@@ -1,0 +1,81 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Access Tokens</h1>
+<p class="text-slate-600 mb-4">Token-based authentication is ideal for APIs where clients send a Bearer token with each request instead of relying on cookies and sessions. Nimbus's <code class="bg-slate-100 px-1 rounded">auth.Guard</code> interface makes it straightforward to build a token guard.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Concept</h2>
+<p class="text-slate-600 mb-4">API tokens are opaque strings generated on login or user creation. The client includes the token in the <code class="bg-slate-100 px-1 rounded">Authorization</code> header as <code class="bg-slate-100 px-1 rounded">Bearer &lt;token&gt;</code>. The server validates the token against a store (database, cache, etc.) and resolves the associated user.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Token model</h2>
+<p class="text-slate-600 mb-4">Store tokens in a database table alongside the user ID and optional expiration:</p>
+<pre><code>type AccessToken struct {
+    database.Model
+    Token     string    `gorm:"uniqueIndex"`
+    UserID    uint
+    ExpiresAt time.Time
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Generating tokens</h2>
+<p class="text-slate-600 mb-4">Generate a cryptographically secure token using <code class="bg-slate-100 px-1 rounded">crypto/rand</code> and store it in the database:</p>
+<pre><code>func GenerateToken(db *gorm.DB, userID uint, ttl time.Duration) (string, error) {
+    b := make([]byte, 32)
+    rand.Read(b)
+    token := hex.EncodeToString(b)
+
+    record := AccessToken{
+        Token:     token,
+        UserID:    userID,
+        ExpiresAt: time.Now().Add(ttl),
+    }
+    if err := db.Create(&record).Error; err != nil {
+        return "", err
+    }
+    return token, nil
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Implementing a token guard</h2>
+<p class="text-slate-600 mb-4">Implement the <code class="bg-slate-100 px-1 rounded">auth.Guard</code> interface to read the Bearer token from the request and look up the user:</p>
+<pre><code>type TokenGuard struct {
+    DB *gorm.DB
+}
+
+func (g *TokenGuard) User(ctx context.Context) (auth.User, error) {
+    req, _ := ctx.Value("http_request").(*http.Request)
+    header := req.Header.Get("Authorization")
+    if !strings.HasPrefix(header, "Bearer ") {
+        return nil, nil
+    }
+    tokenStr := strings.TrimPrefix(header, "Bearer ")
+
+    var token AccessToken
+    err := g.DB.Where("token = ? AND expires_at > ?", tokenStr, time.Now()).First(&token).Error
+    if err != nil {
+        return nil, nil
+    }
+
+    var user AppUser
+    if err := g.DB.First(&user, token.UserID).Error; err != nil {
+        return nil, nil
+    }
+    return &user, nil
+}
+
+func (g *TokenGuard) Login(ctx context.Context, user auth.User) error {
+    return nil // tokens are created separately via GenerateToken
+}
+
+func (g *TokenGuard) Logout(ctx context.Context) error {
+    return nil // revoke by deleting the token record
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Protecting API routes</h2>
+<p class="text-slate-600 mb-4">Apply the token guard with <code class="bg-slate-100 px-1 rounded">RequireAuth</code> on your API group. Pass an empty <code class="bg-slate-100 px-1 rounded">redirectTo</code> to return 401 JSON instead of redirecting:</p>
+<pre><code>tokenGuard := &TokenGuard{DB: db}
+
+api := app.Router.Group("/api")
+api.Use(auth.RequireAuth(tokenGuard, ""))
+api.Get("/me", MeHandler)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Token expiration</h2>
+<p class="text-slate-600 mb-4">Tokens should have a TTL. The guard checks <code class="bg-slate-100 px-1 rounded">expires_at</code> when validating. You can also run a periodic cleanup to delete expired tokens:</p>
+<pre><code>// Clean up expired tokens
+db.Where("expires_at &lt; ?", time.Now()).Delete(&AccessToken{})</code></pre>

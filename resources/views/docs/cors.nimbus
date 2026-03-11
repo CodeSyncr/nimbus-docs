@@ -1,0 +1,58 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">CORS Middleware</h1>
+<p class="text-slate-600 mb-4">Cross-Origin Resource Sharing (CORS) controls which domains can make requests to your server from a browser. Without proper CORS headers, browsers block cross-origin AJAX requests. Nimbus includes <code class="bg-slate-100 px-1 rounded">middleware.CORS()</code> to configure these headers.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">What is CORS?</h2>
+<p class="text-slate-600 mb-4">When a web page at <code class="bg-slate-100 px-1 rounded">https://app.example.com</code> makes a fetch request to <code class="bg-slate-100 px-1 rounded">https://api.example.com</code>, the browser enforces the Same-Origin Policy. The server must respond with <code class="bg-slate-100 px-1 rounded">Access-Control-Allow-Origin</code> headers to permit the request. CORS defines the handshake between browser and server.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Basic usage</h2>
+<p class="text-slate-600 mb-4">Pass the allowed origin string to <code class="bg-slate-100 px-1 rounded">middleware.CORS()</code>. Use <code class="bg-slate-100 px-1 rounded">"*"</code> to allow all origins:</p>
+<pre><code>app.Router.Use(middleware.CORS("*"))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Restricting to a specific origin</h2>
+<p class="text-slate-600 mb-4">For production, restrict to your frontend domain:</p>
+<pre><code>app.Router.Use(middleware.CORS("https://app.example.com"))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Headers set by the middleware</h2>
+<p class="text-slate-600 mb-4">The CORS middleware automatically sets these response headers on every request:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">Access-Control-Allow-Origin</code> — Set to the origin you specify.</li>
+  <li><code class="bg-slate-100 px-1 rounded">Access-Control-Allow-Methods</code> — GET, POST, PUT, PATCH, DELETE, OPTIONS.</li>
+  <li><code class="bg-slate-100 px-1 rounded">Access-Control-Allow-Headers</code> — Content-Type, Authorization.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Preflight requests</h2>
+<p class="text-slate-600 mb-4">Browsers send an OPTIONS preflight request before certain cross-origin requests (e.g. those with custom headers or non-simple methods). The Nimbus CORS middleware detects OPTIONS requests and responds with a <code class="bg-slate-100 px-1 rounded">204 No Content</code> status, including the required CORS headers, so the actual request can proceed.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">CORS on specific route groups</h2>
+<p class="text-slate-600 mb-4">You can apply CORS only to your API routes instead of globally:</p>
+<pre><code>api := app.Router.Group("/api")
+api.Use(middleware.CORS("https://app.example.com"))
+
+api.Get("/posts", ListPosts)
+api.Post("/posts", CreatePost)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Credentials and cookies</h2>
+<p class="text-slate-600 mb-4">If your frontend sends cookies or authorization headers cross-origin, the browser requires <code class="bg-slate-100 px-1 rounded">Access-Control-Allow-Credentials: true</code>. You can add this by wrapping the built-in CORS middleware or writing a custom one:</p>
+<pre><code>func CORSWithCredentials(origin string) router.Middleware {
+    return func(next router.HandlerFunc) router.HandlerFunc {
+        return func(c *http.Context) error {
+            c.Response.Header().Set("Access-Control-Allow-Origin", origin)
+            c.Response.Header().Set("Access-Control-Allow-Credentials", "true")
+            c.Response.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+            c.Response.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+            if c.Request.Method == "OPTIONS" {
+                c.Status(204)
+                return nil
+            }
+            return next(c)
+        }
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Important notes</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li>Using <code class="bg-slate-100 px-1 rounded">"*"</code> as origin is convenient for development but insecure for production.</li>
+  <li>When using credentials, the origin must be an explicit domain — <code class="bg-slate-100 px-1 rounded">"*"</code> is not allowed.</li>
+  <li>Place the CORS middleware before other middleware that might short-circuit the request.</li>
+</ul>

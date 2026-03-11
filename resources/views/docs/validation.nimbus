@@ -1,0 +1,125 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Validation</h1>
+<p class="text-slate-600 mb-6">Nimbus provides a <strong>VineJS-inspired fluent validation API</strong> for validating requests, forms, and models. Define rules as chainable methods, validate structs directly, and use database-backed rules for uniqueness checks.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Fluent schema rules</h2>
+<p class="text-slate-600 mb-2">Define validation schemas using the fluent builder API:</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/validation"
+
+func (r *CreateBlogRequest) Rules() validation.Schema {
+    return validation.Schema{
+        "title":   validation.String().Required().Min(1).Max(255),
+        "content": validation.String().Required().Min(1).Max(5000),
+        "email":   validation.String().Required().Email(),
+        "age":     validation.Number().Required().Min(18).Max(120),
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">String rules</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Required()</code></td><td class="px-4 py-2">Field must not be empty</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Min(n)</code></td><td class="px-4 py-2">Minimum length</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Max(n)</code></td><td class="px-4 py-2">Maximum length</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Email()</code></td><td class="px-4 py-2">Must be a valid email</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">URL()</code></td><td class="px-4 py-2">Must be a valid URL</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Regex(pattern)</code></td><td class="px-4 py-2">Must match regex</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">In(values...)</code></td><td class="px-4 py-2">Must be one of the allowed values</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Alpha()</code></td><td class="px-4 py-2">Letters only</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">AlphaNum()</code></td><td class="px-4 py-2">Letters and numbers only</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Trim()</code></td><td class="px-4 py-2">Trim whitespace before validation</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Confirmed()</code></td><td class="px-4 py-2">Must match <code class="bg-slate-100 px-1 rounded">field_confirmation</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Number rules</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Required()</code></td><td class="px-4 py-2">Field must not be zero</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Min(n)</code></td><td class="px-4 py-2">Minimum value</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Max(n)</code></td><td class="px-4 py-2">Maximum value</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Positive()</code></td><td class="px-4 py-2">Must be greater than 0</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Between(min, max)</code></td><td class="px-4 py-2">Must be within range</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Database rules</h2>
+<p class="text-slate-600 mb-2">Use <code class="bg-slate-100 px-1 rounded">Unique()</code> and <code class="bg-slate-100 px-1 rounded">Exists()</code> for database-backed validation. These query the database using GORM.</p>
+<pre><code>func (r *CreateUserRequest) Rules() validation.Schema {
+    return validation.Schema{
+        // Check email is unique in users table
+        "email": validation.String().Required().Email().Unique(validation.UniqueOpts{
+            Table:  "users",
+            Column: "email",
+        }),
+
+        // Unique with filter (exclude current user during updates)
+        "email": validation.String().Required().Email().Unique(validation.UniqueOpts{
+            Table:  "users",
+            Column: "email",
+            Filter: func(db *gorm.DB) *gorm.DB {
+                return db.Where("id != ?", currentUserID)
+            },
+        }),
+
+        // Check role exists in roles table
+        "role_id": validation.Number().Required().Exists(validation.ExistsOpts{
+            Table:  "roles",
+            Column: "id",
+        }),
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Model-level validation</h2>
+<p class="text-slate-600 mb-2">Models can implement <code class="bg-slate-100 px-1 rounded">SchemaProvider</code> to validate themselves. This is the recommended pattern:</p>
+<pre><code>type Todo struct {
+    database.Model
+    Title string
+    Done  bool
+}
+
+func (t *Todo) Rules() validation.Schema {
+    return validation.Schema{
+        "title": validation.String().Required().Min(1).Max(255),
+    }
+}
+
+func (t *Todo) Validate() error {
+    return validation.ValidateStruct(t)
+}
+
+// In a controller:
+todo := &models.Todo{Title: strings.TrimSpace(ctx.Request.FormValue("title"))}
+if err := todo.Validate(); err != nil {
+    return ctx.View("form", map[string]any{"error": err.Error()})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Request validation in controllers</h2>
+<pre><code>func (c *BlogController) Store(ctx *http.Context) error {
+    var req validators.CreateBlogRequest
+
+    ve, err := validation.BindAndValidateSchema(ctx, &req)
+    if ve != nil {
+        return ve  // returns 422 JSON with validation errors
+    }
+    if err != nil {
+        return err
+    }
+
+    blog := &models.Blog{Title: req.Title, Content: req.Content}
+    if err := database.Get().Create(blog).Error; err != nil {
+        return err
+    }
+    return ctx.JSON(http.StatusCreated, blog)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Generating validators</h2>
+<p class="text-slate-600 mb-2">Scaffold a validator with the CLI:</p>
+<pre><code>nimbus make:validator Blog</code></pre>
+<p class="text-slate-600 mb-4">This generates a struct with <code class="bg-slate-100 px-1 rounded">Rules()</code> and <code class="bg-slate-100 px-1 rounded">Validate()</code> methods using the fluent API.</p>

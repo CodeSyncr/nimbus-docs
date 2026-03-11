@@ -1,0 +1,15 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Prompts</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Interactive prompts for collecting user input in commands. Nimbus does not yet provide built-in prompts; use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bufio.Scanner</code> or a package like <a href="https://github.com/AlecAivazis/survey" target="_blank" rel="noopener" class="text-amber-600 dark:text-amber-400 hover:underline">survey</a> for interactive input.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Simple text input</h2>
+<pre data-file="commands/setup.go"><code>reader := bufio.NewReader(os.Stdin)
+fmt.Print("Enter model name: ")
+name, _ := reader.ReadString('\n')
+name = strings.TrimSpace(name)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using survey (optional)</h2>
+<pre data-file="commands/setup.go"><code>import "github.com/AlecAivazis/survey/v2"
+
+var name string
+survey.AskOne(&survey.Input{Message: "Model name:"}, &name)</code></pre>

@@ -1,0 +1,83 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">AI SDK</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The AI SDK plugin provides a unified API for interacting with AI providers (OpenAI, Anthropic, Ollama, etc.), inspired by <a href="https://laravel.com/docs/12.x/ai-sdk" class="text-amber-600 dark:text-amber-400 hover:underline">Laravel's AI SDK</a>. Build agents, generate text, and stream responses with a consistent interface.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Try the <a href="/demos/ai" class="text-amber-600 dark:text-amber-400 hover:underline">AI demo</a> to see it in action.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Installation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Add the plugin in your <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code>:</p>
+<pre data-file="bin/server.go"><code>import (
+    "github.com/CodeSyncr/nimbus"
+    "github.com/CodeSyncr/nimbus/plugins/ai"
+)
+
+func main() {
+    app := nimbus.New()
+    app.Use(ai.New())
+    // ...
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Set environment variables in your <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code>:</p>
+<pre data-file=".env"><code>AI_PROVIDER=openai
+AI_MODEL=gpt-4o
+OPENAI_API_KEY=sk-...</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">For local development without an API key, use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">AI_PROVIDER=ollama</code> with <a href="https://ollama.ai" class="text-amber-600 dark:text-amber-400 hover:underline">Ollama</a> running locally.</p>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Environment Variables</h3>
+<table class="w-full border-collapse border border-slate-200 dark:border-slate-700 mb-4">
+  <thead><tr class="bg-slate-50 dark:bg-slate-800"><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Variable</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Description</th></tr></thead>
+  <tbody class="text-slate-600 dark:text-slate-400 text-sm">
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>AI_PROVIDER</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">openai, xai, ollama, anthropic, gemini, mistral, cohere</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>AI_MODEL</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Model name (e.g. gpt-4o, llama3.2)</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>OPENAI_API_KEY</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Required for OpenAI</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>OLLAMA_HOST</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Ollama server URL (default: http://localhost:11434)</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ANTHROPIC_API_KEY</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Required for Anthropic</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>XAI_API_KEY</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Required for xAI (Grok)</td></tr>
+  </tbody>
+</table>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Text Generation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ai.Generate</code> for simple completions:</p>
+<pre data-file="app/controllers/ai.go"><code>response, err := ai.Generate(c.Request().Context(), "Explain quantum computing")
+if err != nil {
+    return err
+}
+return c.JSON(200, map[string]string{"answer": response.Text})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Streaming</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ai.Stream</code> for streaming responses:</p>
+<pre data-file="app/controllers/ai.go"><code>stream, errCh := ai.Stream(ctx, "Write a haiku about Go")
+for chunk := range stream {
+    fmt.Fprint(w, chunk)
+}
+if err := &#60;-errCh; err != nil {
+    return err
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Agents</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Agents encapsulate instructions (system prompt) and optional conversation context:</p>
+<pre data-file="app/controllers/ai.go"><code>agent := ai.NewAgent("You are a helpful coding assistant specializing in Go.")
+response, err := agent.Prompt(ctx, "How do I use channels for concurrency?")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Options</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Customize generation with options:</p>
+<pre data-file="app/controllers/ai.go"><code>response, err := ai.Generate(ctx, "Summarize this",
+    ai.WithModel("gpt-4o-mini"),
+    ai.WithMaxTokens(500),
+    ai.WithTemperature(0.7),
+    ai.WithSystem("You are a concise summarizer."),
+)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Providers</h2>
+<table class="w-full border-collapse border border-slate-200 dark:border-slate-700 mb-4">
+  <thead><tr class="bg-slate-50 dark:bg-slate-800"><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Provider</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Status</th></tr></thead>
+  <tbody class="text-slate-600 dark:text-slate-400 text-sm">
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">OpenAI</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Supported</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">xAI (Grok)</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Supported</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Ollama</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Supported (local)</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Anthropic, Gemini, Mistral, Cohere</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Config ready</td></tr>
+  </tbody>
+</table>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Related</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">For AI client integrations (tools, resources, prompts), see <a href="/docs/mcp" class="text-amber-600 dark:text-amber-400 hover:underline">MCP</a>.</p>

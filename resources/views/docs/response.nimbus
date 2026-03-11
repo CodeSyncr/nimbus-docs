@@ -1,0 +1,99 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Response</h1>
+<p class="text-slate-600 mb-6">Every Nimbus handler receives a <code class="bg-slate-100 px-1 rounded">*http.Context</code> (aliased as <code class="bg-slate-100 px-1 rounded">c</code>) which provides convenient helpers for sending HTTP responses. Under the hood, <code class="bg-slate-100 px-1 rounded">c.Response</code> is a standard <code class="bg-slate-100 px-1 rounded">http.ResponseWriter</code>, so all Go idioms work too.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">JSON responses</h2>
+<p class="text-slate-600 mb-2">Send a JSON body with a status code. The Content-Type header is set to <code class="bg-slate-100 px-1 rounded">application/json</code> automatically.</p>
+<pre><code>func listUsers(c *http.Context) error {
+    users := []map[string]string{
+        {"name": "Alice"},
+        {"name": "Bob"},
+    }
+    return c.JSON(200, users)
+}
+
+func createUser(c *http.Context) error {
+    return c.JSON(201, map[string]string{"message": "created"})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Plain text responses</h2>
+<p class="text-slate-600 mb-2">Send a plain text response with <code class="bg-slate-100 px-1 rounded">c.String(code, text)</code>. Content-Type is set to <code class="bg-slate-100 px-1 rounded">text/plain; charset=utf-8</code>.</p>
+<pre><code>func healthCheck(c *http.Context) error {
+    c.String(200, "OK")
+    return nil
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Rendering views</h2>
+<p class="text-slate-600 mb-2">Render a <code class="bg-slate-100 px-1 rounded">.nimbus</code> template and send it as HTML. Pass a data map that becomes available in the template.</p>
+<pre><code>func homePage(c *http.Context) error {
+    return c.View("home", map[string]any{
+        "title": "Welcome",
+        "name":  "Guest",
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Redirects</h2>
+<p class="text-slate-600 mb-2">Issue an HTTP redirect with <code class="bg-slate-100 px-1 rounded">c.Redirect(code, url)</code>. Common codes are 301 (permanent) and 302 (temporary).</p>
+<pre><code>func oldPage(c *http.Context) error {
+    c.Redirect(301, "/new-page")
+    return nil
+}
+
+func afterLogin(c *http.Context) error {
+    c.Redirect(302, "/dashboard")
+    return nil
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Setting status code</h2>
+<p class="text-slate-600 mb-2">Use <code class="bg-slate-100 px-1 rounded">c.Status(code)</code> to write the status header directly. This is useful when you want to set the status before writing the body yourself.</p>
+<pre><code>func noContent(c *http.Context) error {
+    c.Status(204)
+    return nil
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Setting response headers</h2>
+<p class="text-slate-600 mb-2">Access the underlying <code class="bg-slate-100 px-1 rounded">http.ResponseWriter</code> via <code class="bg-slate-100 px-1 rounded">c.Response</code> to set custom headers. Headers must be set before calling <code class="bg-slate-100 px-1 rounded">WriteHeader</code> or writing the body.</p>
+<pre><code>func customHeaders(c *http.Context) error {
+    c.Response.Header().Set("X-Request-Id", "abc-123")
+    c.Response.Header().Set("Cache-Control", "no-cache")
+    return c.JSON(200, map[string]string{"ok": "true"})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Writing raw bytes</h2>
+<p class="text-slate-600 mb-2">For full control, write directly to <code class="bg-slate-100 px-1 rounded">c.Response</code>. It implements <code class="bg-slate-100 px-1 rounded">http.ResponseWriter</code>, so you can call <code class="bg-slate-100 px-1 rounded">Write([]byte)</code> directly.</p>
+<pre><code>func rawResponse(c *http.Context) error {
+    c.Response.Header().Set("Content-Type", "application/octet-stream")
+    c.Response.WriteHeader(200)
+    _, err := c.Response.Write([]byte("raw bytes here"))
+    return err
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Streaming responses</h2>
+<p class="text-slate-600 mb-2">Since <code class="bg-slate-100 px-1 rounded">c.Response</code> is an <code class="bg-slate-100 px-1 rounded">http.ResponseWriter</code>, you can flush chunks for streaming. If the writer supports <code class="bg-slate-100 px-1 rounded">http.Flusher</code>, call <code class="bg-slate-100 px-1 rounded">Flush()</code> after each write.</p>
+<pre><code>func streamHandler(c *http.Context) error {
+    c.Response.Header().Set("Content-Type", "text/event-stream")
+    c.Response.Header().Set("Cache-Control", "no-cache")
+    c.Response.WriteHeader(200)
+
+    flusher, ok := c.Response.(http.Flusher)
+    if !ok {
+        return fmt.Errorf("streaming not supported")
+    }
+
+    for i := 0; i &lt; 5; i++ {
+        fmt.Fprintf(c.Response, "data: message %d\n\n", i)
+        flusher.Flush()
+        time.Sleep(1 * time.Second)
+    }
+    return nil
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Response helper summary</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">c.JSON(code, body)</code> — Send JSON with status code.</li>
+  <li><code class="bg-slate-100 px-1 rounded">c.String(code, text)</code> — Send plain text.</li>
+  <li><code class="bg-slate-100 px-1 rounded">c.View(name, data)</code> — Render a .nimbus template as HTML.</li>
+  <li><code class="bg-slate-100 px-1 rounded">c.Redirect(code, url)</code> — Send an HTTP redirect.</li>
+  <li><code class="bg-slate-100 px-1 rounded">c.Status(code)</code> — Write the status header (returns *Context for chaining).</li>
+  <li><code class="bg-slate-100 px-1 rounded">c.Response</code> — The underlying http.ResponseWriter for raw access.</li>
+</ul>

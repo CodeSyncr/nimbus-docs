@@ -1,0 +1,20 @@
+# Nimbus hot reload
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -mod=mod -o ./tmp/main ."
+  bin = "./tmp/main"
+  delay = 1000
+  exclude_dir = ["tmp", "vendor", "node_modules"]
+  exclude_regex = ["_test.go"]
+  include_ext = ["go", "nimbus"]
+  send_interrupt = true
+  kill_delay = "1s"
+
+[log]
+  time = false
+  main_only = false
+
+[misc]
+  clean_on_exit = true

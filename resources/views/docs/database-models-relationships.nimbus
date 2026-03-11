@@ -1,0 +1,52 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Relationships</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">
+  Define relationships between models with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus</code> tags.
+  Nimbus keeps your models framework-agnostic and maps these relations to GORM (and other ORMs in the future).
+  Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Preload</code> or
+  <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.AutoPreload</code> to eager load associations and avoid N+1 queries.
+</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">belongsTo</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">A post belongs to a user (Nimbus tags):</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Post struct {
+    database.Model
+    UserID uint
+    User   User ` + "`nimbus:\"belongsTo:User,foreignKey:UserID\"`" + `
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">hasMany</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">A user has many posts:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type User struct {
+    database.Model
+    Posts []Post ` + "`nimbus:\"hasMany:Post,foreignKey:UserID\"`" + `
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Eager loading (Preload)</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>var posts []Post
+database.Preload(database.Get(), "User").Find(&posts)
+// or let Nimbus inspect relations and preload automatically:
+database.AutoPreload(database.Get(), &Post{}).Find(&posts)
+// Each post.User is populated</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Nested preload</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>database.Get().
+    Preload("User.Profile").
+    Preload("Comments").
+    Find(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">manyToMany</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Users and teams via pivot table:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type User struct {
+    database.Model
+    Teams []Team ` + "`nimbus:\"manyToMany:Team,foreignKey:UserID\"`" + `
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Declaring relations with methods</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">
+  For more control, models can implement <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Relations() []string</code>
+  and let Nimbus auto-preload the listed associations:
+</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func (Post) Relations() []string {
+    return []string{"User", "Comments"}
+}</code></pre>

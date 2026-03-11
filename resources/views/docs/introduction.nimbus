@@ -1,0 +1,54 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Introduction</h1>
+<p class="text-slate-600 mb-4">Nimbus is a convention-over-configuration web framework for Go, inspired by <a href="https://adonisjs.com" class="text-indigo-600 hover:text-indigo-700">AdonisJS</a>. It brings the productivity and structure of full-featured Node.js frameworks to the Go ecosystem, while keeping the performance and type safety that Go developers expect.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Why Nimbus?</h2>
+<p class="text-slate-600 mb-4">Most Go web frameworks are minimalist routers that leave application structure entirely up to you. Nimbus takes a different approach: it provides an opinionated project layout, a rich standard library, and familiar patterns so you can focus on building features instead of wiring things together.</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li>Spend less time on boilerplate — Nimbus scaffolds a complete project in seconds.</li>
+  <li>Consistent conventions — every Nimbus app follows the same directory structure and patterns.</li>
+  <li>Batteries included — routing, ORM, views, auth, caching, and more out of the box.</li>
+  <li>Go performance — compiled binary, low memory footprint, fast startup.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Key Features</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><strong>Routing</strong> — Expressive route registration built on <code class="bg-slate-100 px-1 rounded">Chi</code> with path params, groups, and middleware.</li>
+  <li><strong>Controllers</strong> — Struct-based controllers with action methods (Index, Show, Create, Update, Delete).</li>
+  <li><strong>ORM</strong> — Integrated GORM for models, migrations, and seeders.</li>
+  <li><strong>Views</strong> — Custom <code class="bg-slate-100 px-1 rounded">.nimbus</code> template engine with layouts, partials, and data binding.</li>
+  <li><strong>Middleware</strong> — Logger, Recover, CORS, CSRF, Rate Limiting, and easy custom middleware.</li>
+  <li><strong>Authentication</strong> — Session guards, access tokens, and authorization policies.</li>
+  <li><strong>Cache</strong> — In-memory and Redis-backed caching with a unified API.</li>
+  <li><strong>Events</strong> — Application-level event emitter for decoupled communication.</li>
+  <li><strong>Queue</strong> — Background job processing for async workloads.</li>
+  <li><strong>Mail</strong> — SMTP email sending with template support.</li>
+  <li><strong>WebSockets</strong> — Real-time communication via WebSocket channels.</li>
+  <li><strong>CLI</strong> — <code class="bg-slate-100 px-1 rounded">nimbus</code> command-line tool for scaffolding, serving, and code generation.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Philosophy</h2>
+<p class="text-slate-600 mb-4">Nimbus follows three core principles:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><strong>Convention over configuration</strong> — sensible defaults that work out of the box; override only when you need to.</li>
+  <li><strong>Full-stack productivity</strong> — everything you need for a web app ships with the framework, not as separate micro-libraries.</li>
+  <li><strong>Idiomatic Go</strong> — patterns feel natural to Go developers: exported struct methods, standard <code class="bg-slate-100 px-1 rounded">net/http</code> compatibility, and minimal magic.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">How Nimbus Compares</h2>
+<p class="text-slate-600 mb-4">If you have used other Go web frameworks, here is how Nimbus fits in:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><strong>vs Gin / Echo / Chi</strong> — These are excellent routers, but they leave project structure, ORM, views, and auth up to you. Nimbus includes all of that.</li>
+  <li><strong>vs Fiber</strong> — Fiber provides more built-in features than a bare router, but still does not enforce conventions. Nimbus adds an opinionated structure plus a CLI.</li>
+  <li><strong>vs Buffalo</strong> — Buffalo was the closest Go equivalent to Rails. Nimbus inherits the same spirit but is actively maintained and modeled after AdonisJS.</li>
+  <li><strong>vs AdonisJS (Node.js)</strong> — Nimbus mirrors AdonisJS concepts (controllers, middleware, service providers, views, ORM) in Go, offering the same developer experience with Go performance.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Under the Hood</h2>
+<p class="text-slate-600 mb-4">Nimbus builds on battle-tested Go libraries:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">go-chi/chi</code> — HTTP router (net/http compatible, fast, composable).</li>
+  <li><code class="bg-slate-100 px-1 rounded">gorm.io/gorm</code> — ORM for database operations, migrations, and model relationships.</li>
+  <li><code class="bg-slate-100 px-1 rounded">godotenv</code> — Environment variable loading from <code class="bg-slate-100 px-1 rounded">.env</code> files.</li>
+</ul>
+<p class="text-slate-600 mb-4">Ready to get started? Head over to the <a href="/docs/installation" class="text-indigo-600 hover:text-indigo-700">Installation</a> guide.</p>

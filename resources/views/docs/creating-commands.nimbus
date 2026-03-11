@@ -1,0 +1,93 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Creating Commands</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">This guide covers creating custom commands using the Nimbus CLI, inspired by AdonisJS Ace. Commands use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">github.com/CodeSyncr/nimbus/command</code> — no direct Cobra dependency.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Creating your first command</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Generate a new command using the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">make:command</code> Ace command. This creates a command in the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">commands/</code> directory with the standard structure.</p>
+<pre data-file="Terminal"><code>nimbus make:command greet</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use namespaces with colons for related commands:</p>
+<pre data-file="Terminal"><code>nimbus make:command make:controller</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The generated file uses <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">command.New</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">command.Register</code>, and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">command.Ctx</code>.</p>
+<pre data-file="commands/greet.go"><code>package commands
+
+import (
+	"fmt"
+
+	"github.com/CodeSyncr/nimbus/command"
+)
+
+func init() {
+	command.Register(GreetCommand())
+}
+
+func GreetCommand() *command.Command {
+	return command.New("greet", "Description of the command").
+		Long("Longer help text for --help").
+		RunE(func(ctx *command.Ctx) error {
+			fmt.Println("Hello from greet")
+			return nil
+		})
+}</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Execute the command after wiring <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">main.go</code>:</p>
+<pre data-file="Terminal"><code>go run . greet</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuring command metadata</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Command metadata controls how your command appears in help screens and how it behaves.</p>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Command name and description</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">command.New(use, short)</code> sets the name and short description. Use colons for namespaces.</p>
+<pre data-file="commands/greet.go"><code>return command.New("greet", "Greet a user by name").
+	Long("The greet command prints a greeting. Use --loud for emphasis.")</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Aliases</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Provide alternative names with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Aliases</code>:</p>
+<pre data-file="commands/greet.go"><code>return command.New("greet", "Greet a user").
+	Aliases("welcome", "sayhi")</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Users can run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">go run . welcome</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">go run . sayhi</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Registering commands</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Commands register themselves via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">command.Register</code> in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">init()</code>. Wire the CLI in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">main.go</code> with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">command.Run</code>:</p>
+<pre data-file="main.go"><code>package main
+
+import (
+	"fmt"
+	"os"
+
+	_ "myapp/commands" // load commands (register via init)
+
+	"myapp/bin"
+
+	"github.com/CodeSyncr/nimbus/command"
+)
+
+func main() {
+	if len(os.Args) > 1 && os.Args[1] == "migrate" {
+		bin.RunMigrations()
+		return
+	}
+	if len(os.Args) > 1 && os.Args[1] == "queue:work" {
+		bin.RunQueueWorker()
+		return
+	}
+	if len(os.Args) > 1 {
+		command.RunOrExit(os.Args[1:])
+		return
+	}
+	app := bin.Boot()
+	_ = app.Run()
+}</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The blank import <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">_ "myapp/commands"</code> loads the package and runs <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">init()</code>, which registers each command. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">command.RunOrExit</code> to run and exit on error, or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">command.Run</code> to handle errors yourself.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Built-in commands</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The Nimbus CLI provides these generators (run with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus</code> from app root):</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus new [app-name]</code> — scaffold a new Nimbus application</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus serve</code> — start the app with hot reload</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:command [name]</code> — create a custom command</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:model [name]</code> — generate a model</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:controller [name]</code> — generate a controller</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:middleware [name]</code> — generate middleware</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:migration [name]</code> — generate a migration</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:seeder [name]</code> — generate a seeder</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:job [name]</code> — generate a queue job</li>
+</ul>

@@ -1,0 +1,85 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Logger</h1>
+<p class="text-slate-600 mb-6">Nimbus uses <code class="bg-slate-100 px-1 rounded">uber-go/zap</code> for structured, high-performance logging. The <code class="bg-slate-100 px-1 rounded">logger</code> package provides a pre-configured <code class="bg-slate-100 px-1 rounded">*zap.SugaredLogger</code> and convenience functions.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Quick start</h2>
+<p class="text-slate-600 mb-2">Import the logger package and call the level functions directly. The global logger is initialised automatically on import.</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/logger"
+
+logger.Info("server started", "port", 3333)
+logger.Debug("loading config", "path", ".env")
+logger.Warn("cache miss", "key", "user:42")
+logger.Error("query failed", "error", err)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Log levels</h2>
+<p class="text-slate-600 mb-2">The logger supports four primary levels. Each accepts a message string followed by key-value pairs for structured fields.</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">logger.Debug(msg, keysAndValues...)</code> — verbose detail for development.</li>
+  <li><code class="bg-slate-100 px-1 rounded">logger.Info(msg, keysAndValues...)</code> — general operational events.</li>
+  <li><code class="bg-slate-100 px-1 rounded">logger.Warn(msg, keysAndValues...)</code> — potential issues that don't stop execution.</li>
+  <li><code class="bg-slate-100 px-1 rounded">logger.Error(msg, keysAndValues...)</code> — errors that need attention.</li>
+  <li><code class="bg-slate-100 px-1 rounded">logger.Fatal(msg, keysAndValues...)</code> — logs the message then calls <code class="bg-slate-100 px-1 rounded">os.Exit(1)</code>.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Structured fields</h2>
+<p class="text-slate-600 mb-2">Pass alternating key-value pairs after the message. Zap encodes them as structured fields in the log output.</p>
+<pre><code>logger.Info("user login",
+    "userID", 42,
+    "email", "alice@example.com",
+    "ip", "192.168.1.1",
+)
+// Output: 2026-03-08T12:00:00Z  INFO  user login  {"userID": 42, "email": "alice@example.com", "ip": "192.168.1.1"}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Child loggers with context</h2>
+<p class="text-slate-600 mb-2"><code class="bg-slate-100 px-1 rounded">logger.With(keysAndValues...)</code> returns a new <code class="bg-slate-100 px-1 rounded">*zap.SugaredLogger</code> that includes the given fields in every subsequent log line. Useful for adding request-scoped context.</p>
+<pre><code>reqLogger := logger.With("requestID", "abc-123", "method", "GET")
+reqLogger.Infow("handling request", "path", "/users")
+reqLogger.Infow("query complete", "rows", 15)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Logging in middleware</h2>
+<p class="text-slate-600 mb-2">The built-in <code class="bg-slate-100 px-1 rounded">middleware.Logger()</code> logs every request. You can also add custom logging in your own middleware.</p>
+<pre><code>func RequestLogger() router.Middleware {
+    return func(next router.HandlerFunc) router.HandlerFunc {
+        return func(c *http.Context) error {
+            start := time.Now()
+            err := next(c)
+            logger.Info("request",
+                "method", c.Request().Method,
+                "path", c.Request().URL.Path,
+                "duration", time.Since(start).String(),
+            )
+            return err
+        }
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Logging in handlers</h2>
+<pre><code>func createUser(c *http.Context) error {
+    logger.Info("creating user", "ip", c.Request().RemoteAddr)
+    // ... create user ...
+    logger.Info("user created", "userID", user.ID)
+    return c.JSON(201, user)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Custom configuration</h2>
+<p class="text-slate-600 mb-2">Replace the global logger with <code class="bg-slate-100 px-1 rounded">logger.Set()</code> to customise encoding, level, or output. The default uses console encoding at Info level with ISO 8601 timestamps.</p>
+<pre><code>import (
+    "go.uber.org/zap"
+    "go.uber.org/zap/zapcore"
+    "github.com/CodeSyncr/nimbus/logger"
+)
+
+cfg := zap.NewProductionConfig()
+cfg.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+cfg.Encoding = "json"
+l, _ := cfg.Build()
+logger.Set(l)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Default configuration</h2>
+<p class="text-slate-600 mb-2">Out of the box, the logger is configured with:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li>Production config base (sampling, caller info)</li>
+  <li>Console encoding for readable terminal output</li>
+  <li>Info level (Debug messages hidden by default)</li>
+  <li>ISO 8601 timestamps</li>
+</ul>

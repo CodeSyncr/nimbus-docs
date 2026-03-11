@@ -1,0 +1,493 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Routing</h1>
+<p class="text-slate-600 mb-4">
+  The Nimbus router is the backbone of your application. It maps incoming HTTP requests to handler functions based on three components: the <strong>HTTP method</strong> (GET, POST, etc.), a <strong>URI pattern</strong> (the path, possibly with dynamic segments), and a <strong>handler</strong> that processes the request and returns a response. Middleware can wrap any route or group to run logic before or after the handler executes.
+</p>
+<p class="text-slate-600 mb-4">
+  Under the hood, Nimbus uses <a href="https://github.com/go-chi/chi" class="text-indigo-600 hover:text-indigo-700 underline">go-chi/chi/v5</a> for high-performance, radix-tree-based route matching that is fully compatible with <code class="bg-slate-100 px-1 rounded">net/http</code>.
+</p>
+
+<!-- ───────────────── Basic example ───────────────── -->
+<h2 id="basic-example" class="text-xl font-semibold text-slate-900 mt-8 mb-2">Basic example</h2>
+<p class="text-slate-600 mb-4">
+  Routes are registered on <code class="bg-slate-100 px-1 rounded">app.Router</code>. Every handler receives a <code class="bg-slate-100 px-1 rounded">*http.Context</code> and returns an <code class="bg-slate-100 px-1 rounded">error</code>. A <code class="bg-slate-100 px-1 rounded">nil</code> return signals success.
+</p>
+<pre><code>// Static routes
+app.Router.Get("/", func(c *http.Context) error {
+    return c.View("home", nil)
+})
+
+app.Router.Get("/about", func(c *http.Context) error {
+    return c.String(200, "About page")
+})
+
+// Dynamic route with a parameter
+app.Router.Get("/users/:id", func(c *http.Context) error {
+    id := c.Param("id")
+    return c.JSON(200, map[string]string{"user_id": id})
+})
+
+// POST route that reads request data
+app.Router.Post("/users", func(c *http.Context) error {
+    name := c.FormValue("name")
+    email := c.FormValue("email")
+    // ... save user to database ...
+    return c.JSON(201, map[string]string{
+        "name":  name,
+        "email": email,
+    })
+})</code></pre>
+
+<!-- ───────────────── Controller handler ───────────────── -->
+<h2 id="controller-handler" class="text-xl font-semibold text-slate-900 mt-8 mb-2">Using a controller as route handler</h2>
+<p class="text-slate-600 mb-4">
+  Instead of inline functions, you can organize handlers into controller structs. This keeps route definitions clean and groups related logic together.
+</p>
+<pre><code>// app/controllers/users_controller.go
+package controllers
+
+import "github.com/CodeSyncr/nimbus/context"
+
+type UsersController struct{}
+
+func (uc *UsersController) List(c *http.Context) error {
+    users := []map[string]string{
+        {"id": "1", "name": "Alice"},
+        {"id": "2", "name": "Bob"},
+    }
+    return c.JSON(200, users)
+}
+
+func (uc *UsersController) Show(c *http.Context) error {
+    id := c.Param("id")
+    return c.JSON(200, map[string]string{"id": id})
+}</code></pre>
+<p class="text-slate-600 mb-4">Register the controller methods as route handlers:</p>
+<pre><code>uc := &amp;controllers.UsersController{}
+
+app.Router.Get("/users", uc.List)
+app.Router.Get("/users/:id", uc.Show)</code></pre>
+
+<!-- ───────────────── Route params ───────────────── -->
+<h2 id="route-params" class="text-xl font-semibold text-slate-900 mt-8 mb-2">Route params</h2>
+<p class="text-slate-600 mb-4">
+  Dynamic segments in a route path let you capture values from the URL. Access them with <code class="bg-slate-100 px-1 rounded">c.Param("name")</code>.
+</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Basic route params</h3>
+<p class="text-slate-600 mb-4">
+  Prefix a segment with <code class="bg-slate-100 px-1 rounded">:</code> to make it dynamic. The captured value is available by name.
+</p>
+<pre><code>app.Router.Get("/posts/:slug", func(c *http.Context) error {
+    slug := c.Param("slug") // e.g. "hello-world"
+    return c.View("post", map[string]any{"slug": slug})
+})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Multiple params</h3>
+<p class="text-slate-600 mb-4">
+  A route can contain several dynamic segments. Each one is captured independently.
+</p>
+<pre><code>app.Router.Get("/posts/:postId/comments/:commentId", func(c *http.Context) error {
+    postId := c.Param("postId")
+    commentId := c.Param("commentId")
+    return c.JSON(200, map[string]string{
+        "post":    postId,
+        "comment": commentId,
+    })
+})
+// GET /posts/5/comments/42 → {"post":"5","comment":"42"}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Wildcard params</h3>
+<p class="text-slate-600 mb-4">
+  A trailing <code class="bg-slate-100 px-1 rounded">/*</code> captures the rest of the path. This is useful for catch-all routes like file serving or SPA fallbacks.
+</p>
+<pre><code>app.Router.Get("/files/*", func(c *http.Context) error {
+    // GET /files/images/photo.jpg → filepath = "images/photo.jpg"
+    filepath := c.Param("*")
+    return c.String(200, "Serving: "+filepath)
+})</code></pre>
+
+<!-- ───────────────── HTTP methods ───────────────── -->
+<h2 id="http-methods" class="text-xl font-semibold text-slate-900 mt-8 mb-2">HTTP methods</h2>
+<p class="text-slate-600 mb-4">
+  Nimbus provides a dedicated method for each standard HTTP verb. All methods accept a path and a <code class="bg-slate-100 px-1 rounded">HandlerFunc</code>, and return a <code class="bg-slate-100 px-1 rounded">*Route</code> for chaining.
+</p>
+<table class="w-full border border-slate-200 rounded-lg text-sm mb-4 overflow-hidden">
+  <thead>
+    <tr class="bg-slate-50">
+      <th class="text-left px-4 py-2 border-b border-slate-200 font-semibold text-slate-700">Method</th>
+      <th class="text-left px-4 py-2 border-b border-slate-200 font-semibold text-slate-700">Router call</th>
+      <th class="text-left px-4 py-2 border-b border-slate-200 font-semibold text-slate-700">Typical purpose</th>
+    </tr>
+  </thead>
+  <tbody class="text-slate-600">
+    <tr class="border-b border-slate-100">
+      <td class="px-4 py-2 font-mono text-xs">GET</td>
+      <td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">router.Get(path, handler)</code></td>
+      <td class="px-4 py-2">Retrieve a resource or render a page</td>
+    </tr>
+    <tr class="border-b border-slate-100">
+      <td class="px-4 py-2 font-mono text-xs">POST</td>
+      <td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">router.Post(path, handler)</code></td>
+      <td class="px-4 py-2">Create a new resource</td>
+    </tr>
+    <tr class="border-b border-slate-100">
+      <td class="px-4 py-2 font-mono text-xs">PUT</td>
+      <td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">router.Put(path, handler)</code></td>
+      <td class="px-4 py-2">Replace a resource entirely</td>
+    </tr>
+    <tr class="border-b border-slate-100">
+      <td class="px-4 py-2 font-mono text-xs">PATCH</td>
+      <td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">router.Patch(path, handler)</code></td>
+      <td class="px-4 py-2">Partially update a resource</td>
+    </tr>
+    <tr>
+      <td class="px-4 py-2 font-mono text-xs">DELETE</td>
+      <td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">router.Delete(path, handler)</code></td>
+      <td class="px-4 py-2">Remove a resource</td>
+    </tr>
+  </tbody>
+</table>
+<pre><code>app.Router.Get("/posts", listPosts)
+app.Router.Post("/posts", createPost)
+app.Router.Put("/posts/:id", replacePost)
+app.Router.Patch("/posts/:id", updatePost)
+app.Router.Delete("/posts/:id", deletePost)</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Matching any HTTP method</h3>
+<p class="text-slate-600 mb-4">
+  Use <code class="bg-slate-100 px-1 rounded">router.Any()</code> to register a handler for all standard methods (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS).
+</p>
+<pre><code>app.Router.Any("/healthcheck", func(c *http.Context) error {
+    return c.JSON(200, map[string]string{"status": "ok"})
+})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Custom method combinations</h3>
+<p class="text-slate-600 mb-4">
+  Use <code class="bg-slate-100 px-1 rounded">router.Route()</code> to match a specific set of HTTP methods.
+</p>
+<pre><code>app.Router.Route("/contact", []string{"GET", "POST"}, func(c *http.Context) error {
+    if c.Request().Method == "POST" {
+        // process form submission
+        return c.Redirect(302, "/contact/thanks")
+    }
+    return c.View("contact", nil)
+})</code></pre>
+
+<!-- ───────────────── Route middleware ───────────────── -->
+<h2 id="route-middleware" class="text-xl font-semibold text-slate-900 mt-8 mb-2">Route middleware</h2>
+<p class="text-slate-600 mb-4">
+  Middleware wraps handlers to run logic before and/or after the main handler executes. The signature is <code class="bg-slate-100 px-1 rounded">func(HandlerFunc) HandlerFunc</code>.
+</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Global middleware</h3>
+<p class="text-slate-600 mb-4">
+  Call <code class="bg-slate-100 px-1 rounded">router.Use()</code> to apply middleware to every route in the application. This is typically done during app startup.
+</p>
+<pre><code>app.Router.Use(middleware.Logger(), middleware.Recover())</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Group middleware</h3>
+<p class="text-slate-600 mb-4">
+  Pass middleware when creating a group. Only routes within that group are affected. You can also add more middleware later with <code class="bg-slate-100 px-1 rounded">group.Use()</code>.
+</p>
+<pre><code>// Middleware applied at group creation
+admin := app.Router.Group("/admin", authMiddleware, roleMiddleware)
+admin.Get("/dashboard", dashboardHandler)
+
+// Add more middleware after creation
+admin.Use(auditLogMiddleware)
+admin.Get("/settings", settingsHandler)</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Writing custom middleware</h3>
+<p class="text-slate-600 mb-4">
+  A middleware function takes the next handler in the chain and returns a new handler that wraps it.
+</p>
+<pre><code>func TimingMiddleware() router.Middleware {
+    return func(next router.HandlerFunc) router.HandlerFunc {
+        return func(c *http.Context) error {
+            start := time.Now()
+            err := next(c)
+            duration := time.Since(start)
+            log.Printf("%s %s took %v", c.Request().Method, c.Request().URL.Path, duration)
+            return err
+        }
+    }
+}
+
+app.Router.Use(TimingMiddleware())</code></pre>
+
+<!-- ───────────────── Named routes ───────────────── -->
+<h2 id="named-routes" class="text-xl font-semibold text-slate-900 mt-8 mb-2">Named routes</h2>
+<p class="text-slate-600 mb-4">
+  Naming a route lets you generate its URL by name instead of hard-coding paths. Use the <code class="bg-slate-100 px-1 rounded">.As()</code> method to assign a name.
+</p>
+<pre><code>app.Router.Get("/users", listUsers).As("users.index")
+app.Router.Get("/users/:id", showUser).As("users.show")
+app.Router.Post("/users", createUser).As("users.store")</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Generating URLs from named routes</h3>
+<p class="text-slate-600 mb-4">
+  Call <code class="bg-slate-100 px-1 rounded">router.URL()</code> with the route name and key-value pairs for any dynamic segments. This is especially useful for redirects and link generation in templates.
+</p>
+<pre><code>// Generate URLs by route name
+url := app.Router.URL("users.index")          // "/users"
+url := app.Router.URL("users.show", "id", "42") // "/users/42"
+
+// Use in a redirect
+app.Router.Post("/users", func(c *http.Context) error {
+    // ... create user with id 7 ...
+    url := app.Router.URL("users.show", "id", "7")
+    return c.Redirect(302, url)
+})</code></pre>
+
+<!-- ───────────────── Grouping routes ───────────────── -->
+<h2 id="grouping-routes" class="text-xl font-semibold text-slate-900 mt-8 mb-2">Grouping routes</h2>
+<p class="text-slate-600 mb-4">
+  Groups let you share a path prefix and middleware across multiple routes. This reduces repetition and makes your route definitions easier to read.
+</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Prefix groups</h3>
+<pre><code>api := app.Router.Group("/api")
+
+api.Get("/posts", listPosts)     // GET  /api/posts
+api.Post("/posts", createPost)   // POST /api/posts
+api.Get("/posts/:id", showPost)  // GET  /api/posts/:id</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Groups with middleware</h3>
+<pre><code>// All routes in this group require authentication
+auth := app.Router.Group("/account", authMiddleware)
+auth.Get("/profile", profileHandler)    // GET  /account/profile
+auth.Put("/profile", updateProfile)     // PUT  /account/profile
+auth.Get("/settings", settingsHandler)  // GET  /account/settings</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Nesting groups</h3>
+<p class="text-slate-600 mb-4">
+  You can create multiple groups to model a nested URL structure. Each group maintains its own prefix and middleware stack.
+</p>
+<pre><code>// Public API routes
+api := app.Router.Group("/api/v1")
+api.Get("/posts", listPosts)
+
+// Admin API routes (adds auth on top of the /api/v1 prefix concept)
+admin := app.Router.Group("/api/v1/admin", authMiddleware, adminMiddleware)
+admin.Get("/users", adminListUsers)   // GET /api/v1/admin/users
+admin.Delete("/users/:id", adminDeleteUser) // DELETE /api/v1/admin/users/:id</code></pre>
+
+<!-- ───────────────── Resource routes ───────────────── -->
+<h2 id="resource-routes" class="text-xl font-semibold text-slate-900 mt-8 mb-2">Resource routes</h2>
+<p class="text-slate-600 mb-4">
+  Resource routing is one of the most powerful features in Nimbus. A single call to <code class="bg-slate-100 px-1 rounded">router.Resource()</code> generates all seven RESTful routes for a resource, following convention over configuration.
+</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Registering a resource</h3>
+<pre><code>app.Router.Resource("posts", &amp;PostsController{})</code></pre>
+<p class="text-slate-600 mb-4">This single line generates the following seven routes:</p>
+
+<table class="w-full border border-slate-200 rounded-lg text-sm mb-4 overflow-hidden">
+  <thead>
+    <tr class="bg-slate-50">
+      <th class="text-left px-4 py-2 border-b border-slate-200 font-semibold text-slate-700">HTTP method</th>
+      <th class="text-left px-4 py-2 border-b border-slate-200 font-semibold text-slate-700">Path</th>
+      <th class="text-left px-4 py-2 border-b border-slate-200 font-semibold text-slate-700">Controller action</th>
+      <th class="text-left px-4 py-2 border-b border-slate-200 font-semibold text-slate-700">Named route</th>
+    </tr>
+  </thead>
+  <tbody class="text-slate-600">
+    <tr class="border-b border-slate-100">
+      <td class="px-4 py-2 font-mono text-xs">GET</td>
+      <td class="px-4 py-2 font-mono text-xs">/posts</td>
+      <td class="px-4 py-2">Index</td>
+      <td class="px-4 py-2 font-mono text-xs">posts.index</td>
+    </tr>
+    <tr class="border-b border-slate-100">
+      <td class="px-4 py-2 font-mono text-xs">GET</td>
+      <td class="px-4 py-2 font-mono text-xs">/posts/create</td>
+      <td class="px-4 py-2">Create</td>
+      <td class="px-4 py-2 font-mono text-xs">posts.create</td>
+    </tr>
+    <tr class="border-b border-slate-100">
+      <td class="px-4 py-2 font-mono text-xs">POST</td>
+      <td class="px-4 py-2 font-mono text-xs">/posts</td>
+      <td class="px-4 py-2">Store</td>
+      <td class="px-4 py-2 font-mono text-xs">posts.store</td>
+    </tr>
+    <tr class="border-b border-slate-100">
+      <td class="px-4 py-2 font-mono text-xs">GET</td>
+      <td class="px-4 py-2 font-mono text-xs">/posts/:id</td>
+      <td class="px-4 py-2">Show</td>
+      <td class="px-4 py-2 font-mono text-xs">posts.show</td>
+    </tr>
+    <tr class="border-b border-slate-100">
+      <td class="px-4 py-2 font-mono text-xs">GET</td>
+      <td class="px-4 py-2 font-mono text-xs">/posts/:id/edit</td>
+      <td class="px-4 py-2">Edit</td>
+      <td class="px-4 py-2 font-mono text-xs">posts.edit</td>
+    </tr>
+    <tr class="border-b border-slate-100">
+      <td class="px-4 py-2 font-mono text-xs">PUT | PATCH</td>
+      <td class="px-4 py-2 font-mono text-xs">/posts/:id</td>
+      <td class="px-4 py-2">Update</td>
+      <td class="px-4 py-2 font-mono text-xs">posts.update</td>
+    </tr>
+    <tr>
+      <td class="px-4 py-2 font-mono text-xs">DELETE</td>
+      <td class="px-4 py-2 font-mono text-xs">/posts/:id</td>
+      <td class="px-4 py-2">Destroy</td>
+      <td class="px-4 py-2 font-mono text-xs">posts.destroy</td>
+    </tr>
+  </tbody>
+</table>
+<p class="text-slate-600 mb-4">
+  Every resource route is automatically named using the pattern <code class="bg-slate-100 px-1 rounded">resourceName.action</code>. The <code class="bg-slate-100 px-1 rounded">Update</code> action responds to both PUT and PATCH.
+</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">The ResourceController interface</h3>
+<p class="text-slate-600 mb-4">
+  Your controller must implement the <code class="bg-slate-100 px-1 rounded">ResourceController</code> interface, which defines all seven actions:
+</p>
+<pre><code>type ResourceController interface {
+    Index(c *http.Context) error   // GET    /resource
+    Create(c *http.Context) error  // GET    /resource/create
+    Store(c *http.Context) error   // POST   /resource
+    Show(c *http.Context) error    // GET    /resource/:id
+    Edit(c *http.Context) error    // GET    /resource/:id/edit
+    Update(c *http.Context) error  // PUT|PATCH /resource/:id
+    Destroy(c *http.Context) error // DELETE /resource/:id
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">ApiOnly</h3>
+<p class="text-slate-600 mb-4">
+  For JSON APIs, the <code class="bg-slate-100 px-1 rounded">Create</code> and <code class="bg-slate-100 px-1 rounded">Edit</code> actions (which render forms) are unnecessary. Use <code class="bg-slate-100 px-1 rounded">router.ApiOnly()</code> to skip them.
+</p>
+<pre><code>app.Router.Resource("posts", &amp;PostsController{}, router.ApiOnly())
+// Registers: index, store, show, update, destroy
+// Skips:     create, edit</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Only and Except</h3>
+<p class="text-slate-600 mb-4">
+  Fine-tune which actions are registered with <code class="bg-slate-100 px-1 rounded">router.Only()</code> and <code class="bg-slate-100 px-1 rounded">router.Except()</code>.
+</p>
+<pre><code>// Register only index and show
+app.Router.Resource("posts", ctrl, router.Only("index", "show"))
+
+// Register everything except destroy
+app.Router.Resource("posts", ctrl, router.Except("destroy"))</code></pre>
+<p class="text-slate-600 mb-4">
+  Valid action names: <code class="bg-slate-100 px-1 rounded">index</code>, <code class="bg-slate-100 px-1 rounded">create</code>, <code class="bg-slate-100 px-1 rounded">store</code>, <code class="bg-slate-100 px-1 rounded">show</code>, <code class="bg-slate-100 px-1 rounded">edit</code>, <code class="bg-slate-100 px-1 rounded">update</code>, <code class="bg-slate-100 px-1 rounded">destroy</code>.
+</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Resource inside a group</h3>
+<p class="text-slate-600 mb-4">
+  Resources can be registered on a group. The group prefix is applied to all generated paths, and group middleware wraps every action.
+</p>
+<pre><code>api := app.Router.Group("/api", authMiddleware)
+api.Resource("posts", &amp;PostsController{}, router.ApiOnly())
+
+// Generated routes:
+// GET    /api/posts          → posts.index
+// POST   /api/posts          → posts.store
+// GET    /api/posts/:id      → posts.show
+// PUT    /api/posts/:id      → posts.update
+// PATCH  /api/posts/:id      → posts.update_patch
+// DELETE /api/posts/:id      → posts.destroy</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Full controller example</h3>
+<p class="text-slate-600 mb-4">
+  Here is a complete controller implementing the <code class="bg-slate-100 px-1 rounded">ResourceController</code> interface:
+</p>
+<pre><code>package controllers
+
+import (
+    "fmt"
+    "github.com/CodeSyncr/nimbus/context"
+)
+
+type PostsController struct{}
+
+func (pc *PostsController) Index(c *http.Context) error {
+    return c.JSON(200, map[string]string{"action": "list all posts"})
+}
+
+func (pc *PostsController) Create(c *http.Context) error {
+    return c.View("posts/create", nil)
+}
+
+func (pc *PostsController) Store(c *http.Context) error {
+    title := c.FormValue("title")
+    // ... save to database ...
+    return c.Redirect(302, fmt.Sprintf("/posts/%s", "new-id"))
+}
+
+func (pc *PostsController) Show(c *http.Context) error {
+    id := c.Param("id")
+    return c.JSON(200, map[string]string{"action": "show post", "id": id})
+}
+
+func (pc *PostsController) Edit(c *http.Context) error {
+    id := c.Param("id")
+    return c.View("posts/edit", map[string]any{"id": id})
+}
+
+func (pc *PostsController) Update(c *http.Context) error {
+    id := c.Param("id")
+    title := c.FormValue("title")
+    // ... update in database ...
+    return c.JSON(200, map[string]string{"id": id, "title": title})
+}
+
+func (pc *PostsController) Destroy(c *http.Context) error {
+    id := c.Param("id")
+    // ... delete from database ...
+    return c.JSON(200, map[string]string{"deleted": id})
+}</code></pre>
+<p class="text-slate-600 mb-4">Register with one line:</p>
+<pre><code>app.Router.Resource("posts", &amp;controllers.PostsController{})</code></pre>
+
+<!-- ───────────────── Route matching ───────────────── -->
+<h2 id="route-matching" class="text-xl font-semibold text-slate-900 mt-8 mb-2">How route matching works</h2>
+<p class="text-slate-600 mb-4">
+  Understanding how the router resolves an incoming request to a handler is important for avoiding surprises.
+</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><strong>Registration order matters.</strong> Routes are evaluated in the order they are registered. The first matching route wins.</li>
+  <li><strong>Static segments take priority over dynamic ones.</strong> A route for <code class="bg-slate-100 px-1 rounded">/users/me</code> will match before <code class="bg-slate-100 px-1 rounded">/users/:id</code> when the request path is <code class="bg-slate-100 px-1 rounded">/users/me</code>, provided it was registered first.</li>
+  <li><strong>Trailing slashes are normalized.</strong> The router automatically strips trailing slashes so <code class="bg-slate-100 px-1 rounded">/users/</code> and <code class="bg-slate-100 px-1 rounded">/users</code> resolve to the same route. You do not need to register both variants.</li>
+  <li><strong>Method must match.</strong> A GET request will never match a route registered only for POST, even if the path is identical.</li>
+</ul>
+<pre><code>// Register the static route first so it takes priority
+app.Router.Get("/users/me", currentUserHandler)
+app.Router.Get("/users/:id", showUserHandler)
+
+// GET /users/me   → currentUserHandler (static match)
+// GET /users/42   → showUserHandler    (dynamic match)
+// GET /users/     → showUserHandler    (trailing slash stripped, matches /users with no :id)</code></pre>
+
+<!-- ───────────────── 404 handling ───────────────── -->
+<h2 id="handling-404" class="text-xl font-semibold text-slate-900 mt-8 mb-2">Handling 404</h2>
+<p class="text-slate-600 mb-4">
+  When no registered route matches the incoming request, the underlying Chi router returns a default <strong>404 Not Found</strong> response. If you need custom 404 behavior, you can register a wildcard catch-all route at the bottom of your route definitions.
+</p>
+<pre><code>// Register all your routes first ...
+app.Router.Get("/", homeHandler)
+app.Router.Get("/about", aboutHandler)
+app.Router.Resource("posts", &amp;PostsController{})
+
+// Then a catch-all for unmatched routes
+app.Router.Any("/*", func(c *http.Context) error {
+    return c.String(404, "Page not found")
+})</code></pre>
+<p class="text-slate-600 mb-4">
+  For APIs, you might want to return a structured JSON error:
+</p>
+<pre><code>api := app.Router.Group("/api")
+// ... register API routes ...
+
+api.Any("/*", func(c *http.Context) error {
+    return c.JSON(404, map[string]string{
+        "error":   "not_found",
+        "message": "The requested endpoint does not exist.",
+    })
+})</code></pre>
+<p class="text-slate-600 mb-4">
+  If a handler itself returns a non-nil error, Nimbus responds with a <strong>500 Internal Server Error</strong> containing the error message. For more granular error handling, see the <a href="/docs/exception-handling" class="text-indigo-600 hover:text-indigo-700 underline">Exception Handling</a> guide.
+</p>

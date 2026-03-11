@@ -1,0 +1,64 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Rate Limiting</h1>
+<p class="text-slate-600 mb-4">Rate limiting protects your application from abuse by restricting how many requests a client can make within a time window. Nimbus provides <code class="bg-slate-100 px-1 rounded">middleware.RateLimit()</code> as an in-memory rate limiter you can apply globally or to specific route groups.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Basic usage</h2>
+<p class="text-slate-600 mb-4">The <code class="bg-slate-100 px-1 rounded">RateLimit</code> middleware takes three parameters: the request limit, the time window, and a key function that identifies each client:</p>
+<pre><code>app.Router.Use(middleware.RateLimit(100, time.Minute, func(r *http.Request) string {
+    return r.RemoteAddr
+}))</code></pre>
+<p class="text-slate-600 mb-4">This allows 100 requests per minute per IP address. When the limit is exceeded, the middleware returns a <code class="bg-slate-100 px-1 rounded">429 Too Many Requests</code> JSON response.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Parameters</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">limit int</code> — Maximum number of requests allowed in the window.</li>
+  <li><code class="bg-slate-100 px-1 rounded">window time.Duration</code> — The time period for the limit (e.g. <code class="bg-slate-100 px-1 rounded">time.Minute</code>, <code class="bg-slate-100 px-1 rounded">time.Hour</code>).</li>
+  <li><code class="bg-slate-100 px-1 rounded">keyFn func(*http.Request) string</code> — Extracts a unique key per client. If it returns an empty string, <code class="bg-slate-100 px-1 rounded">RemoteAddr</code> is used as fallback.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Per-IP limiting</h2>
+<p class="text-slate-600 mb-4">The most common approach is to rate limit by client IP address:</p>
+<pre><code>app.Router.Use(middleware.RateLimit(60, time.Minute, func(r *http.Request) string {
+    return r.RemoteAddr
+}))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Custom key functions</h2>
+<p class="text-slate-600 mb-4">You can rate limit by any identifier — for example, by API key or authenticated user ID:</p>
+<pre><code>// Rate limit by API key
+app.Router.Use(middleware.RateLimit(1000, time.Hour, func(r *http.Request) string {
+    return r.Header.Get("X-API-Key")
+}))
+
+// Rate limit by authenticated user
+app.Router.Use(middleware.RateLimit(200, time.Minute, func(r *http.Request) string {
+    user := auth.UserFromContext(r.Context())
+    if user != nil {
+        return user.GetID()
+    }
+    return r.RemoteAddr
+}))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Rate limiting specific routes</h2>
+<p class="text-slate-600 mb-4">Apply stricter limits to sensitive endpoints like login or password reset:</p>
+<pre><code>authGroup := app.Router.Group("/auth")
+authGroup.Use(middleware.RateLimit(5, time.Minute, func(r *http.Request) string {
+    return r.RemoteAddr
+}))
+authGroup.Post("/login", HandleLogin)
+authGroup.Post("/reset-password", HandlePasswordReset)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Response on limit exceeded</h2>
+<p class="text-slate-600 mb-4">When a client exceeds the limit, Nimbus returns a JSON response with HTTP status <code class="bg-slate-100 px-1 rounded">429</code>:</p>
+<pre><code>HTTP/1.1 429 Too Many Requests
+Content-Type: application/json
+
+{"error": "rate limit exceeded"}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">How it works internally</h2>
+<p class="text-slate-600 mb-4">The rate limiter stores a counter and window start time per key in memory. When a request arrives:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li>If the key is new or the window has expired, the counter resets to 1.</li>
+  <li>If the counter is below the limit, it increments and the request proceeds.</li>
+  <li>If the counter has reached the limit, the request is rejected with 429.</li>
+</ul>
+<p class="text-slate-600 mb-4">This is an in-memory implementation suitable for single-server deployments. For distributed systems, consider implementing a custom middleware backed by Redis or a similar shared store.</p>

@@ -1,0 +1,62 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Select Query Builder</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">The select query builder lets you construct <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SELECT</code> queries using a fluent, chainable API. Use it when you need to fetch data from tables without the full model layer, or when building complex queries with joins, aggregations, and subqueries.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Overview</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Nimbus provides two entry points for select queries:</p>
+<ul class="list-disc list-inside text-slate-600 dark:text-slate-400 mb-4 space-y-1">
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.From(db, "table")</code> — Query a table by name; returns plain maps or structs.</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.QueryFor(db, model)</code> — Query via a model; returns model instances with relationships and serialization.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Basic usage</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Fetch all published posts (plain objects)
+var posts []Post
+database.From(database.Get(), "posts").
+    Where("status", "published").
+    OrderBy("created_at desc").
+    Get(&posts)
+
+// Or use the model for type-safe results
+database.QueryFor(database.Get(), &Post{}).
+    Where("status", "published").
+    OrderBy("created_at desc").
+    Get(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Where clauses</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Chain <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Where</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">OrWhere</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereNotNull</code>, and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereNull</code> to filter results.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Simple equality
+q.Where("status", "published")
+
+// Operator: Where("column", "op", value)
+q.Where("id", ">", 5)
+q.Where("created_at", ">=", time.Now().AddDate(0, 0, -7))
+
+// OR conditions
+q.Where("status", "draft").OrWhere("status", "archived")
+
+// Null checks
+q.WhereNotNull("published_at")
+q.WhereNull("deleted_at")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Select, Order, Limit, Offset</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>q.Select("id", "title", "created_at")
+q.OrderBy("created_at desc")
+q.Limit(20)
+q.Offset(40)
+q.Get(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">First vs Get</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">First</code> returns a single record; <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Get</code> returns all matching records.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>var post Post
+q.First(&post)  // ORDER BY id LIMIT 1
+
+var posts []Post
+q.Get(&posts)   // all matches</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Advanced: GORM DB</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">q.DB()</code> to access the underlying GORM instance for joins, subqueries, and aggregations.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>q := database.From(database.Get(), "posts")
+q.DB().Joins("LEFT JOIN users ON users.id = posts.user_id").
+    Select("posts.*, users.name as author_name").
+    Find(&results)</code></pre>

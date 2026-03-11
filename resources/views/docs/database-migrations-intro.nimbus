@@ -1,0 +1,45 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Migrations Introduction</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Migrations provide version control for your database schema. Instead of manually altering tables, you define <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Up</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Down</code> functions that apply and revert changes. Migrations run in order and are tracked in a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">schema_migrations</code> table.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Why migrations?</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Migrations let you:</p>
+<ul class="list-disc list-inside text-slate-600 dark:text-slate-400 mb-4 space-y-1">
+  <li>Evolve the schema over time without losing data</li>
+  <li>Share schema changes across the team via version control</li>
+  <li>Roll back mistakes with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Down</code></li>
+  <li>Deploy schema updates consistently to staging and production</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Creating a migration</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Generate a migration with the CLI:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>nimbus make:migration create_posts</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">This creates a timestamped file in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database/migrations/</code>. The timestamp (e.g. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">20260308120000</code>) ensures migrations run in chronological order.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Migration structure</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Each migration implements <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Migration</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Migration struct {
+    Name string
+    Up   func(*gorm.DB) error
+    Down func(*gorm.DB) error
+}</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Register migrations in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database/migrations/registry.go</code> and pass them to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">NewMigrator</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Running migrations</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>migrator := database.NewMigrator(db, migrations.All())
+if err := migrator.Up(); err != nil {
+    log.Fatalf("migration failed: %v", err)
+}</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus db:migrate</code> from your app root, or invoke <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">go run . migrate</code> if your main.go wires it.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Rollback</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Down()</code> reverses the last applied migration.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>migrator.Down()</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best practices</h2>
+<ul class="list-disc list-inside text-slate-600 dark:text-slate-400 mb-4 space-y-1">
+  <li>Always implement both <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Up</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Down</code></li>
+  <li>Use timestamp prefixes for deterministic ordering</li>
+  <li>One logical change per migration</li>
+  <li>Never edit applied migrations — add a new one instead</li>
+</ul>

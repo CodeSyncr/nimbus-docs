@@ -1,0 +1,120 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Events</h1>
+<p class="text-slate-600 mb-6">Nimbus includes a lightweight pub/sub event dispatcher for decoupling application components. Fire events from controllers, listen in plugins, and react without tight coupling.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Overview</h2>
+<p class="text-slate-600 mb-4">The event system is available on <code class="bg-slate-100 px-1 rounded">app.Events</code> and as package-level helpers in <code class="bg-slate-100 px-1 rounded">events</code>. Listeners are functions that receive a payload and return an error.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Listening for events</h2>
+<pre><code>import "github.com/CodeSyncr/nimbus/events"
+
+// Using the app dispatcher
+app.Events.Listen("user.created", func(payload any) error {
+    user := payload.(*models.User)
+    return sendWelcomeEmail(user)
+})
+
+// Using package-level helpers (global dispatcher)
+events.Listen("order.placed", func(payload any) error {
+    order := payload.(*models.Order)
+    return notifyWarehouse(order)
+})
+
+// Multiple listeners on the same event
+app.Events.Listen("user.created", auditLogger)
+app.Events.Listen("user.created", sendSlackNotification)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Dispatching events</h2>
+<pre><code>// Synchronous — all listeners run in order, returns first error
+err := app.Events.Dispatch("user.created", user)
+
+// Asynchronous — each listener runs in its own goroutine, errors are logged
+app.Events.DispatchAsync("analytics.track", trackData)
+
+// Package-level helpers
+events.Dispatch("order.placed", order)
+events.DispatchAsync("notification.send", msg)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Event listeners in plugins</h2>
+<p class="text-slate-600 mb-2">Plugins can declare listeners via the <code class="bg-slate-100 px-1 rounded">HasEvents</code> capability interface. They are automatically registered during boot.</p>
+<pre><code>func (p *AuditPlugin) Listeners() map[string][]events.Listener {
+    return map[string][]events.Listener{
+        "user.created":  {p.onUserCreated},
+        "user.deleted":  {p.onUserDeleted},
+        "order.placed":  {p.onOrderPlaced},
+    }
+}
+
+func (p *AuditPlugin) onUserCreated(payload any) error {
+    user := payload.(*models.User)
+    return p.log("user.created", user.ID)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Dispatcher API</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Listen(event, fn)</code></td><td class="px-4 py-2">Register a listener</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Dispatch(event, payload)</code></td><td class="px-4 py-2">Fire synchronously, returns first error</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">DispatchAsync(event, payload)</code></td><td class="px-4 py-2">Fire asynchronously in goroutines</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Has(event)</code></td><td class="px-4 py-2">Check if event has listeners</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">ListenerCount(event)</code></td><td class="px-4 py-2">Number of registered listeners</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Clear(events...)</code></td><td class="px-4 py-2">Remove listeners (all or specific events)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Built-in framework events</h2>
+<p class="text-slate-600 mb-2">Nimbus dispatches these events automatically at each lifecycle stage. Use the constants from <code class="bg-slate-100 px-1 rounded">events</code>:</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/events"
+
+app.Events.Listen(events.AppBooted, func(payload any) error {
+    log.Println("App is ready!")
+    return nil
+})
+
+app.Events.Listen(events.AppShutdown, func(payload any) error {
+    sig := payload.(os.Signal)
+    log.Println("Shutting down due to:", sig)
+    return nil
+})</code></pre>
+
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Constant</th><th class="px-4 py-2 text-left font-semibold">Event name</th><th class="px-4 py-2 text-left font-semibold">Payload</th><th class="px-4 py-2 text-left font-semibold">When</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">ProviderRegister</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">provider:register</code></td><td class="px-4 py-2">nil</td><td class="px-4 py-2">All providers registered</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">PluginRegister</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">plugin:register</code></td><td class="px-4 py-2">nil</td><td class="px-4 py-2">All plugins registered + bindings</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">ProviderBoot</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">provider:boot</code></td><td class="px-4 py-2">nil</td><td class="px-4 py-2">All providers booted</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">PluginBoot</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">plugin:boot</code></td><td class="px-4 py-2">nil</td><td class="px-4 py-2">All plugins booted</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">RouteRegistered</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">route:registered</code></td><td class="px-4 py-2">nil</td><td class="px-4 py-2">Plugin routes mounted</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">MiddlewareRegistered</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">middleware:registered</code></td><td class="px-4 py-2">nil</td><td class="px-4 py-2">Plugin middleware merged</td></tr>
+      <tr class="border-t border-slate-200 bg-amber-50"><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">AppBooted</code></td><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">app:booted</code></td><td class="px-4 py-2">nil</td><td class="px-4 py-2">Boot complete, all capabilities applied</td></tr>
+      <tr class="border-t border-slate-200 bg-amber-50"><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">AppStarted</code></td><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">app:started</code></td><td class="px-4 py-2">string (port)</td><td class="px-4 py-2">Server is listening</td></tr>
+      <tr class="border-t border-slate-200 bg-amber-50"><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">AppShutdown</code></td><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">app:shutdown</code></td><td class="px-4 py-2">os.Signal</td><td class="px-4 py-2">Graceful shutdown started</td></tr>
+      <tr class="border-t border-slate-200 bg-blue-50"><td class="px-4 py-2"><code class="bg-blue-100 px-1 rounded text-blue-800">DatabaseQuery</code></td><td class="px-4 py-2"><code class="bg-blue-100 px-1 rounded text-blue-800">db:query</code></td><td class="px-4 py-2"><code class="text-xs">QueryPayload</code></td><td class="px-4 py-2">After any query (SELECT)</td></tr>
+      <tr class="border-t border-slate-200 bg-blue-50"><td class="px-4 py-2"><code class="bg-blue-100 px-1 rounded text-blue-800">DatabaseInsert</code></td><td class="px-4 py-2"><code class="bg-blue-100 px-1 rounded text-blue-800">db:insert</code></td><td class="px-4 py-2"><code class="text-xs">QueryPayload</code></td><td class="px-4 py-2">After INSERT</td></tr>
+      <tr class="border-t border-slate-200 bg-blue-50"><td class="px-4 py-2"><code class="bg-blue-100 px-1 rounded text-blue-800">DatabaseUpdate</code></td><td class="px-4 py-2"><code class="bg-blue-100 px-1 rounded text-blue-800">db:update</code></td><td class="px-4 py-2"><code class="text-xs">QueryPayload</code></td><td class="px-4 py-2">After UPDATE</td></tr>
+      <tr class="border-t border-slate-200 bg-blue-50"><td class="px-4 py-2"><code class="bg-blue-100 px-1 rounded text-blue-800">DatabaseDelete</code></td><td class="px-4 py-2"><code class="bg-blue-100 px-1 rounded text-blue-800">db:delete</code></td><td class="px-4 py-2"><code class="text-xs">QueryPayload</code></td><td class="px-4 py-2">After DELETE</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p class="text-slate-600 mb-6 text-sm">
+  <strong>Note:</strong> Database events dispatch asynchronously. The <code class="bg-slate-100 px-1 rounded">QueryPayload</code> contains <code class="bg-slate-100 px-1 rounded">SQL</code>, <code class="bg-slate-100 px-1 rounded">Vars</code>, <code class="bg-slate-100 px-1 rounded">RowsAffected</code>, <code class="bg-slate-100 px-1 rounded">Duration</code>, and <code class="bg-slate-100 px-1 rounded">Error</code>.
+</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Custom event naming conventions</h2>
+<p class="text-slate-600 mb-2">Use dot-notation for your own events:</p>
+<pre><code>// Auth events
+"user.created"
+"user.updated"
+"user.deleted"
+"user.login"
+
+// Business events
+"order.placed"
+"order.shipped"
+"payment.succeeded"
+"payment.failed"</code></pre>

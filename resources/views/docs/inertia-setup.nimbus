@@ -1,0 +1,50 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Inertia Setup</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Step-by-step guide to add Inertia to an existing Nimbus app or customize the scaffold.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">1. Add dependencies</h2>
+<pre data-file="Terminal"><code>go get github.com/petaki/inertia-go</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">2. Create the inertia folder</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Create <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/</code> at the project root with your framework entry (e.g. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">app.tsx</code> for React) and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">pages/</code> for route components.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">3. Root template</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Create <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">resources/views/inertia_layout.nimbus</code> with conditional loading for dev (HMR) and prod:</p>
+<pre data-file="resources/views/inertia_layout.nimbus"><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+  &lt;link rel="icon" href="data:image/svg+xml,..." /&gt;
+  &lt;title inertia&gt;My App&lt;/title&gt;
+  &#123;&#123; if .viteDev &#125;&#125;
+  &lt;script type="module"&gt;
+    import RefreshRuntime from 'http://localhost:5173/@react-refresh'
+    RefreshRuntime.injectIntoGlobalHook(window)
+    window.$RefreshReg$ = () =&gt; {}
+    window.$RefreshSig$ = () =&gt; (type) =&gt; type
+    window.__vite_plugin_react_preamble_installed__ = true
+  &lt;/script&gt;
+  &lt;script type="module" src="http://localhost:5173/@vite/client"&gt;&lt;/script&gt;
+  &lt;script type="module" src="http://localhost:5173/inertia/app.tsx"&gt;&lt;/script&gt;
+  &#123;&#123; else &#125;&#125;
+  &lt;link rel="stylesheet" href="/build/assets/app.css" /&gt;
+  &lt;script type="module" src="/build/assets/app.js"&gt;&lt;/script&gt;
+  &#123;&#123; end &#125;&#125;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div id="app" data-page="&#123;&#123; marshal .page &#125;&#125;"&gt;&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">viteDev</code> variable is set by the Inertia plugin when <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">VITE_DEV=1</code> (nimbus serve sets this for Inertia apps). The preamble is required for React Fast Refresh when HTML is served by Nimbus.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">4. Vite configuration</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Configure Vite to build from <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/app.tsx</code> (or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.js</code>) and output to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">public/build/assets/app.js</code> (no hash).</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">5. Serve build assets</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Register a handler to serve <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">public/build</code> at <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/build/*</code>. The scaffold includes <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">buildAssetsHandler</code> for this.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">6. Run (single server)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Build and serve. No <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">npm run dev</code> needed—everything runs on port 3333:</p>
+<pre data-file="Terminal"><code>npm run build
+nimbus serve</code></pre>

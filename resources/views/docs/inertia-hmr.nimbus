@@ -1,0 +1,54 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Inertia HMR &amp; Vite</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Full Hot Module Replacement (HMR) with React Fast Refresh when using Inertia + Vite. Edit <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/</code> files and see changes instantly.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">How it works</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">When you run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus serve</code> on an Inertia app:</p>
+<ul class="list-disc list-inside text-slate-600 dark:text-slate-400 mb-4 space-y-1">
+  <li>Nimbus runs <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">npm run build</code> once (if node_modules exists)</li>
+  <li>Vite dev server starts in the background on port 5173</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">VITE_DEV=1</code> is set so the layout loads from Vite</li>
+  <li>Air runs the Go app on port 3333</li>
+  <li>Vite logs are hidden to keep the terminal clean</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">nimbus serve behavior</h2>
+<table class="w-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 mb-4">
+  <thead><tr class="bg-slate-100 dark:bg-slate-800"><th class="text-left p-2">Command</th><th class="text-left p-2">Vite dev server</th><th class="text-left p-2">HMR</th><th class="text-left p-2">Vite logs</th></tr></thead>
+  <tbody>
+    <tr class="border-t border-slate-200 dark:border-slate-700"><td class="p-2"><code>nimbus serve</code></td><td class="p-2">Yes (background)</td><td class="p-2">Yes</td><td class="p-2">Hidden</td></tr>
+    <tr class="border-t border-slate-200 dark:border-slate-700"><td class="p-2"><code>nimbus serve -w</code></td><td class="p-2">Yes (background)</td><td class="p-2">Yes</td><td class="p-2">Hidden</td></tr>
+  </tbody>
+</table>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">React preamble</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Because the HTML is served by Nimbus (port 3333) and not Vite, the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@vitejs/plugin-react</code> can't inject its preamble. We add it manually in the layout when <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">viteDev</code> is true:</p>
+<pre data-file="resources/views/inertia_layout.nimbus"><code>&lt;script type="module"&gt;
+  import RefreshRuntime from 'http://localhost:5173/@react-refresh'
+  RefreshRuntime.injectIntoGlobalHook(window)
+  window.$RefreshReg$ = () =&gt; {}
+  window.$RefreshSig$ = () =&gt; (type) =&gt; type
+  window.__vite_plugin_react_preamble_installed__ = true
+&lt;/script&gt;</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">This must appear <strong>before</strong> the app script. Without it, you'll see: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@vitejs/plugin-react can't detect preamble</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Vite config</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Ensure <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">vite.config.js</code> builds to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">public/build</code> with stable filenames (no hash):</p>
+<pre data-file="vite.config.js"><code>build: {
+  outDir: "public/build",
+  manifest: true,
+  rollupOptions: {
+    input: "inertia/app.tsx",
+    output: {
+      entryFileNames: "assets/[name].js",
+      chunkFileNames: "assets/[name].js",
+      assetFileNames: "assets/[name].[ext]",
+    },
+  },
+},</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Troubleshooting</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4"><strong>HMR not working:</strong> Ensure you run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus serve</code> (not just <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">go run main.go</code>). Check that Vite is on port 5173.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4"><strong>Preamble error:</strong> Verify the preamble script block is in the layout and loads before the app script.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4"><strong>Build fails:</strong> Run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">npm install</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">npm run build</code> before <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus serve</code>.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4"><strong>See Vite logs:</strong> Run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">npm run dev</code> in a separate terminal.</p>

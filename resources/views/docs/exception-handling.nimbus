@@ -1,0 +1,149 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">Exception Handling</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus handlers return an <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">error</code>. When a handler returns a non-nil error, the framework's global error handler converts it into an HTTP response. You can customise this behaviour with custom error types, middleware, and panic recovery.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Returning errors from handlers</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Every handler has the signature <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">func(*http.Context) error</code>. Return <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nil</code> on success or an error to trigger error handling.</p>
+<pre><code>func getUser(c *http.Context) error {
+    id := c.Param("id")
+    user, err := findUser(id)
+    if err != nil {
+        return err // triggers 500 by default
+    }
+    return c.JSON(200, user)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Global error handler (core)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Nimbus ships with a global error handler in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">errors.Handler()</code>. It is wired into the starter app's <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">start/kernel.go</code>:</p>
+<pre><code>// File: start/kernel.go
+app.Router.Use(
+    middleware.Logger(),
+    middleware.Recover(),
+    errors.Handler(),
+    // ...
+)</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Behaviour:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><strong>Validation errors</strong> (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">validation.ValidationErrors</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">validator.ValidationErrors</code>) → <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">422 Unprocessable Entity</code> JSON.</li>
+  <li><strong>HTTPError</strong> → JSON with the given status code.</li>
+  <li><strong>Other errors</strong> → <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">500 Internal Server Error</code> JSON with a generic message.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">HTTPError helper</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">errors.HTTPError</code> to return HTTP errors from handlers:</p>
+<pre><code>// File: app/controllers/users.go
+import "github.com/CodeSyncr/nimbus/errors"
+
+func Show(c *http.Context) error {
+    id := c.Param("id")
+    user, err := findUser(id)
+    if err == sql.ErrNoRows {
+        return errors.HTTPError{
+            Status:  http.StatusNotFound,
+            Message: "User not found",
+        }
+    }
+    if err != nil {
+        return err // 500
+    }
+    return c.JSON(http.StatusOK, user)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Validation errors (422)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Combine <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">validation</code> helpers with the global handler for consistent 422 responses:</p>
+<pre><code>type CreatePostPayload struct {
+    Title string `json:"title" validate:"required,min=3"`
+    Body  string `json:"body" validate:"required"`
+}
+
+func CreatePost(c *http.Context) error {
+    var payload CreatePostPayload
+    if err := validation.ValidateRequestJSON(c.Request.Body, &payload); err != nil {
+        // errors.Handler will detect validator errors and return 422 JSON:
+        // { "Title": ["required"], "Body": ["required"] }
+        return err
+    }
+    // ...
+    return c.JSON(http.StatusCreated, post)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Form requests + error handling</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Form requests wrap validation + authorization in a reusable type. They integrate seamlessly with the global error handler:</p>
+<pre><code>type LoginPayload struct {
+    Email    string `json:"email" validate:"required,email"`
+    Password string `json:"password" validate:"required"`
+}
+
+type LoginRequest struct {
+    validation.BaseFormRequest[LoginPayload]
+}
+
+func (r *LoginRequest) Payload() *LoginPayload {
+    return &LoginPayload{}
+}
+
+func (r *LoginRequest) Authorize(c *http.Context) error {
+    // Allow all for this example.
+    return nil
+}
+
+func Login(c *http.Context) error {
+    req := &LoginRequest{}
+    payload, ve, err := validation.BindAndValidate(c, req)
+    if ve != nil {
+        // Handler will turn this into 422 JSON automatically.
+        return ve
+    }
+    if err != nil {
+        return err
+    }
+    // use payload.Email, payload.Password ...
+    return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Panic recovery</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The built-in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">middleware.Recover()</code> catches panics inside handlers, logs them, and returns a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">500</code> JSON response instead of crashing the server.</p>
+<pre><code>app.Router.Use(middleware.Recover())
+
+func riskyHandler(c *http.Context) error {
+    // If this panics, Recover() catches it and returns 500
+    result := doSomethingDangerous()
+    return c.JSON(200, result)
+}</code></pre>
+<p class="text-slate-600 mb-4">Always register <code class="bg-slate-100 px-1 rounded">Recover()</code> early in the middleware chain — typically as the first or second middleware — so it catches panics from all downstream handlers and middleware.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Logging errors</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use the Nimbus <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">logger</code> package for structured error logging inside your error handler or handlers.</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/logger"
+
+func ErrorHandlerWithLogging() router.Middleware {
+    return func(next router.HandlerFunc) router.HandlerFunc {
+        return func(c *http.Context) error {
+            err := next(c)
+            if err != nil {
+                logger.Error("request failed",
+                    "method", c.Request.Method,
+                    "path", c.Request.URL.Path,
+                    "error", err.Error(),
+                )
+                return c.JSON(500, map[string]string{
+                    "error": "internal server error",
+                })
+            }
+            return nil
+        }
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Recommended middleware order</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Register error-related middleware in this order for correct behaviour:</p>
+<pre><code>app.Router.Use(
+    middleware.Recover(),   // 1. catch panics first
+    middleware.Logger(),    // 2. log all requests
+    ErrorHandler(),        // 3. convert errors to responses
+)</code></pre>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Recover()</code> is outermost so it catches panics from everything inside.</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Logger()</code> logs every request regardless of outcome.</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">errors.Handler()</code> converts returned errors into proper JSON responses.</li>
+</ul>

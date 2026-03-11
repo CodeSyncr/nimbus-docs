@@ -1,0 +1,110 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Request</h1>
+<p class="text-slate-600 mb-4">The HTTP request is available via <code class="bg-slate-100 px-1 rounded">c.Request</code> — a standard <code class="bg-slate-100 px-1 rounded">*http.Request</code>. Nimbus does not wrap it with a custom type, so you have full access to every method and field the Go standard library provides.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Request Headers</h2>
+<p class="text-slate-600 mb-4">Read any HTTP header using <code class="bg-slate-100 px-1 rounded">c.Request.Header.Get()</code>:</p>
+<pre><code>contentType := c.Request.Header.Get("Content-Type")
+auth := c.Request.Header.Get("Authorization")
+accept := c.Request.Header.Get("Accept")
+custom := c.Request.Header.Get("X-Custom-Header")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Query Parameters</h2>
+<p class="text-slate-600 mb-4">Access URL query string values with <code class="bg-slate-100 px-1 rounded">c.Request.URL.Query()</code>:</p>
+<pre><code>// URL: /search?q=nimbus&page=2
+query := c.Request.URL.Query()
+q := query.Get("q")       // "nimbus"
+page := query.Get("page") // "2"
+
+// Check if a param exists
+if query.Has("sort") {
+    sort := query.Get("sort")
+    // use sort
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Route Parameters</h2>
+<p class="text-slate-600 mb-4">Named path segments are extracted by the router and available via <code class="bg-slate-100 px-1 rounded">c.Param()</code>:</p>
+<pre><code>// Route: /users/:id/posts/:postId
+id := c.Param("id")
+postId := c.Param("postId")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Form Data</h2>
+<p class="text-slate-600 mb-4">For <code class="bg-slate-100 px-1 rounded">application/x-www-form-urlencoded</code> or <code class="bg-slate-100 px-1 rounded">multipart/form-data</code> bodies, use <code class="bg-slate-100 px-1 rounded">ParseForm()</code> or <code class="bg-slate-100 px-1 rounded">ParseMultipartForm()</code>:</p>
+<pre><code>c.Request.ParseForm()
+name := c.Request.FormValue("name")
+email := c.Request.FormValue("email")
+
+// Multipart form (file uploads)
+c.Request.ParseMultipartForm(10 &lt;&lt; 20) // 10 MB max
+file, header, err := c.Request.FormFile("avatar")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">JSON Body</h2>
+<p class="text-slate-600 mb-4">Decode a JSON request body into a Go struct using <code class="bg-slate-100 px-1 rounded">json.NewDecoder</code>:</p>
+<pre><code>type CreatePostInput struct {
+    Title string `json:"title"`
+    Body  string `json:"body"`
+}
+
+func createPost(c *http.Context) error {
+    var input CreatePostInput
+    err := json.NewDecoder(c.Request.Body).Decode(&input)
+    if err != nil {
+        return c.JSON(400, map[string]string{"error": "invalid JSON"})
+    }
+    defer c.Request.Body.Close()
+    return c.JSON(201, input)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">URL Path and Method</h2>
+<p class="text-slate-600 mb-4">Get the request path and HTTP method:</p>
+<pre><code>path := c.Request.URL.Path     // "/users/42"
+method := c.Request.Method      // "GET", "POST", etc.
+fullURL := c.Request.URL.String() // "/users/42?tab=profile"</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Cookies</h2>
+<p class="text-slate-600 mb-4">Read cookies from the request:</p>
+<pre><code>cookie, err := c.Request.Cookie("session_id")
+if err == nil {
+    sessionID := cookie.Value
+    // use sessionID
+}
+
+// Set a cookie on the response
+http.SetCookie(c.Response, &http.Cookie{
+    Name:     "session_id",
+    Value:    newSessionID,
+    Path:     "/",
+    HttpOnly: true,
+    MaxAge:   86400,
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Client IP Address</h2>
+<p class="text-slate-600 mb-4">Get the client IP from <code class="bg-slate-100 px-1 rounded">RemoteAddr</code>, or check forwarded headers when behind a proxy:</p>
+<pre><code>ip := c.Request.RemoteAddr
+
+// Behind a reverse proxy, prefer X-Forwarded-For or X-Real-IP
+if forwarded := c.Request.Header.Get("X-Forwarded-For"); forwarded != "" {
+    ip = forwarded
+}
+if realIP := c.Request.Header.Get("X-Real-IP"); realIP != "" {
+    ip = realIP
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Content Type</h2>
+<p class="text-slate-600 mb-4">Check the content type of the incoming request to handle different body formats:</p>
+<pre><code>ct := c.Request.Header.Get("Content-Type")
+// "application/json", "application/x-www-form-urlencoded", "multipart/form-data", etc.</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Full Example</h2>
+<p class="text-slate-600 mb-4">A handler that reads multiple request properties:</p>
+<pre><code>func debugHandler(c *http.Context) error {
+    info := map[string]string{
+        "method":      c.Request.Method,
+        "path":        c.Request.URL.Path,
+        "query":       c.Request.URL.RawQuery,
+        "ip":          c.Request.RemoteAddr,
+        "user_agent":  c.Request.Header.Get("User-Agent"),
+        "content_type": c.Request.Header.Get("Content-Type"),
+    }
+    return c.JSON(200, info)
+}</code></pre>

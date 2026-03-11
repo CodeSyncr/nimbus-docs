@@ -1,0 +1,101 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Controllers</h1>
+<p class="text-slate-600 mb-4">Controllers organize your request handling logic into structs with action methods. Instead of defining inline handler functions for every route, you group related actions into a controller — just like AdonisJS.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">What Is a Controller?</h2>
+<p class="text-slate-600 mb-4">A controller is a Go struct whose methods match the Nimbus handler signature: <code class="bg-slate-100 px-1 rounded">func(*http.Context) error</code>. Each method represents one action (listing resources, showing a single resource, creating, updating, or deleting).</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Creating a Controller</h2>
+<p class="text-slate-600 mb-4">Create a file in <code class="bg-slate-100 px-1 rounded">app/controllers/</code>. Define a struct and attach action methods:</p>
+<pre><code>package controllers
+
+import (
+    "github.com/CodeSyncr/nimbus/http"
+)
+
+type PostsController struct{}
+
+func (pc *PostsController) Index(c *http.Context) error {
+    posts := []map[string]string{
+        {"id": "1", "title": "Hello World"},
+        {"id": "2", "title": "Getting Started with Nimbus"},
+    }
+    return c.JSON(http.StatusOK, posts)
+}
+
+func (pc *PostsController) Show(c *http.Context) error {
+    id := c.Param("id")
+    return c.JSON(http.StatusOK, map[string]string{"id": id})
+}
+
+func (pc *PostsController) Create(c *http.Context) error {
+    return c.JSON(http.StatusCreated, map[string]string{"message": "created"})
+}
+
+func (pc *PostsController) Update(c *http.Context) error {
+    id := c.Param("id")
+    return c.JSON(http.StatusOK, map[string]string{"id": id, "updated": "true"})
+}
+
+func (pc *PostsController) Delete(c *http.Context) error {
+    id := c.Param("id")
+    return c.JSON(http.StatusOK, map[string]string{"id": id, "deleted": "true"})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Registering Controller Routes</h2>
+<p class="text-slate-600 mb-4">In <code class="bg-slate-100 px-1 rounded">main.go</code>, instantiate the controller and bind each action to a route:</p>
+<pre><code>posts := &controllers.PostsController{}
+
+app.Router.Get("/posts", posts.Index)
+app.Router.Get("/posts/:id", posts.Show)
+app.Router.Post("/posts", posts.Create)
+app.Router.Put("/posts/:id", posts.Update)
+app.Router.Delete("/posts/:id", posts.Delete)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Resourceful Routing Pattern</h2>
+<p class="text-slate-600 mb-4">The pattern above follows RESTful conventions. Here is the full mapping for a resource:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">GET /posts</code> — <code class="bg-slate-100 px-1 rounded">Index</code> — list all posts</li>
+  <li><code class="bg-slate-100 px-1 rounded">GET /posts/:id</code> — <code class="bg-slate-100 px-1 rounded">Show</code> — show one post</li>
+  <li><code class="bg-slate-100 px-1 rounded">POST /posts</code> — <code class="bg-slate-100 px-1 rounded">Create</code> — create a new post</li>
+  <li><code class="bg-slate-100 px-1 rounded">PUT /posts/:id</code> — <code class="bg-slate-100 px-1 rounded">Update</code> — replace a post</li>
+  <li><code class="bg-slate-100 px-1 rounded">DELETE /posts/:id</code> — <code class="bg-slate-100 px-1 rounded">Delete</code> — remove a post</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Using Route Groups</h2>
+<p class="text-slate-600 mb-4">Group controller routes under a shared prefix:</p>
+<pre><code>api := app.Router.Group("/api")
+
+posts := &controllers.PostsController{}
+api.Get("/posts", posts.Index)
+api.Get("/posts/:id", posts.Show)
+api.Post("/posts", posts.Create)
+api.Put("/posts/:id", posts.Update)
+api.Delete("/posts/:id", posts.Delete)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Passing Data to Views</h2>
+<p class="text-slate-600 mb-4">Controllers can render <code class="bg-slate-100 px-1 rounded">.nimbus</code> templates by calling <code class="bg-slate-100 px-1 rounded">c.View()</code> with a data map:</p>
+<pre><code>func (pc *PostsController) Index(c *http.Context) error {
+    posts := fetchPostsFromDB()
+    return c.View("posts/index", map[string]any{
+        "title": "All Posts",
+        "posts": posts,
+    })
+}</code></pre>
+<p class="text-slate-600 mb-4">The keys in the map become available as variables in your template. For example, <code class="bg-slate-100 px-1 rounded">title</code> and <code class="bg-slate-100 px-1 rounded">posts</code> can be referenced in the <code class="bg-slate-100 px-1 rounded">posts/index.nimbus</code> view file.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Controller with Dependencies</h2>
+<p class="text-slate-600 mb-4">Add fields to the controller struct for dependencies like a database connection:</p>
+<pre><code>type UsersController struct {
+    DB *gorm.DB
+}
+
+func (uc *UsersController) Index(c *http.Context) error {
+    var users []User
+    uc.DB.Find(&users)
+    return c.JSON(http.StatusOK, users)
+}
+
+// In main.go
+users := &controllers.UsersController{DB: db}
+app.Router.Get("/users", users.Index)</code></pre>

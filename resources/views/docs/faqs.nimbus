@@ -1,0 +1,58 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">FAQs</h1>
+<p class="text-slate-600 mb-4">Answers to the most common questions about building with Nimbus.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">What Go version is required?</h2>
+<p class="text-slate-600 mb-4">Nimbus requires <strong>Go 1.21 or later</strong>. This is the minimum version specified in the framework's <code class="bg-slate-100 px-1 rounded">go.mod</code>. We recommend always using the latest stable Go release for security patches and performance improvements.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Can I use a different ORM instead of GORM?</h2>
+<p class="text-slate-600 mb-4">Yes. While Nimbus ships with GORM integration via the <code class="bg-slate-100 px-1 rounded">database</code> package, the framework does not force you to use it. You can use any Go database library — <code class="bg-slate-100 px-1 rounded">sqlx</code>, <code class="bg-slate-100 px-1 rounded">ent</code>, <code class="bg-slate-100 px-1 rounded">sqlc</code>, or plain <code class="bg-slate-100 px-1 rounded">database/sql</code>. Simply import your preferred library, initialize it in <code class="bg-slate-100 px-1 rounded">main.go</code>, and pass the connection to your controllers however you like (struct field, service provider, or global).</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">How do I add custom middleware?</h2>
+<p class="text-slate-600 mb-4">Middleware in Nimbus has the signature <code class="bg-slate-100 px-1 rounded">func(HandlerFunc) HandlerFunc</code>. Create a function that wraps the next handler, apply it globally with <code class="bg-slate-100 px-1 rounded">app.Router.Use()</code> or to a group with <code class="bg-slate-100 px-1 rounded">group.Use()</code>:</p>
+<pre><code>func TimingMiddleware() router.Middleware {
+    return func(next router.HandlerFunc) router.HandlerFunc {
+        return func(c *http.Context) error {
+            start := time.Now()
+            err := next(c)
+            log.Printf("request took %v", time.Since(start))
+            return err
+        }
+    }
+}
+
+// Register globally
+app.Router.Use(TimingMiddleware())</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Is Nimbus production-ready?</h2>
+<p class="text-slate-600 mb-4">Nimbus is under active development. The core features — routing, middleware, ORM, views, auth, caching, and the CLI — are functional and tested. However, as with any young framework, you should evaluate it against your requirements. The underlying libraries (Chi, GORM) are battle-tested and widely used in production Go applications.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">How does hot reload work?</h2>
+<p class="text-slate-600 mb-4">When you run <code class="bg-slate-100 px-1 rounded">nimbus serve</code>, the CLI watches your project directory for file changes (Go files, <code class="bg-slate-100 px-1 rounded">.nimbus</code> templates, <code class="bg-slate-100 px-1 rounded">.env</code>). When a change is detected, the running process is stopped, the app is recompiled, and the server restarts automatically. This happens in a few hundred milliseconds for most projects.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Can I use React, Vue, or other frontend frameworks?</h2>
+<p class="text-slate-600 mb-4">Absolutely. The <code class="bg-slate-100 px-1 rounded">.nimbus</code> template engine is designed for server-rendered HTML, but nothing prevents you from building a JSON API with Nimbus and consuming it from a React, Vue, Svelte, or any other frontend. Two common approaches:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><strong>API-only mode</strong> — Skip views entirely. Define routes that return JSON via <code class="bg-slate-100 px-1 rounded">c.JSON()</code>. Serve your SPA from a CDN or the <code class="bg-slate-100 px-1 rounded">public/</code> directory.</li>
+  <li><strong>Hybrid</strong> — Use <code class="bg-slate-100 px-1 rounded">.nimbus</code> templates for server-rendered pages and mount a frontend framework on specific pages by including its bundle in the layout.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">What databases are supported?</h2>
+<p class="text-slate-600 mb-4">Through GORM, Nimbus supports SQLite, PostgreSQL, MySQL, and SQL Server out of the box. Set the <code class="bg-slate-100 px-1 rounded">DB_DRIVER</code> and <code class="bg-slate-100 px-1 rounded">DB_DSN</code> in your <code class="bg-slate-100 px-1 rounded">.env</code> file:</p>
+<pre><code># SQLite
+DB_DRIVER=sqlite
+DB_DSN=database.sqlite
+
+# PostgreSQL
+DB_DRIVER=postgres
+DB_DSN=host=localhost user=app password=secret dbname=myapp port=5432 sslmode=disable
+
+# MySQL
+DB_DRIVER=mysql
+DB_DSN=user:password@tcp(127.0.0.1:3306)/myapp?parseTime=true</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">How do I serve static files?</h2>
+<p class="text-slate-600 mb-4">Place files in the <code class="bg-slate-100 px-1 rounded">public/</code> directory. Nimbus can serve them directly, or you can let a reverse proxy like Nginx handle static assets for better performance in production.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Where can I get help?</h2>
+<p class="text-slate-600 mb-4">Open an issue on the <a href="https://github.com/CodeSyncr/nimbus" class="text-indigo-600 hover:text-indigo-700">GitHub repository</a>, check existing discussions, or read through the source code. Contributions and questions are welcome.</p>

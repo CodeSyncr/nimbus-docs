@@ -1,0 +1,121 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Folder Structure</h1>
+<p class="text-slate-600 mb-4">Every Nimbus app follows a consistent directory layout inspired by AdonisJS. When you run <code class="bg-slate-100 px-1 rounded">nimbus new myapp</code>, the CLI scaffolds the structure below.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Top-level Overview</h2>
+<pre><code>myapp/
+  app/
+    controllers/
+    middleware/
+    models/
+    jobs/
+  bin/
+    server.go
+  config/
+    config.go
+    env.go
+    app.go
+    database.go
+  database/
+    migrations/
+    seeders/
+  start/
+    kernel.go
+    routes.go
+  resources/
+    views/
+      layout.nimbus
+      home.nimbus
+    css/
+    js/
+  public/
+  .env
+  .env.example
+  main.go
+  go.mod
+  go.sum</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">app/</h2>
+<p class="text-slate-600 mb-4">Contains your application logic, organized by concern.</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">app/controllers/</h3>
+<p class="text-slate-600 mb-4">Controller structs that handle HTTP requests. Each controller is a Go struct with methods like <code class="bg-slate-100 px-1 rounded">Index</code>, <code class="bg-slate-100 px-1 rounded">Show</code>, <code class="bg-slate-100 px-1 rounded">Store</code>, <code class="bg-slate-100 px-1 rounded">Update</code>, and <code class="bg-slate-100 px-1 rounded">Destroy</code>. Controllers receive a <code class="bg-slate-100 px-1 rounded">*http.Context</code> and return an <code class="bg-slate-100 px-1 rounded">error</code>.</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">app/middleware/</h3>
+<p class="text-slate-600 mb-4">Custom middleware functions for your application. Nimbus ships with built-in middleware (Logger, Recover, CORS, CSRF, RateLimit), but app-specific middleware such as authentication checks or request transformations go here.</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">app/models/</h3>
+<p class="text-slate-600 mb-4">GORM model structs that map to database tables. Each file typically defines one model and its relationships.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">bin/</h2>
+<p class="text-slate-600 mb-4">The application boot file. <code class="bg-slate-100 px-1 rounded">bin/server.go</code> is the HTTP server entrypoint — it loads configuration, creates the Nimbus app, registers middleware (via the kernel), wires up routes, and connects to the database.</p>
+<pre><code>// bin/server.go
+func Boot() *nimbus.App {
+    config.Load()
+    app := nimbus.New()
+    start.RegisterMiddleware(app)
+    start.RegisterRoutes(app)
+    _, _ = database.Connect(config.Database.Driver, config.Database.DSN)
+    return app
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">config/</h2>
+<p class="text-slate-600 mb-4">Application configuration files. Values are loaded from environment variables via <code class="bg-slate-100 px-1 rounded">.env</code> using godotenv.</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">config.go</code> — Loads <code class="bg-slate-100 px-1 rounded">.env</code> and calls each config loader.</li>
+  <li><code class="bg-slate-100 px-1 rounded">env.go</code> — Helper functions: <code class="bg-slate-100 px-1 rounded">env()</code>, <code class="bg-slate-100 px-1 rounded">envInt()</code>, <code class="bg-slate-100 px-1 rounded">envBool()</code>.</li>
+  <li><code class="bg-slate-100 px-1 rounded">app.go</code> — General settings: port, environment, app name.</li>
+  <li><code class="bg-slate-100 px-1 rounded">database.go</code> — Database driver and DSN configuration.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">start/</h2>
+<p class="text-slate-600 mb-4">The <code class="bg-slate-100 px-1 rounded">start/</code> directory holds files that run during application startup, mirroring AdonisJS's <code class="bg-slate-100 px-1 rounded">start/</code> folder.</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">kernel.go</code> — Registers middleware with the server or the router. This is the only place where middleware is configured.</li>
+  <li><code class="bg-slate-100 px-1 rounded">routes.go</code> — Defines all HTTP routes for the application.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">database/</h2>
+<p class="text-slate-600 mb-4">Database-related files for managing schema and seed data.</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">database/migrations/</h3>
+<p class="text-slate-600 mb-4">Migration files that define schema changes. Nimbus uses GORM AutoMigrate or manual migration files to version your database schema.</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">database/seeders/</h3>
+<p class="text-slate-600 mb-4">Seeder files that populate your database with sample or default data for development and testing.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">resources/views/</h2>
+<p class="text-slate-600 mb-4">Template files using the <code class="bg-slate-100 px-1 rounded">.nimbus</code> extension. These are HTML files with template directives for layouts, data binding, and control flow. Views are rendered by calling <code class="bg-slate-100 px-1 rounded">c.View("name", data)</code> from a controller or handler.</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">layout.nimbus</code> — Base layout wrapping all pages.</li>
+  <li><code class="bg-slate-100 px-1 rounded">home.nimbus</code> — Homepage template.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">public/</h2>
+<p class="text-slate-600 mb-4">Static assets served directly by the web server. Place CSS, JavaScript, images, fonts, and other files that should be publicly accessible here.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Root Files</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">main.go</code> — Minimal bootstrap entrypoint. Imports <code class="bg-slate-100 px-1 rounded">bin.Boot()</code> and calls <code class="bg-slate-100 px-1 rounded">app.Run()</code>. You should not need to modify this file.</li>
+  <li><code class="bg-slate-100 px-1 rounded">.env</code> — Environment variables (PORT, APP_ENV, DB_DRIVER, DB_DSN, etc.).</li>
+  <li><code class="bg-slate-100 px-1 rounded">.env.example</code> — Template of available environment variables for new developers.</li>
+  <li><code class="bg-slate-100 px-1 rounded">go.mod</code> / <code class="bg-slate-100 px-1 rounded">go.sum</code> — Go module files managing dependencies.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">AdonisJS Comparison</h2>
+<p class="text-slate-600 mb-4">If you are coming from AdonisJS, here is how the Nimbus structure maps:</p>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">AdonisJS</th><th class="px-4 py-2 text-left font-semibold">Nimbus</th><th class="px-4 py-2 text-left font-semibold">Purpose</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">server.ts</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">main.go</code></td><td class="px-4 py-2">Untouched entry point</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">bin/server.ts</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">bin/server.go</code></td><td class="px-4 py-2">Boot, config, DB</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">start/kernel.ts</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">start/kernel.go</code></td><td class="px-4 py-2">Middleware only</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">start/routes.ts</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">start/routes.go</code></td><td class="px-4 py-2">Route definitions</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">config/*.ts</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">config/*.go</code></td><td class="px-4 py-2">Environment-driven config</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">app/controllers/</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">app/controllers/</code></td><td class="px-4 py-2">HTTP controllers</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">app/middleware/</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">app/middleware/</code></td><td class="px-4 py-2">Custom middleware</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">resources/views/</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">views/</code></td><td class="px-4 py-2">Templates</td></tr>
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,78 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Seeders</h1>
+<p class="text-slate-600 mb-4">Seeders populate your database with initial or test data. Nimbus provides the <code class="bg-slate-100 px-1 rounded">database.Seeder</code> interface and a <code class="bg-slate-100 px-1 rounded">SeedRunner</code> to execute seeders in order.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">The Seeder interface</h2>
+<p class="text-slate-600 mb-4">Any type that implements <code class="bg-slate-100 px-1 rounded">Run(db *gorm.DB) error</code> is a valid seeder:</p>
+<pre><code>type Seeder interface {
+    Run(db *gorm.DB) error
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Creating a seeder</h2>
+<p class="text-slate-600 mb-4">Generate a seeder scaffold with the CLI:</p>
+<pre><code>nimbus make:seeder user_seeder</code></pre>
+<p class="text-slate-600 mb-4">This creates a file in <code class="bg-slate-100 px-1 rounded">database/seeders/</code>. Implement the <code class="bg-slate-100 px-1 rounded">Run</code> method with your seed logic:</p>
+<pre><code>type UserSeeder struct{}
+
+func (s *UserSeeder) Run(db *gorm.DB) error {
+    users := []User{
+        {Name: "Alice", Email: "alice@example.com", Role: "admin"},
+        {Name: "Bob", Email: "bob@example.com", Role: "user"},
+        {Name: "Charlie", Email: "charlie@example.com", Role: "user"},
+    }
+    return db.Create(&users).Error
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Using SeedFunc</h2>
+<p class="text-slate-600 mb-4">For simple seeders you can use <code class="bg-slate-100 px-1 rounded">database.SeedFunc</code> to adapt a plain function without defining a struct:</p>
+<pre><code>tagSeeder := database.SeedFunc(func(db *gorm.DB) error {
+    tags := []Tag{
+        {Name: "go"}, {Name: "web"}, {Name: "nimbus"},
+    }
+    return db.Create(&tags).Error
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Running seeders</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Run all seeders from <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database/seeders/registry.go</code> with:</p>
+<pre data-file="Terminal"><code>nimbus db:seed</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Or use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.NewSeedRunner</code> programmatically:</p>
+<pre><code>runner := database.NewSeedRunner(db, []database.Seeder{
+    &UserSeeder{},
+    &PostSeeder{},
+    tagSeeder,
+})
+
+if err := runner.Run(); err != nil {
+    log.Fatalf("seeding failed: %v", err)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Seeding relationships</h2>
+<p class="text-slate-600 mb-4">When seeding related records, order your seeders so parent records are created first. Use GORM associations or create records with explicit foreign keys:</p>
+<pre><code>type PostSeeder struct{}
+
+func (s *PostSeeder) Run(db *gorm.DB) error {
+    var admin User
+    db.Where("role = ?", "admin").First(&admin)
+
+    posts := []Post{
+        {Title: "Welcome to Nimbus", Body: "Getting started guide", UserID: admin.ID},
+        {Title: "Building APIs", Body: "REST API tutorial", UserID: admin.ID},
+    }
+    return db.Create(&posts).Error
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Using faker data</h2>
+<p class="text-slate-600 mb-4">For realistic test data, use a library like <code class="bg-slate-100 px-1 rounded">github.com/brianvoe/gofakeit</code> inside your seeders:</p>
+<pre><code>func (s *UserSeeder) Run(db *gorm.DB) error {
+    for i := 0; i &lt; 50; i++ {
+        user := User{
+            Name:  gofakeit.Name(),
+            Email: gofakeit.Email(),
+            Role:  "user",
+        }
+        if err := db.Create(&user).Error; err != nil {
+            return err
+        }
+    }
+    return nil
+}</code></pre>

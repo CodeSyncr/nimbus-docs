@@ -1,0 +1,40 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Raw Query Builder</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">When the fluent query builder or model APIs are insufficient, use raw SQL. GORM's <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Raw</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Exec</code> handle parameterized queries to prevent SQL injection.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Overview</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Nimbus exposes GORM's database connection via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Get()</code>. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Raw</code> for SELECT and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Exec</code> for INSERT/UPDATE/DELETE.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Raw SELECT</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db := database.Get()
+
+// Parameterized query (use ? for placeholders)
+var count int64
+db.Raw("SELECT COUNT(*) FROM posts WHERE status = ?", "published").Scan(&count)
+
+// Multiple rows
+var posts []Post
+db.Raw("SELECT * FROM posts WHERE created_at > ?", time.Now().AddDate(0, 0, -7)).Scan(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Raw Exec</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">For INSERT, UPDATE, DELETE use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Exec</code>.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db.Exec("UPDATE posts SET status = ? WHERE id = ?", "published", 1)
+db.Exec("DELETE FROM posts WHERE status = ? AND created_at < ?", "draft", cutoff)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Named arguments</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">GORM supports named parameters with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@name</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">sql.Named</code>.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db.Raw("SELECT * FROM posts WHERE status = @status", sql.Named("status", "published")).Scan(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Raw with subquery</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db.Raw(`
+    SELECT * FROM posts
+    WHERE user_id IN (SELECT id FROM users WHERE role = ?)
+`, "admin").Scan(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Security</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Always use parameterized queries. Never concatenate user input into SQL strings.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// BAD: SQL injection risk
+db.Raw("SELECT * FROM posts WHERE title = '" + userInput + "'")
+
+// GOOD: parameterized
+db.Raw("SELECT * FROM posts WHERE title = ?", userInput)</code></pre>

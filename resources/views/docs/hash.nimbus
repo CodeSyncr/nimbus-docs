@@ -1,0 +1,21 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Hashing</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus provides bcrypt password hashing via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hash.Make</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hash.Check</code> for secure password storage.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Hash a Password</h2>
+<pre data-file="app/models/user.go"><code>import "github.com/CodeSyncr/nimbus/hash"
+
+func (u *User) SetPassword(plain string) error {
+    h, err := hash.Make(plain)
+    if err != nil { return err }
+    u.PasswordHash = h
+    return nil
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Verify a Password</h2>
+<pre data-file="app/controllers/auth_controller.go"><code>if !u.CheckPassword(password) {
+    return ctx.View("auth/login", map[string]any{"error": "Invalid credentials"})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Custom Cost</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hash.MakeWithCost(plain, 12)</code> for a higher bcrypt cost (slower, more secure). Default is 10.</p>

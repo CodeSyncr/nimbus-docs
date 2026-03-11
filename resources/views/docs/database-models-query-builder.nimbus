@@ -1,0 +1,30 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Model Query Builder</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Every model can use the query builder via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">db.Model(&amp;Model{})</code>. Chain Where, Order, Limit, Preload, and other methods to build complex queries that return model instances.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Starting a query</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db := database.Get()
+q := db.Model(&Post{})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Chaining conditions</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>var posts []Post
+db.Model(&Post{}).
+    Where("status", "published").
+    Where("created_at > ?", time.Now().AddDate(0, 0, -7)).
+    Order("created_at desc").
+    Limit(10).
+    Find(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">With eager loading</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db.Model(&Post{}).
+    Preload("User").
+    Preload("Comments").
+    Where("status", "published").
+    Find(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using database.QueryFor</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.QueryFor</code> helper wraps the model query:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>database.QueryFor(database.Get(), &Post{}).
+    Where("status", "published").
+    OrderBy("created_at desc").
+    Get(&posts)</code></pre>

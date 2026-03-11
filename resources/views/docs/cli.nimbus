@@ -1,0 +1,22 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Introduction</h1>
+<p class="text-slate-600 mb-6">Run <code class="bg-slate-100 px-1 rounded">nimbus new</code> from the Nimbus repo to scaffold a full app (with <code class="bg-slate-100 px-1 rounded">bin/server.go</code>, <code class="bg-slate-100 px-1 rounded">start/kernel.go</code>, <code class="bg-slate-100 px-1 rounded">start/routes.go</code>, and <code class="bg-slate-100 px-1 rounded">config/*.go</code>); run <code class="bg-slate-100 px-1 rounded">nimbus serve</code> and <code class="bg-slate-100 px-1 rounded">make:*</code> from your app root.</p>
+
+<div class="overflow-x-auto mb-8">
+  <table class="w-full text-sm border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+    <thead><tr class="bg-slate-100"><th class="text-left p-3 font-semibold text-slate-700">Command</th><th class="text-left p-3 font-semibold text-slate-700">Description</th></tr></thead>
+    <tbody class="bg-white">
+      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus new name</td><td class="p-3 text-slate-600">Create a new app</td></tr>
+      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus serve</td><td class="p-3 text-slate-600">Run app with hot reload (Air)</td></tr>
+      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:model Name</td><td class="p-3 text-slate-600">Scaffold a model in app/models</td></tr>
+      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:migration name</td><td class="p-3 text-slate-600">Scaffold a migration in database/migrations</td></tr>
+      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:command name</td><td class="p-3 text-slate-600">Create a custom command in commands/</td></tr>
+      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:controller Name</td><td class="p-3 text-slate-600">Scaffold a controller in app/controllers</td></tr>
+      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:middleware Name</td><td class="p-3 text-slate-600">Scaffold middleware in app/middleware</td></tr>
+      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:job Name</td><td class="p-3 text-slate-600">Scaffold a job in app/jobs</td></tr>
+      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:seeder Name</td><td class="p-3 text-slate-600">Scaffold a seeder in database/seeders</td></tr>
+      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus migrate</td><td class="p-3 text-slate-600">Run migrations (if wired in app)</td></tr>
+      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus migrate:rollback</td><td class="p-3 text-slate-600">Rollback last migration</td></tr>
+    </tbody>
+  </table>
+</div>

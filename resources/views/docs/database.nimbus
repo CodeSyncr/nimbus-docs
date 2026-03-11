@@ -1,0 +1,188 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Database & ORM</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus provides a full-featured ORM built on GORM, inspired by <a href="https://docs.adonisjs.com/guides/database/lucid" class="text-amber-600 dark:text-amber-400 hover:underline">AdonisJS Lucid</a>. Configure connections, use the query builder, models, migrations, relationships, pagination, transactions, hooks, serialization, and factories.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Documentation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Detailed guides for each topic:</p>
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+  <div>
+    <span class="text-xs font-semibold uppercase text-slate-400">Query builders</span>
+    <ul class="mt-1 space-y-1">
+      <li><a href="/docs/database-query-select" class="text-amber-600 dark:text-amber-400 hover:underline">Select query builder</a></li>
+      <li><a href="/docs/database-query-insert" class="text-amber-600 dark:text-amber-400 hover:underline">Insert query builder</a></li>
+      <li><a href="/docs/database-query-raw" class="text-amber-600 dark:text-amber-400 hover:underline">Raw query builder</a></li>
+    </ul>
+  </div>
+  <div>
+    <span class="text-xs font-semibold uppercase text-slate-400">Migrations</span>
+    <ul class="mt-1 space-y-1">
+      <li><a href="/docs/database-migrations-intro" class="text-amber-600 dark:text-amber-400 hover:underline">Introduction</a></li>
+      <li><a href="/docs/database-migrations-schema" class="text-amber-600 dark:text-amber-400 hover:underline">Schema builder</a></li>
+      <li><a href="/docs/database-migrations-table" class="text-amber-600 dark:text-amber-400 hover:underline">Table builder</a></li>
+    </ul>
+  </div>
+  <div>
+    <span class="text-xs font-semibold uppercase text-slate-400">Models</span>
+    <ul class="mt-1 space-y-1">
+      <li><a href="/docs/database-models-intro" class="text-amber-600 dark:text-amber-400 hover:underline">Introduction</a></li>
+      <li><a href="/docs/database-models-schema-classes" class="text-amber-600 dark:text-amber-400 hover:underline">Schema classes</a></li>
+      <li><a href="/docs/database-models-crud" class="text-amber-600 dark:text-amber-400 hover:underline">CRUD operations</a></li>
+      <li><a href="/docs/database-models-hooks" class="text-amber-600 dark:text-amber-400 hover:underline">Hooks</a></li>
+      <li><a href="/docs/database-models-query-builder" class="text-amber-600 dark:text-amber-400 hover:underline">Query builder</a></li>
+      <li><a href="/docs/database-models-naming-strategy" class="text-amber-600 dark:text-amber-400 hover:underline">Naming strategy</a></li>
+      <li><a href="/docs/database-models-query-scopes" class="text-amber-600 dark:text-amber-400 hover:underline">Query scopes</a></li>
+      <li><a href="/docs/database-models-serializing" class="text-amber-600 dark:text-amber-400 hover:underline">Serializing models</a></li>
+      <li><a href="/docs/database-models-relationships" class="text-amber-600 dark:text-amber-400 hover:underline">Relationships</a></li>
+      <li><a href="/docs/database-models-factories" class="text-amber-600 dark:text-amber-400 hover:underline">Model factories</a></li>
+    </ul>
+  </div>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">DB_DRIVER</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">DB_DSN</code> in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code>. Supported drivers: sqlite, postgres, mysql.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// bin/server.go
+db, err := database.Connect(config.Database.Driver, config.Database.DSN)
+
+// With debug (pretty-print SQL in development)
+db, err := database.ConnectWithConfig(database.ConnectConfig{
+    Driver: config.Database.Driver,
+    DSN:    config.Database.DSN,
+    Debug:  config.App.Env == "development",
+})</code></pre>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Driver</th><th class="px-4 py-2 text-left font-semibold">DSN example</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">sqlite</code></td><td class="px-4 py-2">database.sqlite</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">postgres</code></td><td class="px-4 py-2">host=localhost user=gorm password=gorm dbname=gorm port=5432 sslmode=disable</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mysql</code></td><td class="px-4 py-2">user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&amp;parseTime=True</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Query builder</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.From(db, "posts")</code> for raw table queries or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">db.Model(&amp;Post{})</code> for model queries.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Table query (returns plain objects)
+var posts []map[string]any
+database.From(database.Get(), "posts").
+    Where("status", "published").
+    OrderBy("created_at desc").
+    Limit(10).
+    Get(&posts)
+
+// Model query (returns model instances)
+var posts []Post
+database.Get().Model(&Post{}).
+    Where("status", "published").
+    Order("created_at desc").
+    Find(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Models</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">
+  Embed <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Model</code> for ID, CreatedAt, UpdatedAt, DeletedAt (soft delete),
+  and optionally declare metadata with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Table()</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Fillable()</code>.
+</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Post struct {
+    database.Model
+    Title   string
+    Content string
+    Status  string
+}
+
+// Optional: override table name for Nimbus helpers.
+func (Post) Table() string { return "posts" }
+
+// Optional: control mass-assignable fields.
+func (Post) Fillable() []string {
+    return []string{"Title", "Content", "Status"}
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">CRUD</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Create
+post := Post{Title: "Hello", Content: "World", Status: "draft"}
+database.Get().Create(&post)
+
+// Read
+var p Post
+database.Get().First(&p, id)
+database.Get().Where("status", "published").Find(&posts)
+
+// Update
+database.Get().Model(&p).Updates(map[string]any{"title": "New Title"})
+
+// Delete (soft delete when Model has DeletedAt)
+database.Get().Delete(&p)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Pagination</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Paginate</code> returns a Lucid-style paginator with meta and URLs.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>q := database.Get().Model(&Post{}).Where("status", "published").Order("created_at desc")
+paginator, err := database.Paginate(q, &posts, page, 20)
+paginator.BaseUrl("/posts")
+// paginator.Data, paginator.Total, paginator.CurrentPage, paginator.LastPage
+// paginator.FirstPageURL, paginator.NextPageURL, paginator.PrevPageURL</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Transactions</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Wrap operations in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Transaction</code>. Rolls back on error.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>err := database.Transaction(database.Get(), func(tx *gorm.DB) error {
+    if err := tx.Create(&post).Error; err != nil {
+        return err
+    }
+    return tx.Model(&user).Update("post_count", gorm.Expr("post_count + 1")).Error
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Relationships &amp; eager loading</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">
+  Define relations with Nimbus tags (framework-agnostic) and use
+  <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Preload</code> or
+  <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.AutoPreload</code> to avoid N+1.
+</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Post struct {
+    database.Model
+    UserID uint
+    User   User ` + "`nimbus:\"belongsTo:User,foreignKey:UserID\"`" + `
+}
+
+type User struct {
+    database.Model
+    Posts []Post ` + "`nimbus:\"hasMany:Post,foreignKey:UserID\"`" + `
+}
+
+// Eager load
+database.AutoPreload(database.Get(), &Post{}).Find(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Model hooks</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Register lifecycle hooks with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.RegisterHooks</code>.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>database.RegisterHooks(database.Get(), "users", database.Hooks{
+    BeforeCreate: func(db *gorm.DB) {
+        // e.g. hash password
+    },
+    AfterCreate: func(db *gorm.DB) {
+        // e.g. send welcome email
+    },
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Serialization</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Exclude sensitive fields when returning JSON with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Serialize</code>.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>m, _ := database.Serialize(user, database.SerializeOptions{
+    Omit: []string{"password", "remember_token"},
+})
+return c.JSON(200, m)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Factories</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Generate fake data for tests and seeders.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>PostFactory := database.Define("posts", func(f *database.Faker) map[string]any {
+    return map[string]any{
+        "title":   f.Sentence(),
+        "content": f.Paragraph(),
+        "status":  "draft",
+    }
+})
+PostFactory.Create(db)
+PostFactory.CreateMany(db, 10)
+PostFactory.Merge(map[string]any{"status": "published"}).Create(db)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Migrations</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Migration</code> (Name, Up, Down) and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database/schema</code> for schema changes. See <a href="/docs/migrations" class="text-amber-600 dark:text-amber-400 hover:underline">Migrations</a>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Seeders</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Implement <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Seeder</code> or use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.SeedFunc</code>. See <a href="/docs/seeders" class="text-amber-600 dark:text-amber-400 hover:underline">Seeders</a>.</p>

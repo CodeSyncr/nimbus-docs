@@ -1,0 +1,109 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Body Parser</h1>
+<p class="text-slate-600 mb-6">Nimbus handlers have full access to the underlying <code class="bg-slate-100 px-1 rounded">*http.Request</code> via <code class="bg-slate-100 px-1 rounded">c.Request</code>. You parse request bodies using Go's standard library — there is no magic, just familiar patterns.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Parsing JSON bodies</h2>
+<p class="text-slate-600 mb-2">Use <code class="bg-slate-100 px-1 rounded">encoding/json</code> to decode the request body into a struct or map. The body is available at <code class="bg-slate-100 px-1 rounded">c.Request.Body</code>.</p>
+<pre><code>type CreateUserInput struct {
+    Name  string `json:"name"`
+    Email string `json:"email"`
+}
+
+func createUser(c *http.Context) error {
+    var input CreateUserInput
+    if err := json.NewDecoder(c.Request.Body).Decode(&amp;input); err != nil {
+        return c.JSON(400, map[string]string{"error": "invalid json"})
+    }
+    defer c.Request.Body.Close()
+
+    return c.JSON(201, map[string]string{
+        "name":  input.Name,
+        "email": input.Email,
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Parsing form data</h2>
+<p class="text-slate-600 mb-2">For <code class="bg-slate-100 px-1 rounded">application/x-www-form-urlencoded</code> bodies (standard HTML forms), call <code class="bg-slate-100 px-1 rounded">c.Request.ParseForm()</code> then read values with <code class="bg-slate-100 px-1 rounded">c.Request.FormValue(key)</code>.</p>
+<pre><code>func handleForm(c *http.Context) error {
+    if err := c.Request.ParseForm(); err != nil {
+        return c.JSON(400, map[string]string{"error": "bad form data"})
+    }
+
+    name := c.Request.FormValue("name")
+    email := c.Request.FormValue("email")
+
+    return c.JSON(200, map[string]string{
+        "name":  name,
+        "email": email,
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Parsing multipart form data</h2>
+<p class="text-slate-600 mb-2">For <code class="bg-slate-100 px-1 rounded">multipart/form-data</code> (file uploads and mixed fields), call <code class="bg-slate-100 px-1 rounded">c.Request.ParseMultipartForm(maxMemory)</code>. The <code class="bg-slate-100 px-1 rounded">maxMemory</code> parameter controls how much is buffered in memory (excess goes to temp files).</p>
+<pre><code>func handleMultipart(c *http.Context) error {
+    // 10 MB max in memory
+    if err := c.Request.ParseMultipartForm(10 &lt;&lt; 20); err != nil {
+        return c.JSON(400, map[string]string{"error": "bad multipart data"})
+    }
+
+    title := c.Request.FormValue("title")
+    description := c.Request.FormValue("description")
+
+    return c.JSON(200, map[string]string{
+        "title":       title,
+        "description": description,
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Binding JSON to a struct</h2>
+<p class="text-slate-600 mb-2">A common pattern is to define a request struct with <code class="bg-slate-100 px-1 rounded">json</code> tags and a helper function that decodes and validates in one step.</p>
+<pre><code>func bindJSON(r *http.Request, dest any) error {
+    decoder := json.NewDecoder(r.Body)
+    decoder.DisallowUnknownFields()
+    return decoder.Decode(dest)
+}
+
+type UpdatePostInput struct {
+    Title   string `json:"title"`
+    Content string `json:"content"`
+}
+
+func updatePost(c *http.Context) error {
+    var input UpdatePostInput
+    if err := bindJSON(c.Request, &amp;input); err != nil {
+        return c.JSON(400, map[string]string{"error": err.Error()})
+    }
+    return c.JSON(200, input)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Content-Type detection</h2>
+<p class="text-slate-600 mb-2">Check the <code class="bg-slate-100 px-1 rounded">Content-Type</code> header to decide how to parse the body. This lets a single handler accept both JSON and form data.</p>
+<pre><code>func flexibleHandler(c *http.Context) error {
+    ct := c.Request.Header.Get("Content-Type")
+
+    switch {
+    case strings.HasPrefix(ct, "application/json"):
+        var data map[string]any
+        json.NewDecoder(c.Request.Body).Decode(&amp;data)
+        return c.JSON(200, data)
+
+    case strings.HasPrefix(ct, "application/x-www-form-urlencoded"):
+        c.Request.ParseForm()
+        return c.JSON(200, map[string]string{
+            "name": c.Request.FormValue("name"),
+        })
+
+    default:
+        return c.JSON(415, map[string]string{
+            "error": "unsupported content type",
+        })
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Tips</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li>Always close or drain <code class="bg-slate-100 px-1 rounded">c.Request.Body</code> to avoid resource leaks.</li>
+  <li>Use <code class="bg-slate-100 px-1 rounded">io.LimitReader</code> to cap body size before decoding for safety.</li>
+  <li>Use <code class="bg-slate-100 px-1 rounded">decoder.DisallowUnknownFields()</code> to reject unexpected JSON keys.</li>
+  <li>For validation after parsing, see the <a href="/docs/validation" class="text-indigo-600 hover:text-indigo-700">Validation</a> docs.</li>
+</ul>

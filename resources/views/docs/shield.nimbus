@@ -1,0 +1,296 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Shield</h1>
+<p class="text-slate-600 mb-6">
+  Shield is a security middleware package for Nimbus that protects web applications from common web
+  attacks. It sets secure HTTP headers, provides CSRF protection, and includes a Content Security
+  Policy builder — all in a single, composable package.
+</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2" id="installation">Installation</h2>
+<p class="text-slate-600 mb-4">Shield ships with Nimbus under <code>packages/shield</code>. Import it directly:</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/packages/shield"</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2" id="quick-start">Quick Start</h2>
+<p class="text-slate-600 mb-4">Register Shield in <code>start/kernel.go</code> alongside your other middleware:</p>
+<pre><code>package start
+
+import (
+    "github.com/CodeSyncr/nimbus"
+    "github.com/CodeSyncr/nimbus/middleware"
+    "github.com/CodeSyncr/nimbus/packages/shield"
+)
+
+func RegisterMiddleware(app *nimbus.App) {
+    cfg := shield.DefaultConfig()
+
+    app.Router.Use(
+        middleware.Logger(),
+        middleware.Recover(),
+        shield.Guard(cfg),
+        shield.CSRFGuard(cfg.CSRF),
+    )
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2" id="security-headers">Security Headers</h2>
+<p class="text-slate-600 mb-4">
+  <code>shield.Guard(cfg)</code> sets the following headers on every response. Each can be
+  individually configured or disabled.
+</p>
+
+<div class="overflow-x-auto mb-6">
+  <table class="w-full text-sm border-collapse">
+    <thead>
+      <tr class="border-b border-slate-200">
+        <th class="text-left py-2 pr-4 font-semibold text-slate-700">Header</th>
+        <th class="text-left py-2 pr-4 font-semibold text-slate-700">Default Value</th>
+        <th class="text-left py-2 font-semibold text-slate-700">Purpose</th>
+      </tr>
+    </thead>
+    <tbody class="text-slate-600">
+      <tr class="border-b border-slate-100">
+        <td class="py-2 pr-4"><code>X-Content-Type-Options</code></td>
+        <td class="py-2 pr-4"><code>nosniff</code></td>
+        <td class="py-2">Prevents MIME-type sniffing</td>
+      </tr>
+      <tr class="border-b border-slate-100">
+        <td class="py-2 pr-4"><code>X-XSS-Protection</code></td>
+        <td class="py-2 pr-4"><code>0</code></td>
+        <td class="py-2">Disables legacy XSS auditor (use CSP instead)</td>
+      </tr>
+      <tr class="border-b border-slate-100">
+        <td class="py-2 pr-4"><code>X-Frame-Options</code></td>
+        <td class="py-2 pr-4"><code>SAMEORIGIN</code></td>
+        <td class="py-2">Clickjacking protection</td>
+      </tr>
+      <tr class="border-b border-slate-100">
+        <td class="py-2 pr-4"><code>Referrer-Policy</code></td>
+        <td class="py-2 pr-4"><code>strict-origin-when-cross-origin</code></td>
+        <td class="py-2">Controls referrer information</td>
+      </tr>
+      <tr class="border-b border-slate-100">
+        <td class="py-2 pr-4"><code>X-DNS-Prefetch-Control</code></td>
+        <td class="py-2 pr-4"><code>off</code></td>
+        <td class="py-2">Controls browser DNS prefetching</td>
+      </tr>
+      <tr class="border-b border-slate-100">
+        <td class="py-2 pr-4"><code>X-Download-Options</code></td>
+        <td class="py-2 pr-4"><code>noopen</code></td>
+        <td class="py-2">Prevents old IE from executing downloads</td>
+      </tr>
+      <tr class="border-b border-slate-100">
+        <td class="py-2 pr-4"><code>X-Permitted-Cross-Domain-Policies</code></td>
+        <td class="py-2 pr-4"><code>none</code></td>
+        <td class="py-2">Restricts Flash/PDF cross-domain access</td>
+      </tr>
+      <tr class="border-b border-slate-100">
+        <td class="py-2 pr-4"><code>Cross-Origin-Opener-Policy</code></td>
+        <td class="py-2 pr-4"><code>same-origin</code></td>
+        <td class="py-2">Isolates browsing context</td>
+      </tr>
+      <tr class="border-b border-slate-100">
+        <td class="py-2 pr-4"><code>Cross-Origin-Resource-Policy</code></td>
+        <td class="py-2 pr-4"><code>same-origin</code></td>
+        <td class="py-2">Controls resource loading across origins</td>
+      </tr>
+      <tr class="border-b border-slate-100">
+        <td class="py-2 pr-4"><code>Strict-Transport-Security</code></td>
+        <td class="py-2 pr-4"><em>disabled</em></td>
+        <td class="py-2">Forces HTTPS (enable for production)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2" id="configuration">Configuration</h2>
+<p class="text-slate-600 mb-4">Override any default by modifying the <code>Config</code> struct:</p>
+<pre><code>cfg := shield.DefaultConfig()
+
+// Clickjacking: deny all framing
+cfg.FrameGuard = "DENY"
+
+// Enable HSTS for production
+cfg.HSTS.Enabled = true
+cfg.HSTS.MaxAge = 365 * 24 * time.Hour
+cfg.HSTS.IncludeSubdomains = true
+cfg.HSTS.Preload = true
+
+// Disable CSRF for an API-only app
+cfg.CSRF.Enabled = false
+
+app.Router.Use(shield.Guard(cfg))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2" id="csrf-protection">CSRF Protection</h2>
+<p class="text-slate-600 mb-4">
+  Shield uses a <strong>signed double-submit cookie</strong> pattern. On every request a
+  cryptographically random token is generated, HMAC-signed, and stored in a cookie. Unsafe
+  methods (POST, PUT, PATCH, DELETE) must include the raw token in a header or form field.
+</p>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">How it works</h3>
+<ol class="list-decimal pl-6 mb-4 text-slate-600 space-y-1">
+  <li>Middleware generates a 256-bit random token and sets it as a signed cookie.</li>
+  <li>The raw token is stored in the request context.</li>
+  <li>Templates use <code>{{ .csrfField }}</code> — auto-injected by <code>ctx.View</code> when Shield CSRF is enabled.</li>
+  <li>On form submit, the token is sent as a hidden field (<code>_csrf</code>) or header (<code>X-CSRF-Token</code>).</li>
+  <li>Middleware validates the submitted token against the cookie, using constant-time comparison.</li>
+  <li>Tokens rotate after each successful validation (one-time use).</li>
+</ol>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">Template usage</h3>
+<p class="text-slate-600 mb-2">Include <code>{{ .csrfField }}</code> in every form. It renders a hidden input with the token.</p>
+<pre><code>&lt;form method="POST" action="/posts"&gt;
+    {{ .csrfField }}
+    &lt;input type="text" name="title"&gt;
+    &lt;button type="submit"&gt;Create&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">JavaScript / AJAX usage</h3>
+<p class="text-slate-600 mb-4">
+  If <code>HttpOnly</code> is <code>false</code>, client-side JS can read the cookie and send
+  the token in a custom header:
+</p>
+<pre><code>cfg.CSRF.HttpOnly = false
+
+// In your JavaScript:
+const token = document.cookie
+    .split('; ')
+    .find(c =&gt; c.startsWith('__nimbus_csrf='))
+    ?.split('=')[1]
+    ?.split('.')[0]  // raw token before signature
+
+fetch('/api/posts', {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': token },
+    body: JSON.stringify({ title: 'Hello' })
+})</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">Excepting paths</h3>
+<p class="text-slate-600 mb-4">Skip CSRF validation for API routes or webhooks:</p>
+<pre><code>cfg.CSRF.ExceptPaths = []string{
+    "/api/",
+    "/webhooks/",
+}</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">Custom error handler</h3>
+<pre><code>cfg.CSRF.ErrorHandler = func(c *http.Context) error {
+    return c.JSON(http.StatusForbidden, map[string]string{
+        "error":   "csrf_mismatch",
+        "message": "Your session has expired. Please refresh the page.",
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2" id="content-security-policy">Content Security Policy</h2>
+<p class="text-slate-600 mb-4">
+  Shield includes a fluent CSP builder. Use the presets or build your own policy directive by directive.
+</p>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">Strict preset</h3>
+<pre><code>cfg.CSP = shield.CSPConfig{
+    Enabled: true,
+    Policy:  shield.Strict(),
+}
+// default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; ...</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">Relaxed preset</h3>
+<pre><code>cfg.CSP = shield.CSPConfig{
+    Enabled: true,
+    Policy:  shield.Relaxed(),
+}
+// Allows CDN assets, inline styles — good for development</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">Custom policy</h3>
+<pre><code>cfg.CSP = shield.CSPConfig{
+    Enabled: true,
+    Policy: shield.NewCSP().
+        DefaultSrc("'self'").
+        ScriptSrc("'self'", "https://cdn.jsdelivr.net").
+        StyleSrc("'self'", "'unsafe-inline'", "https://fonts.googleapis.com").
+        FontSrc("'self'", "https://fonts.gstatic.com").
+        ImgSrc("'self'", "data:", "https:").
+        ConnectSrc("'self'", "wss:").
+        ObjectSrc("'none'").
+        FrameAncestors("'none'").
+        BaseURI("'self'").
+        FormAction("'self'"),
+}</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">Nonce-based scripts</h3>
+<pre><code>policy := shield.NewCSP().DefaultSrc("'self'")
+nonce := policy.Nonce("script-src")
+
+// In template: &lt;script nonce="{{ nonce }}"&gt;...&lt;/script&gt;</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">Report-only mode</h3>
+<p class="text-slate-600 mb-4">Test a policy without enforcing it:</p>
+<pre><code>cfg.CSP = shield.CSPConfig{
+    Enabled:    true,
+    ReportOnly: true,
+    Policy:     shield.Strict().ReportURI("/csp-violations"),
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2" id="additional-middleware">Additional Middleware</h2>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">Origin verification</h3>
+<p class="text-slate-600 mb-4">Validate the <code>Origin</code> / <code>Referer</code> header on unsafe requests:</p>
+<pre><code>app.Router.Use(shield.VerifyOrigin("example.com", "www.example.com"))</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">Remove sensitive headers</h3>
+<pre><code>app.Router.Use(shield.RemoveHeader("X-Powered-By", "Server"))</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 mt-6 mb-2">Timing-safe responses</h3>
+<p class="text-slate-600 mb-4">Pad response times to a fixed duration to mitigate timing side-channels on sensitive endpoints:</p>
+<pre><code>app.Router.Post("/login", loginHandler, shield.NoTimingLeak(500*time.Millisecond))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2" id="plugin-mode">Plugin Mode</h2>
+<p class="text-slate-600 mb-4">
+  Instead of registering middleware manually, you can use Shield as a Nimbus plugin in
+  <code>bin/server.go</code>. This exposes named middleware <code>"shield"</code> and
+  <code>"csrf"</code> that you can attach to routes or groups.
+</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/packages/shield"
+
+app.Use(shield.NewPlugin(shield.DefaultConfig()))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2" id="full-example">Full Example</h2>
+<pre><code>package start
+
+import (
+    "time"
+
+    "github.com/CodeSyncr/nimbus"
+    "github.com/CodeSyncr/nimbus/middleware"
+    "github.com/CodeSyncr/nimbus/packages/shield"
+)
+
+func RegisterMiddleware(app *nimbus.App) {
+    cfg := shield.DefaultConfig()
+
+    // Production hardening
+    cfg.HSTS.Enabled = true
+    cfg.HSTS.MaxAge = 365 * 24 * time.Hour
+    cfg.HSTS.Preload = true
+    cfg.CSRF.Secure = true
+
+    // CSP
+    cfg.CSP = shield.CSPConfig{
+        Enabled: true,
+        Policy: shield.NewCSP().
+            DefaultSrc("'self'").
+            ScriptSrc("'self'", "https://cdn.jsdelivr.net").
+            StyleSrc("'self'", "'unsafe-inline'").
+            ImgSrc("'self'", "data:").
+            ObjectSrc("'none'").
+            FrameAncestors("'none'"),
+    }
+
+    // Skip CSRF for API routes
+    cfg.CSRF.ExceptPaths = []string{"/api/"}
+
+    app.Router.Use(
+        middleware.Logger(),
+        middleware.Recover(),
+        shield.Guard(cfg),
+        shield.CSRFGuard(cfg.CSRF),
+        shield.RemoveHeader("X-Powered-By"),
+    )
+}</code></pre>

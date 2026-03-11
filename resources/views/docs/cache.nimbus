@@ -1,0 +1,58 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Cache</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus provides a unified caching API with support for memory, Redis, Memcached, DynamoDB, and Cloudflare KV. Call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">cache.Boot(nil)</code> in your server boot to initialize from <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Documentation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Detailed guides:</p>
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+  <div>
+    <span class="text-xs font-semibold uppercase text-slate-400">Basics</span>
+    <ul class="mt-1 space-y-1">
+      <li><a href="/docs/cache-remember" class="text-amber-600 dark:text-amber-400 hover:underline">Remember &amp; type-safe API</a></li>
+      <li><a href="/docs/cache-backends" class="text-amber-600 dark:text-amber-400 hover:underline">Backends</a></li>
+      <li><a href="/docs/cache-invalidation" class="text-amber-600 dark:text-amber-400 hover:underline">Invalidation &amp; ORM hooks</a></li>
+    </ul>
+  </div>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Remember (getOrSet)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The most common pattern: try cache first, otherwise compute, store, and return.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Boot in bin/server.go (uses CACHE_DRIVER from .env)
+cache.Boot(nil)
+
+user, err := cache.RememberT("user:1", 10*time.Minute, func() (User, error) {
+    var u User
+    err := database.Get().First(&u, 1).Error
+    return u, err
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Get, Set, Has, Missing, Pull</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Get</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Set</code> when you need more control. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Has</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Missing</code> check existence without fetching. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Pull</code> retrieves and deletes in one call (e.g. flash messages).</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>cache.Set("app:settings", map[string]any{"theme": "dark"}, 5*time.Minute)
+settings, ok := cache.Get("app:settings")
+
+cache.SetForever("app:version", "2.0.0")  // never expires
+
+if cache.Has("products:featured") { /* key exists */ }
+token, ok := cache.Pull("verify:token:123")  // get and delete</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Namespaces</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Group related keys under a prefix and clear them together.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>usersCache := cache.Namespace("users")
+usersCache.Set("42", user, 10*time.Minute)  // stores under "users:42"
+usersCache.Clear()  // clears all "users:*"</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">CACHE_DRIVER</code> in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code>. Supported: memory, redis, memcached, dynamodb, cloudflare.</p>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Driver</th><th class="px-4 py-2 text-left font-semibold">Env vars</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">memory</code></td><td class="px-4 py-2">(default, no config)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">redis</code></td><td class="px-4 py-2">REDIS_URL (e.g. redis://localhost:6379)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">memcached</code></td><td class="px-4 py-2">MEMCACHED_SERVERS (e.g. localhost:11211)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">dynamodb</code></td><td class="px-4 py-2">CACHE_DYNAMO_TABLE, AWS_REGION, AWS credentials</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">cloudflare</code></td><td class="px-4 py-2">CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_NAMESPACE_ID, CLOUDFLARE_API_TOKEN</td></tr>
+    </tbody>
+  </table>
+</div>

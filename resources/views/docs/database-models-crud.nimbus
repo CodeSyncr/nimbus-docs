@@ -1,0 +1,43 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">CRUD Operations</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Create, Read, Update, and Delete operations on models use GORM's fluent API. All operations go through <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Get()</code> or a passed <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*gorm.DB</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Create</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>post := Post{Title: "Hello", Content: "World", Status: "draft"}
+result := database.Get().Create(&post)
+// post.ID, post.CreatedAt, post.UpdatedAt are set</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Read</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// By ID
+var post Post
+database.Get().First(&post, 1)
+
+// Find or fail (returns gorm.ErrRecordNotFound)
+database.Get().First(&post, "id = ?", id)
+
+// Multiple
+var posts []Post
+database.Get().Where("status", "published").Find(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Update</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Update single field
+db.Model(&post).Update("title", "New Title")
+
+// Update multiple
+db.Model(&post).Updates(map[string]any{"title": "New", "status": "published"})
+
+// Merge and save (model instance)
+post.Title = "Updated"
+post.Content = "New content"
+db.Save(&post)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Delete</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Soft delete (when Model has DeletedAt)
+db.Delete(&post)
+
+// Hard delete
+db.Unscoped().Delete(&post)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">FirstOrCreate / UpdateOrCreate</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db.Where(Post{Title: "Unique"}).FirstOrCreate(&post)
+db.Where(Post{Email: "a@b.com"}).Assign(attrs).FirstOrCreate(&user)</code></pre>

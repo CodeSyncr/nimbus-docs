@@ -1,0 +1,60 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Migrations</h1>
+<p class="text-slate-600 mb-4">Nimbus provides a structured migration system through <code class="bg-slate-100 px-1 rounded">database.Migrator</code>. Each migration has a <code class="bg-slate-100 px-1 rounded">Name</code>, an <code class="bg-slate-100 px-1 rounded">Up</code> function to apply changes, and a <code class="bg-slate-100 px-1 rounded">Down</code> function to reverse them. Migrations run in alphabetical order by name, so prefix them with a timestamp.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Creating a migration</h2>
+<p class="text-slate-600 mb-4">Generate a migration scaffold with the CLI:</p>
+<pre><code>nimbus make:migration create_posts</code></pre>
+<p class="text-slate-600 mb-4">This creates a file in <code class="bg-slate-100 px-1 rounded">database/migrations/</code> with the migration struct pre-filled. The generated name is timestamped (e.g. <code class="bg-slate-100 px-1 rounded">20260308120000_create_posts</code>) so migrations always run in order.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Migration struct</h2>
+<p class="text-slate-600 mb-4">Each migration is a <code class="bg-slate-100 px-1 rounded">database.Migration</code> with three fields:</p>
+<pre><code>var CreatePosts = database.Migration{
+    Name: "20260308120000_create_posts",
+    Up: func(db *gorm.DB) error {
+        return db.Exec(`CREATE TABLE posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            body TEXT,
+            user_id INTEGER REFERENCES users(id),
+            created_at DATETIME,
+            updated_at DATETIME,
+            deleted_at DATETIME
+        )`).Error
+    },
+    Down: func(db *gorm.DB) error {
+        return db.Exec("DROP TABLE IF EXISTS posts").Error
+    },
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Running migrations</h2>
+<p class="text-slate-600 mb-4">Create a <code class="bg-slate-100 px-1 rounded">Migrator</code> with your database connection and a slice of migrations, then call <code class="bg-slate-100 px-1 rounded">Up()</code>:</p>
+<pre><code>migrator := database.NewMigrator(db, []database.Migration{
+    migrations.CreateUsers,
+    migrations.CreatePosts,
+    migrations.CreateComments,
+})
+
+if err := migrator.Up(); err != nil {
+    log.Fatalf("migration failed: %v", err)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Rolling back</h2>
+<p class="text-slate-600 mb-4">Call <code class="bg-slate-100 px-1 rounded">Down()</code> to reverse the last migration. This executes the <code class="bg-slate-100 px-1 rounded">Down</code> function of the most recently applied migration:</p>
+<pre><code>if err := migrator.Down(); err != nil {
+    log.Fatalf("rollback failed: %v", err)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">AutoMigrate with GORM</h2>
+<p class="text-slate-600 mb-4">For rapid prototyping you can use GORM's <code class="bg-slate-100 px-1 rounded">AutoMigrate</code> directly. This creates or alters tables to match your struct definitions but does not support dropping columns or rollbacks:</p>
+<pre><code>db.AutoMigrate(&User{}, &Post{}, &Comment{})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Best practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li>Always write both <code class="bg-slate-100 px-1 rounded">Up</code> and <code class="bg-slate-100 px-1 rounded">Down</code> functions so rollbacks work correctly.</li>
+  <li>Use timestamp prefixes in migration names to guarantee ordering.</li>
+  <li>Keep migrations small and focused — one table or one change per migration.</li>
+  <li>Never edit a migration that has already been applied in production. Create a new migration instead.</li>
+  <li>Use <code class="bg-slate-100 px-1 rounded">AutoMigrate</code> only in development. Prefer explicit migrations for production deployments.</li>
+  <li>Test migrations against a fresh database and verify rollbacks before deploying.</li>
+</ul>

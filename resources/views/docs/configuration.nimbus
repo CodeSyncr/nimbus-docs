@@ -1,0 +1,112 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Configuration</h1>
+<p class="text-slate-600 mb-6">Nimbus uses environment-driven configuration inspired by AdonisJS. Each subsystem has its own config file that reads from <code class="bg-slate-100 px-1 rounded">.env</code> via godotenv.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">How it works</h2>
+<p class="text-slate-600 mb-2">When the application boots, <code class="bg-slate-100 px-1 rounded">bin/server.go</code> calls <code class="bg-slate-100 px-1 rounded">config.Load()</code> as the very first step. This:</p>
+<ol class="list-decimal pl-6 mb-4 text-slate-600 space-y-1">
+  <li>Reads the <code class="bg-slate-100 px-1 rounded">.env</code> file using <code class="bg-slate-100 px-1 rounded">godotenv.Load()</code>.</li>
+  <li>Calls each config loader (<code class="bg-slate-100 px-1 rounded">loadApp()</code>, <code class="bg-slate-100 px-1 rounded">loadDatabase()</code>, etc.).</li>
+  <li>Populates typed Go structs that you access via <code class="bg-slate-100 px-1 rounded">config.App</code>, <code class="bg-slate-100 px-1 rounded">config.Database</code>, etc.</li>
+</ol>
+<pre data-file="config/config.go"><code>// config/config.go
+package config
+
+import "github.com/joho/godotenv"
+
+func Load() {
+    _ = godotenv.Load()
+    loadApp()
+    loadDatabase()
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Environment variables</h2>
+<p class="text-slate-600 mb-2">Create a <code class="bg-slate-100 px-1 rounded">.env</code> file in your project root:</p>
+<pre data-file=".env"><code>PORT=3333
+APP_ENV=development
+APP_NAME=myapp
+DB_DRIVER=sqlite
+DB_DSN=database.sqlite</code></pre>
+<p class="text-slate-600 mb-4">The <code class="bg-slate-100 px-1 rounded">.env.example</code> file (committed to version control) documents all available variables. Copy it to <code class="bg-slate-100 px-1 rounded">.env</code> and fill in your values. Never commit <code class="bg-slate-100 px-1 rounded">.env</code> itself.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Environment helpers</h2>
+<p class="text-slate-600 mb-2"><code class="bg-slate-100 px-1 rounded">config/env.go</code> provides helper functions to safely read environment variables with fallback values:</p>
+<pre data-file="config/env.go"><code>// config/env.go
+func env(key, fallback string) string      // string with default
+func envInt(key string, fallback int) int   // int with default
+func envBool(key string, fallback bool) bool // bool with default</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Config files</h2>
+<p class="text-slate-600 mb-4">Each subsystem has its own file inside <code class="bg-slate-100 px-1 rounded">config/</code>. Here is the pattern:</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">config/app.go</h3>
+<pre data-file="config/app.go"><code>package config
+
+type AppConfig struct {
+    Name string
+    Env  string
+    Port int
+}
+
+var App AppConfig
+
+func loadApp() {
+    App = AppConfig{
+        Name: env("APP_NAME", "nimbus"),
+        Env:  env("APP_ENV", "development"),
+        Port: envInt("PORT", 3333),
+    }
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">config/database.go</h3>
+<pre data-file="config/database.go"><code>package config
+
+type DatabaseConfig struct {
+    Driver string
+    DSN    string
+}
+
+var Database DatabaseConfig
+
+func loadDatabase() {
+    Database = DatabaseConfig{
+        Driver: env("DB_DRIVER", "sqlite"),
+        DSN:    env("DB_DSN", "database.sqlite"),
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Accessing config</h2>
+<p class="text-slate-600 mb-2">Import the <code class="bg-slate-100 px-1 rounded">config</code> package and access the typed struct fields:</p>
+<pre><code>import "myapp/config"
+
+fmt.Println(config.App.Name)        // "myapp"
+fmt.Println(config.App.Port)        // 3333
+fmt.Println(config.Database.Driver) // "sqlite"</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Adding a new config</h2>
+<p class="text-slate-600 mb-2">To add configuration for a new subsystem (e.g. mail):</p>
+<ol class="list-decimal pl-6 mb-4 text-slate-600 space-y-1">
+  <li>Create <code class="bg-slate-100 px-1 rounded">config/mail.go</code> with a struct, a package-level var, and a <code class="bg-slate-100 px-1 rounded">loadMail()</code> function.</li>
+  <li>Add <code class="bg-slate-100 px-1 rounded">loadMail()</code> to the <code class="bg-slate-100 px-1 rounded">Load()</code> function in <code class="bg-slate-100 px-1 rounded">config/config.go</code>.</li>
+  <li>Add the environment variables to <code class="bg-slate-100 px-1 rounded">.env.example</code>.</li>
+</ol>
+<pre><code>// config/mail.go
+package config
+
+type MailConfig struct {
+    Driver   string
+    SMTPHost string
+    SMTPPort int
+    From     string
+}
+
+var Mail MailConfig
+
+func loadMail() {
+    Mail = MailConfig{
+        Driver:   env("MAIL_DRIVER", "smtp"),
+        SMTPHost: env("SMTP_HOST", "localhost"),
+        SMTPPort: envInt("SMTP_PORT", 587),
+        From:     env("MAIL_FROM", "noreply@example.com"),
+    }
+}</code></pre>

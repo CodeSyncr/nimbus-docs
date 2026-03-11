@@ -1,0 +1,21 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">WebSockets</h1>
+<p class="text-slate-600 mb-6">Hub: <code class="bg-slate-100 px-1 rounded">websocket.NewHub()</code>. Run() in goroutine. Upgrade(w, r) upgrades HTTP and registers client. Broadcast(msg []byte) sends to all. Conn wraps the connection (ReadMessage, WriteMessage, Close).</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Usage</h2>
+<pre><code>hub := websocket.NewHub()
+go hub.Run()
+
+app.Router.Get("/ws", func(c *http.Context) error {
+    conn, err := hub.Upgrade(c.Response, c.Request)
+    if err != nil { return err }
+    defer conn.Close()
+    for {
+        _, msg, err := conn.ReadMessage()
+        if err != nil { break }
+        hub.Broadcast(msg)
+    }
+    return nil
+})</code></pre>
+
+<p class="text-slate-600 text-sm">Broadcast sends to all connected clients. Conn embeds gorilla/websocket.Conn.</p>

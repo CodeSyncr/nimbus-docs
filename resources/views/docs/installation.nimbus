@@ -1,0 +1,77 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Installation</h1>
+<p class="text-slate-600 mb-4">Get up and running with Nimbus in a few minutes. This guide covers the CLI install, project creation, and manual setup.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Prerequisites</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><strong>Go 1.21 or later</strong> — download from <a href="https://go.dev/dl/" class="text-indigo-600 hover:text-indigo-700">go.dev/dl</a>.</li>
+  <li><strong>Git</strong> — for version control and fetching dependencies.</li>
+  <li><code class="bg-slate-100 px-1 rounded">$HOME/go/bin</code> in your <code class="bg-slate-100 px-1 rounded">PATH</code> so installed Go binaries are available globally.</li>
+</ul>
+<p class="text-slate-600 mb-4">Verify your Go installation:</p>
+<pre><code>go version
+# go version go1.21.0 (or later)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Install the Nimbus CLI</h2>
+<p class="text-slate-600 mb-4">The CLI provides commands for creating apps, running the dev server, and generating code.</p>
+<pre><code>go install github.com/CodeSyncr/nimbus/cmd/nimbus@latest</code></pre>
+<p class="text-slate-600 mb-4">If you are working from a local clone of the Nimbus repository, you can install directly:</p>
+<pre><code>cd /path/to/nimbus
+go install ./cmd/nimbus</code></pre>
+<p class="text-slate-600 mb-4">Make sure <code class="bg-slate-100 px-1 rounded">$HOME/go/bin</code> is in your PATH. For zsh, add to <code class="bg-slate-100 px-1 rounded">~/.zshrc</code>:</p>
+<pre><code>export PATH="$HOME/go/bin:$PATH"</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Create a New App</h2>
+<p class="text-slate-600 mb-4">Scaffold a fresh Nimbus project with the <code class="bg-slate-100 px-1 rounded">new</code> command:</p>
+<pre><code>nimbus new myapp
+cd myapp</code></pre>
+<p class="text-slate-600 mb-4">This creates a ready-to-run project with the AdonisJS-style folder structure:</p>
+<pre><code>myapp/
+  bin/server.go         # Boot sequence (config, middleware, routes, DB)
+  start/kernel.go       # Middleware registration
+  start/routes.go       # Route definitions
+  config/               # Environment-driven configuration
+  app/controllers/      # HTTP controllers
+  views/                # .nimbus templates
+  main.go               # Minimal entrypoint (do not modify)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Install Dependencies</h2>
+<pre><code>go mod tidy</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Run the Dev Server</h2>
+<p class="text-slate-600 mb-4">Start the development server with hot reload:</p>
+<pre><code>nimbus serve</code></pre>
+<p class="text-slate-600 mb-4">The server starts at <code class="bg-slate-100 px-1 rounded">http://localhost:3333</code> (configurable via <code class="bg-slate-100 px-1 rounded">.env</code>). File changes are detected automatically and the server restarts.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Manual Setup (without CLI)</h2>
+<p class="text-slate-600 mb-4">You can add Nimbus to any existing Go project manually:</p>
+<pre><code>go get github.com/CodeSyncr/nimbus@latest</code></pre>
+<p class="text-slate-600 mb-4">For a quick start without the full folder structure, a single-file app works:</p>
+<pre><code>package main
+
+import (
+    "github.com/CodeSyncr/nimbus"
+    "github.com/CodeSyncr/nimbus/http"
+    "github.com/CodeSyncr/nimbus/middleware"
+)
+
+func main() {
+    app := nimbus.New()
+    app.Router.Use(middleware.Logger(), middleware.Recover())
+
+    app.Router.Get("/", func(c *http.Context) error {
+        return c.JSON(http.StatusOK, map[string]string{"hello": "nimbus"})
+    })
+
+    app.Run()
+}</code></pre>
+<p class="text-slate-600 mb-4">However, for production apps we recommend using <code class="bg-slate-100 px-1 rounded">nimbus new</code> which generates the full AdonisJS-style structure with <code class="bg-slate-100 px-1 rounded">bin/server.go</code>, <code class="bg-slate-100 px-1 rounded">start/kernel.go</code>, and <code class="bg-slate-100 px-1 rounded">start/routes.go</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Environment</h2>
+<p class="text-slate-600 mb-4">Create a <code class="bg-slate-100 px-1 rounded">.env</code> file in your project root (the CLI creates one for you):</p>
+<pre><code>PORT=3333
+APP_ENV=development
+APP_NAME=myapp
+DB_DRIVER=sqlite
+DB_DSN=database.sqlite</code></pre>
+<p class="text-slate-600 mb-4">Run with <code class="bg-slate-100 px-1 rounded">nimbus serve</code> for hot reload, or <code class="bg-slate-100 px-1 rounded">go run main.go</code> to run directly.</p>

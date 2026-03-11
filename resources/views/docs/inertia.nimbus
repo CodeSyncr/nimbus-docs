@@ -1,0 +1,74 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Inertia.js</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Inertia lets you build single-page apps using <strong>Vue</strong>, <strong>React</strong>, or <strong>Svelte</strong> without building an API. Your Go backend renders pages and passes props; the frontend handles routing and UI. Use Inertia when you want a modern SPA with server-driven routing. Use Unpoly for server-rendered HTML with progressive enhancement.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Installation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The plugin uses <a href="https://github.com/petaki/inertia-go" class="text-amber-600 dark:text-amber-400 hover:underline">petaki/inertia-go</a> as the server adapter:</p>
+<pre data-file="Terminal"><code>go get github.com/petaki/inertia-go</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Create an Inertia app</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">--kit</code> flag when creating a new app:</p>
+<pre data-file="Terminal"><code>nimbus create my-app --kit=react
+nimbus create my-app --kit=vue
+nimbus create my-app --kit=svelte</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">This scaffolds the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/</code> folder at the project root with Vite, the root template, and example pages.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Register the plugin</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">In <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code>, register the Inertia plugin before routes:</p>
+<pre data-file="bin/server.go"><code>import "github.com/CodeSyncr/nimbus/plugins/inertia"
+
+app.Use(inertia.New(inertia.Config{
+    URL:          "http://localhost:3333",
+    RootTemplate: "resources/views/inertia_layout.nimbus",
+    Version:      "1",
+}))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Root template</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The root template (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">resources/views/inertia_layout.nimbus</code>) must include a div with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">data-page="{{ marshal .page }}"</code> and a script tag loading your frontend entry (e.g. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/app.tsx</code>).</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Rendering pages</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia.Render</code> in handlers to return Inertia pages:</p>
+<pre data-file="bin/server.go"><code>import "github.com/CodeSyncr/nimbus/plugins/inertia"
+
+func homeHandler(c *http.Context) error {
+    return inertia.Render(c, "home/index", map[string]any{
+        "title":   "Welcome",
+        "appName": "Nimbus",
+    })
+}</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The component name (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">home/index</code>) maps to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/pages/home/index.tsx</code> (or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.vue</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.svelte</code>).</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Running the app (single server)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Like Laravel Inertia, everything runs on one server. No need for <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">npm run dev</code>. Build the frontend and start Nimbus:</p>
+<pre data-file="Terminal"><code>npm install
+nimbus serve</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The root template loads <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/build/assets/app.js</code> from the Nimbus server. Vite outputs to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">public/build/</code>, which Nimbus serves at <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/build/*</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">HMR (Hot Module Replacement)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">When you run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus serve</code>, the Vite dev server starts automatically in the background. Edit files in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/</code> and see changes instantly with React Fast Refresh—no manual reload.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The layout conditionally loads from the Vite dev server (localhost:5173) in development and from built assets in production. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">VITE_DEV=1</code> is set automatically for Inertia apps. Vite logs are hidden to keep the terminal clean.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Root template (viteDev)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The layout uses <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">&#123;&#123; if .viteDev &#125;&#125;</code> to switch between dev (Vite) and prod (built assets). In dev, it loads the React preamble (required when HTML is from Nimbus), <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@vite/client</code>, and the app entry. In prod, it loads <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/build/assets/app.css</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/build/assets/app.js</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Project structure</h2>
+<pre data-file="Project structure"><code>project/
+├── inertia/              # Frontend (React/Vue/Svelte)
+│   ├── app.tsx           # Entry point
+│   ├── layouts/
+│   └── pages/
+├── resources/
+│   └── views/
+│       └── inertia_layout.nimbus
+└── ...</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
+<table class="w-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 mb-4">
+  <thead><tr class="bg-slate-100 dark:bg-slate-800"><th class="text-left p-2">Option</th><th class="text-left p-2">Description</th></tr></thead>
+  <tbody>
+    <tr class="border-t border-slate-200 dark:border-slate-700"><td class="p-2">URL</td><td class="p-2">Application URL for redirects</td></tr>
+    <tr class="border-t border-slate-200 dark:border-slate-700"><td class="p-2">RootTemplate</td><td class="p-2">Path to root HTML template</td></tr>
+    <tr class="border-t border-slate-200 dark:border-slate-700"><td class="p-2">Version</td><td class="p-2">Asset version for cache busting</td></tr>
+    <tr class="border-t border-slate-200 dark:border-slate-700"><td class="p-2">SSRURL</td><td class="p-2">Node SSR server URL (optional)</td></tr>
+  </tbody>
+</table>

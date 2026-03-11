@@ -1,0 +1,90 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Nimbus Template (.nimbus)</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus includes its own template engine with an Edge/Blade-inspired syntax. Template files use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.nimbus</code> extension and live in the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/</code> directory. Under the hood, they are compiled to Go's <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">html/template</code> — giving you the same security guarantees with a friendlier syntax.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Template file location</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">By default, the engine looks for templates in the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/</code> folder relative to your project root. Subdirectories are supported — use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">c.View("docs/index", data)</code> to render <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/docs/index.nimbus</code>. You can change the root with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">view.SetRoot("custom/path")</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Variable interpolation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Output a variable with double curly braces (HTML-escaped) or triple curly braces (unescaped, for rich content).</p>
+<pre><code>&lt;h1&gt;Welcome, {{ name }}&lt;/h1&gt;
+&lt;p&gt;Page title: {{ title }}&lt;/p&gt;
+&lt;div&gt;{{{ post.content }}}&lt;/div&gt;</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{ variable }}</code> escapes HTML; <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{{ variable }}}</code> outputs raw HTML (use only for trusted content).</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Comments</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{-- comment --}}</code> for template comments. They are stripped from the output.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Conditionals</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@if</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@elseif</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@else</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@endif</code> (or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@end</code>).</p>
+<pre><code>@if(.isLoggedIn)
+  &lt;p&gt;Hello, {{ username }}&lt;/p&gt;
+@elseif(.isGuest)
+  &lt;p&gt;Guest view&lt;/p&gt;
+@else
+  &lt;p&gt;Please log in.&lt;/p&gt;
+@endif</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Loops</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@each(items)</code> or Edge-style <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@each(post in posts)</code>. Inside the loop, use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{ . }}</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{ $post }}</code> for the current item.</p>
+<pre><code>&lt;ul&gt;
+  @each(items)
+    &lt;li&gt;{{ . }}&lt;/li&gt;
+  @endeach
+&lt;/ul&gt;
+
+@each(post in posts)
+  &lt;h2&gt;{{ $post.Title }}&lt;/h2&gt;
+@endeach</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Components</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Create reusable fragments in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/components/</code>. Any <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.nimbus</code> file becomes a tag. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{{{ .slots.main }}}}</code> to render the main slot (Edge-style).</p>
+<pre><code>&lt;!-- views/components/card.nimbus --&gt;
+&lt;div class="card"&gt;
+  {{{ .slots.main }}}
+&lt;/div&gt;
+
+&lt;!-- In a template --&gt;
+@card()
+  &lt;h2&gt;Card title&lt;/h2&gt;
+  &lt;p&gt;Card content&lt;/p&gt;
+@end</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Layouts</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Layouts let you define a shared HTML shell (head, nav, footer) that wraps individual page content. Place <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@layout('name')</code> on the very first line of the child template. The layout receives the page content through the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">embed</code> variable.</p>
+<pre><code>&lt;!-- views/layout-app.nimbus --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;&lt;title&gt;{{ title }} - My App&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+  &lt;nav&gt;...&lt;/nav&gt;
+  &lt;main&gt;{{ embed }}&lt;/main&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+
+&lt;!-- views/home.nimbus --&gt;
+@layout('layout-app')
+&lt;h1&gt;Welcome Home&lt;/h1&gt;</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">All data passed to the child is available in the layout. Layouts can nest within other layouts. Omit the directive to render without a layout.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Debugging</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@dump(variable)</code> to pretty-print data, or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@dump(state)</code> for the entire template state.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Rendering from handlers</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">c.View(name, data)</code> to render a template. The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">name</code> is the file path relative to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/</code> without the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.nimbus</code> extension.</p>
+<pre><code>return c.View("home", map[string]any{
+    "title": "Home",
+    "name":  "Alice",
+    "items": []string{"A", "B"},
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Syntax summary</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{ var }}</code> — output (escaped); <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{{ var }}}</code> — unescaped.</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{-- comment --}}</code> — template comment.</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@if</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@elseif</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@else</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@endif</code> — conditionals.</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@each(slice)</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@each(item in slice)</code> … <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@endeach</code> — loops.</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@layout('name')</code> — inherit layout (first line).</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@dump(var)</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@dump(state)</code> — debug.</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@componentName()</code> … <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@end</code> — component from <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/components/</code>.</li>
+</ul>

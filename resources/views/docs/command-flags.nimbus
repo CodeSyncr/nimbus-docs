@@ -1,0 +1,27 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Command Flags</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Flags accept optional or named parameters. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">BoolFlag</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">StringFlag</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">IntFlag</code>. Read them with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Bool(name)</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.String(name)</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Int(name)</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Defining flags</h2>
+<pre data-file="commands/greet.go"><code>return command.New("greet", "Greet a user").
+	BoolFlag("loud", "l", false, "Use exclamation marks").
+	StringFlag("greeting", "g", "Hello", "Greeting message").
+	IntFlag("repeat", "r", 1, "Repeat count").
+	RunE(func(ctx *command.Ctx) error {
+		loud := ctx.Bool("loud")
+		greeting := ctx.String("greeting")
+		repeat := ctx.Int("repeat")
+		// ...
+		return nil
+	})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Flag types</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">BoolFlag(name, shorthand, default, usage)</code></li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">StringFlag(name, shorthand, default, usage)</code></li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">IntFlag(name, shorthand, default, usage)</code></li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Usage</h2>
+<pre data-file="Terminal"><code>go run . greet Alice --loud
+go run . greet Alice -g "Hi" -r 3</code></pre>

@@ -1,0 +1,84 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Authorization</h1>
+<p class="text-slate-600 mb-4">Authorization in Nimbus determines what an authenticated user is allowed to do. While authentication verifies identity, authorization checks permissions. Nimbus provides the <code class="bg-slate-100 px-1 rounded">auth.Policy</code> interface for fine-grained access control.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">The Policy interface</h2>
+<p class="text-slate-600 mb-4">A policy checks whether a user can perform an action on a resource:</p>
+<pre><code>type Policy interface {
+    Allow(ctx context.Context, user User, action string, resource any) bool
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Defining a policy</h2>
+<p class="text-slate-600 mb-4">Create a struct that implements <code class="bg-slate-100 px-1 rounded">auth.Policy</code>. Check the action and compare the user to the resource:</p>
+<pre><code>type PostPolicy struct{}
+
+func (p *PostPolicy) Allow(ctx context.Context, user auth.User, action string, resource any) bool {
+    post := resource.(*Post)
+    switch action {
+    case "view":
+        return true
+    case "update", "delete":
+        return post.UserID == user.GetID()
+    default:
+        return false
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Using PolicyFunc</h2>
+<p class="text-slate-600 mb-4">For simple checks, use <code class="bg-slate-100 px-1 rounded">auth.PolicyFunc</code> to create a policy from a plain function:</p>
+<pre><code>adminOnly := auth.PolicyFunc(func(ctx context.Context, user auth.User, action string, resource any) bool {
+    appUser := user.(*AppUser)
+    return appUser.Role == "admin"
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Registering policies</h2>
+<p class="text-slate-600 mb-4">Keep a map of policies indexed by resource type so handlers can look them up by name:</p>
+<pre><code>var policies = map[string]auth.Policy{
+    "post":    &PostPolicy{},
+    "comment": &CommentPolicy{},
+    "admin":   adminOnly,
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Checking permissions in handlers</h2>
+<p class="text-slate-600 mb-4">Retrieve the user from context, fetch the resource, then call <code class="bg-slate-100 px-1 rounded">Allow</code> on the appropriate policy:</p>
+<pre><code>func UpdatePost(c *http.Context) error {
+    user := auth.UserFromContext(c.Request.Context())
+
+    var post Post
+    db.First(&post, c.Param("id"))
+
+    policy := policies["post"]
+    if !policy.Allow(c.Request.Context(), user, "update", &post) {
+        return c.JSON(403, map[string]string{"error": "forbidden"})
+    }
+
+    // proceed with update ...
+    return c.JSON(200, map[string]string{"status": "updated"})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Role-based access control</h2>
+<p class="text-slate-600 mb-4">You can build role-based authorization on top of policies. Add a <code class="bg-slate-100 px-1 rounded">Role</code> field to your user model and check it in the policy:</p>
+<pre><code>type RolePolicy struct {
+    AllowedRoles []string
+}
+
+func (p *RolePolicy) Allow(ctx context.Context, user auth.User, action string, resource any) bool {
+    appUser := user.(*AppUser)
+    for _, role := range p.AllowedRoles {
+        if appUser.Role == role {
+            return true
+        }
+    }
+    return false
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Gate pattern</h2>
+<p class="text-slate-600 mb-4">For quick inline checks without a full policy struct, use <code class="bg-slate-100 px-1 rounded">PolicyFunc</code> as a gate:</p>
+<pre><code>canPublish := auth.PolicyFunc(func(ctx context.Context, user auth.User, action string, resource any) bool {
+    appUser := user.(*AppUser)
+    return appUser.Role == "admin" || appUser.Role == "editor"
+})
+
+if !canPublish.Allow(ctx, user, "publish", nil) {
+    return c.JSON(403, map[string]string{"error": "forbidden"})
+}</code></pre>

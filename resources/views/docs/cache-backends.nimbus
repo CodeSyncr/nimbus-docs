@@ -1,0 +1,30 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Cache Backends</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus supports five cache drivers. Choose based on your deployment: single process, multi-instance, or edge.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Memory</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">In-process, single instance. Default. No config.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>CACHE_DRIVER=memory</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Redis</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Distributed, shared across instances. Supports prefix invalidation.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>CACHE_DRIVER=redis
+REDIS_URL=redis://localhost:6379</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Memcached</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Distributed, multi-server. Key limit 250 bytes.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>CACHE_DRIVER=memcached
+MEMCACHED_SERVERS=localhost:11211,10.0.0.2:11211</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">DynamoDB</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Serverless, AWS. Create table with partition key <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">pk</code> (string). Optional <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ttl</code> for auto-expiry.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>CACHE_DRIVER=dynamodb
+CACHE_DYNAMO_TABLE=nimbus-cache
+AWS_REGION=us-east-1</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Cloudflare KV</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Edge-distributed, eventually consistent. Min TTL 60s.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>CACHE_DRIVER=cloudflare
+CLOUDFLARE_ACCOUNT_ID=your_account_id
+CLOUDFLARE_NAMESPACE_ID=your_namespace_id
+CLOUDFLARE_API_TOKEN=your_api_token</code></pre>

@@ -1,0 +1,47 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Schema Builder</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">The schema builder provides a programmatic way to create and alter tables. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database/schema</code> instead of raw SQL for readable, database-agnostic migrations.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Overview</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">schema</code> package exposes:</p>
+<ul class="list-disc list-inside text-slate-600 dark:text-slate-400 mb-4 space-y-1">
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">schema.New(db)</code> — Create a schema instance</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">CreateTable(name, fn)</code> — Define a new table with a callback</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">DropTable(name)</code> — Remove a table</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">AlterTable(name, fn)</code> — Add columns to an existing table</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">CreateTable</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/database/schema"
+
+err := schema.New(db).CreateTable("posts", func(t *schema.Table) {
+    t.Increments("id")
+    t.String("title", 255)
+    t.Text("content")
+    t.String("status", 50).Default("'draft'")
+    t.Timestamps()
+    t.SoftDeletes()
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">DropTable</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>schema.New(db).DropTable("posts")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">AlterTable</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Add columns to an existing table:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>schema.New(db).AlterTable("posts", func(t *schema.Table) {
+    t.String("slug", 255)
+    t.Integer("view_count")
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">In a migration</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>Up: func(db *gorm.DB) error {
+    return schema.New(db).CreateTable("posts", func(t *schema.Table) {
+        t.Increments("id")
+        t.String("title", 255)
+        t.Text("content")
+        t.Timestamps()
+    })
+},
+Down: func(db *gorm.DB) error {
+    return schema.New(db).DropTable("posts")
+}</code></pre>

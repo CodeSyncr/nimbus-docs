@@ -1,0 +1,97 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Testing Introduction</h1>
+<p class="text-slate-600 mb-6">Nimbus embraces Go's built-in <code class="bg-slate-100 px-1 rounded">testing</code> package and adds a <code class="bg-slate-100 px-1 rounded">testing.TestClient</code> for convenient HTTP testing. No extra test runner needed — just <code class="bg-slate-100 px-1 rounded">go test</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Test file conventions</h2>
+<p class="text-slate-600 mb-2">Go discovers tests automatically. Place test files alongside the code they test, using the <code class="bg-slate-100 px-1 rounded">_test.go</code> suffix.</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">app/controllers/users_test.go</code> — tests for the users controller</li>
+  <li><code class="bg-slate-100 px-1 rounded">app/models/user_test.go</code> — tests for the user model</li>
+  <li><code class="bg-slate-100 px-1 rounded">main_test.go</code> — integration and HTTP tests</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Setting up a test app</h2>
+<p class="text-slate-600 mb-2">Create a helper that builds a Nimbus app configured for testing. Use an in-memory SQLite database to keep tests fast and isolated.</p>
+<pre><code>package main
+
+import (
+    "github.com/CodeSyncr/nimbus"
+    "github.com/CodeSyncr/nimbus/database"
+    "github.com/CodeSyncr/nimbus/middleware"
+)
+
+func setupTestApp() *nimbus.App {
+    app := nimbus.New()
+    app.Router.Use(middleware.Recover())
+
+    db, _ := database.Connect("sqlite", ":memory:")
+    app.Container.Singleton("db", func() *gorm.DB {
+        return db
+    })
+
+    // Register routes
+    app.Router.Get("/health", healthHandler)
+    app.Router.Get("/users", listUsersHandler)
+    app.Router.Post("/users", createUserHandler)
+
+    return app
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">The TestClient</h2>
+<p class="text-slate-600 mb-2">Nimbus provides <code class="bg-slate-100 px-1 rounded">testing.NewTestClient(router)</code> which sends requests directly to the router without starting a real HTTP server. It returns <code class="bg-slate-100 px-1 rounded">*httptest.ResponseRecorder</code>.</p>
+<pre><code>import nimbustest "github.com/CodeSyncr/nimbus/testing"
+
+func TestHealthEndpoint(t *testing.T) {
+    app := setupTestApp()
+    client := nimbustest.NewTestClient(app.Router)
+
+    resp := client.Get("/health")
+
+    if resp.Code != 200 {
+        t.Errorf("expected 200, got %d", resp.Code)
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Test database</h2>
+<p class="text-slate-600 mb-4">For database tests, use <code class="bg-slate-100 px-1 rounded">:memory:</code> with SQLite. Run migrations inside the test setup to get a clean schema each time.</p>
+<pre><code>func setupTestDB() *gorm.DB {
+    db, _ := database.Connect("sqlite", ":memory:")
+    db.AutoMigrate(&User{}, &Post{})
+    return db
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Writing a basic test</h2>
+<p class="text-slate-600 mb-2">Test functions must start with <code class="bg-slate-100 px-1 rounded">Test</code> and accept <code class="bg-slate-100 px-1 rounded">*testing.T</code>.</p>
+<pre><code>func TestCreateUser(t *testing.T) {
+    app := setupTestApp()
+    client := nimbustest.NewTestClient(app.Router)
+
+    body := []byte(`{"name":"Alice","email":"alice@example.com"}`)
+    resp := client.Post("/users", body)
+
+    if resp.Code != 201 {
+        t.Fatalf("expected 201, got %d", resp.Code)
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Running tests</h2>
+<p class="text-slate-600 mb-2">Use the standard Go test commands:</p>
+<pre><code># Run all tests
+go test ./...
+
+# Run tests in a specific package
+go test ./app/controllers/...
+
+# Run with verbose output
+go test -v ./...
+
+# Run a specific test function
+go test -run TestCreateUser ./...</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Tips</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li>Use <code class="bg-slate-100 px-1 rounded">t.Parallel()</code> at the top of tests that can run concurrently.</li>
+  <li>Use table-driven tests for handler endpoints that need multiple input/output cases.</li>
+  <li>Keep test setup DRY with helper functions like <code class="bg-slate-100 px-1 rounded">setupTestApp()</code>.</li>
+  <li>Use <code class="bg-slate-100 px-1 rounded">t.Cleanup()</code> to tear down resources when a test finishes.</li>
+</ul>

@@ -1,0 +1,23 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Command Arguments</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Arguments are positional values provided after the command name. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ArgsExact</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ArgsMin</code>, or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ArgsMax</code>. Access them via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Args()</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Arg(i)</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Defining arguments</h2>
+<pre data-file="commands/greet.go"><code>return command.New("greet", "Greet a user by name").
+	ArgsExact(1).
+	RunE(func(ctx *command.Ctx) error {
+		name := ctx.Arg(0)
+		fmt.Printf("Hello, %s!\n", name)
+		return nil
+	})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Argument validators</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ArgsExact(n)</code> — exactly n arguments</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ArgsMin(n)</code> — at least n arguments</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ArgsMax(n)</code> — at most n arguments</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Accessing arguments</h2>
+<pre data-file="commands/greet.go"><code>args := ctx.Args()       // []string
+name := ctx.Arg(0)       // first arg, or "" if out of range</code></pre>

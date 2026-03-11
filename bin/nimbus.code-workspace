@@ -1,0 +1,17 @@
+{
+  "folders": [
+	{
+		"path": "../../nimbus"
+	},
+	{
+		"path": ".."
+	},
+	{
+		"path": "../../nimbus-inertia-react"
+	},
+	{
+		"path": "../../example-app"
+	}
+],
+  "settings": {}
+}

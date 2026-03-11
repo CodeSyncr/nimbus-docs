@@ -1,0 +1,120 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">File Uploads</h1>
+<p class="text-slate-600 mb-6">Nimbus uses Go's standard <code class="bg-slate-100 px-1 rounded">multipart</code> handling for file uploads, combined with the built-in <code class="bg-slate-100 px-1 rounded">storage</code> package for persisting files to disk or other drivers.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Basic file upload</h2>
+<p class="text-slate-600 mb-2">Use <code class="bg-slate-100 px-1 rounded">c.Request.FormFile(fieldName)</code> to retrieve an uploaded file. It returns the file, its header (name, size, MIME type), and any error.</p>
+<pre><code>func uploadHandler(c *http.Context) error {
+    file, header, err := c.Request.FormFile("avatar")
+    if err != nil {
+        return c.JSON(400, map[string]string{"error": "missing file"})
+    }
+    defer file.Close()
+
+    return c.JSON(200, map[string]any{
+        "filename": header.Filename,
+        "size":     header.Size,
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Saving to disk manually</h2>
+<p class="text-slate-600 mb-2">Create a destination file with <code class="bg-slate-100 px-1 rounded">os.Create</code> and copy the upload contents using <code class="bg-slate-100 px-1 rounded">io.Copy</code>.</p>
+<pre><code>func saveUpload(c *http.Context) error {
+    file, header, err := c.Request.FormFile("document")
+    if err != nil {
+        return c.JSON(400, map[string]string{"error": "missing file"})
+    }
+    defer file.Close()
+
+    dst, err := os.Create(filepath.Join("storage/app", header.Filename))
+    if err != nil {
+        return c.JSON(500, map[string]string{"error": "could not save"})
+    }
+    defer dst.Close()
+
+    if _, err := io.Copy(dst, file); err != nil {
+        return c.JSON(500, map[string]string{"error": "write failed"})
+    }
+
+    return c.JSON(201, map[string]string{"path": header.Filename})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">File size limits</h2>
+<p class="text-slate-600 mb-2">Call <code class="bg-slate-100 px-1 rounded">c.Request.ParseMultipartForm(maxMemory)</code> before accessing files to set the memory limit. Also validate <code class="bg-slate-100 px-1 rounded">header.Size</code> against your own maximum.</p>
+<pre><code>const maxUploadSize = 5 &lt;&lt; 20 // 5 MB
+
+func limitedUpload(c *http.Context) error {
+    c.Request.Body = http.MaxBytesReader(c.Response, c.Request.Body, maxUploadSize)
+
+    if err := c.Request.ParseMultipartForm(maxUploadSize); err != nil {
+        return c.JSON(413, map[string]string{"error": "file too large"})
+    }
+
+    file, header, err := c.Request.FormFile("photo")
+    if err != nil {
+        return c.JSON(400, map[string]string{"error": "missing file"})
+    }
+    defer file.Close()
+
+    if header.Size > maxUploadSize {
+        return c.JSON(413, map[string]string{"error": "exceeds 5 MB limit"})
+    }
+
+    return c.JSON(200, map[string]string{"filename": header.Filename})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Validating file types</h2>
+<p class="text-slate-600 mb-2">Check the Content-Type from the file header, or sniff the first 512 bytes with <code class="bg-slate-100 px-1 rounded">http.DetectContentType</code> for reliable MIME detection.</p>
+<pre><code>var allowedTypes = map[string]bool{
+    "image/jpeg": true,
+    "image/png":  true,
+    "image/webp": true,
+}
+
+func validateFileType(c *http.Context) error {
+    file, _, err := c.Request.FormFile("image")
+    if err != nil {
+        return c.JSON(400, map[string]string{"error": "missing file"})
+    }
+    defer file.Close()
+
+    buf := make([]byte, 512)
+    n, _ := file.Read(buf)
+    mime := http.DetectContentType(buf[:n])
+
+    if !allowedTypes[mime] {
+        return c.JSON(422, map[string]string{"error": "invalid file type: " + mime})
+    }
+
+    return c.JSON(200, map[string]string{"type": mime})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Using the storage driver</h2>
+<p class="text-slate-600 mb-2">The <code class="bg-slate-100 px-1 rounded">storage.LocalDriver</code> provides a clean API for persisting files. Create a driver pointing to your storage root, then call <code class="bg-slate-100 px-1 rounded">Put(path, reader)</code>.</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/storage"
+
+var disk = storage.NewLocalDriver("storage/app")
+
+func uploadWithStorage(c *http.Context) error {
+    file, header, err := c.Request.FormFile("attachment")
+    if err != nil {
+        return c.JSON(400, map[string]string{"error": "missing file"})
+    }
+    defer file.Close()
+
+    dest := "uploads/" + header.Filename
+    if err := disk.Put(dest, file); err != nil {
+        return c.JSON(500, map[string]string{"error": "storage failed"})
+    }
+
+    return c.JSON(201, map[string]string{"path": dest})
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Storage driver interface</h3>
+<p class="text-slate-600 mb-2">All storage drivers implement the <code class="bg-slate-100 px-1 rounded">storage.Driver</code> interface:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">Put(path, io.Reader)</code> — Write a file.</li>
+  <li><code class="bg-slate-100 px-1 rounded">Get(path)</code> — Open a file for reading (returns io.ReadCloser).</li>
+  <li><code class="bg-slate-100 px-1 rounded">Delete(path)</code> — Remove a file.</li>
+  <li><code class="bg-slate-100 px-1 rounded">Exists(path)</code> — Check if a file exists.</li>
+</ul>

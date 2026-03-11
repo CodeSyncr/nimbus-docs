@@ -1,0 +1,55 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Queue</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Background job processing (Laravel/AdonisJS style). Queue is <strong>core</strong>—no plugin needed. Call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">queue.Boot()</code> in your app bootstrap.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Installation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Queue is initialized in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code> when creating a new app:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/queue"
+
+queue.Boot(&queue.BootConfig{RegisterJobs: start.RegisterQueueJobs})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Variable</th><th class="px-4 py-2 text-left font-semibold">Description</th><th class="px-4 py-2 text-left font-semibold">Default</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_DRIVER</code></td><td class="px-4 py-2">sync, redis, database, sqs, kafka</td><td class="px-4 py-2">sync</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">REDIS_URL</code></td><td class="px-4 py-2">Redis (for redis driver)</td><td class="px-4 py-2">redis://localhost:6379</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SQS_QUEUE_URL</code></td><td class="px-4 py-2">AWS SQS queue URL</td><td class="px-4 py-2">—</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">KAFKA_BROKERS</code></td><td class="px-4 py-2">Kafka brokers (comma-separated)</td><td class="px-4 py-2">—</td></tr>
+    </tbody>
+  </table>
+</div>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Drivers: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">sync</code> (runs immediately, dev), <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">redis</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">sqs</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">kafka</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Defining jobs</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type SendEmail struct {
+    UserID  int
+    Subject string
+}
+
+func (j *SendEmail) Handle(ctx context.Context) error {
+    // Send email...
+    return nil
+}
+
+// Optional: cleanup when job fails permanently
+func (j *SendEmail) Failed(ctx context.Context, err error) {
+    log.Printf("SendEmail failed: %v", err)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Dispatching</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>queue.Dispatch(&jobs.SendEmail{UserID: 12, Subject: "Welcome"}).Dispatch(ctx)
+queue.Dispatch(&jobs.SendEmail{...}).Delay(5 * time.Minute).Dispatch(ctx)
+queue.Dispatch(&jobs.Report{}).OnQueue("reports").Dispatch(ctx)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Registering jobs</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// start/jobs.go
+func RegisterQueueJobs() {
+    queue.Register(&jobs.SendEmail{})
+    queue.Register(&jobs.ProcessVideo{})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Running the worker</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>nimbus queue:work</code></pre>
+<p class="text-slate-600 dark:text-slate-400 text-sm">Or from code: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">queue.RunWorker(ctx, "default")</code></p>

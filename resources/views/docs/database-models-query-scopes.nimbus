@@ -1,0 +1,25 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Query Scopes</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Scopes are reusable query fragments. Define them as functions that accept <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*gorm.DB</code> and return <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*gorm.DB</code>, then apply them with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Scopes()</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Defining a scope</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func Published(db *gorm.DB) *gorm.DB {
+    return db.Where("status = ?", "published")
+}
+
+func Recent(db *gorm.DB) *gorm.DB {
+    return db.Where("created_at > ?", time.Now().AddDate(0, 0, -30))
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using scopes</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>var posts []Post
+db.Model(&Post{}).Scopes(Published, Recent).Find(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Scopes with arguments</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func Status(status string) func(*gorm.DB) *gorm.DB {
+    return func(db *gorm.DB) *gorm.DB {
+        return db.Where("status = ?", status)
+    }
+}
+
+db.Model(&Post{}).Scopes(Status("draft")).Find(&posts)</code></pre>

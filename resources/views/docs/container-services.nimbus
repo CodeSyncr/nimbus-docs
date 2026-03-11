@@ -1,0 +1,80 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Container Services</h1>
+<p class="text-slate-600 mb-6">Nimbus provides several built-in packages that can be registered as container services through providers. This page lists the common services and shows how to bind, resolve, and override them.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Database (GORM)</h2>
+<p class="text-slate-600 mb-2">The <code class="bg-slate-100 px-1 rounded">database</code> package wraps GORM. Bind it as a singleton so the entire app shares one connection pool.</p>
+<pre><code>app.Container.Singleton("db", func() (*gorm.DB, error) {
+    return database.Connect(app.Config.Database.Driver, app.Config.Database.DSN)
+})
+
+// Resolve anywhere:
+db := app.Container.MustMake("db").(*gorm.DB)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Logger (Zap)</h2>
+<p class="text-slate-600 mb-2">The <code class="bg-slate-100 px-1 rounded">logger</code> package exposes a global <code class="bg-slate-100 px-1 rounded">logger.Log</code> (a <code class="bg-slate-100 px-1 rounded">*zap.SugaredLogger</code>). You can also bind it into the container for explicit dependency injection.</p>
+<pre><code>app.Container.Singleton("logger", func() *zap.SugaredLogger {
+    return logger.Log
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Cache</h2>
+<p class="text-slate-600 mb-2">The <code class="bg-slate-100 px-1 rounded">cache</code> package provides an in-memory cache store. Register it as a singleton.</p>
+<pre><code>app.Container.Singleton("cache", func() *cache.Store {
+    return cache.NewStore()
+})
+
+// Usage:
+store := app.Container.MustMake("cache").(*cache.Store)
+store.Set("key", "value", 5*time.Minute)
+val, ok := store.Get("key")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Event bus</h2>
+<p class="text-slate-600 mb-2">The <code class="bg-slate-100 px-1 rounded">events</code> package provides a publish/subscribe event bus.</p>
+<pre><code>app.Container.Singleton("events", func() *events.Bus {
+    return events.NewBus()
+})
+
+bus := app.Container.MustMake("events").(*events.Bus)
+bus.On("user.created", sendWelcomeEmail)
+bus.Emit("user.created", userData)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Mail</h2>
+<p class="text-slate-600 mb-2">The <code class="bg-slate-100 px-1 rounded">mail</code> package sends email. Bind the mailer with your SMTP configuration.</p>
+<pre><code>app.Container.Singleton("mail", func() *mail.Mailer {
+    return mail.New(mail.Config{
+        Host: "smtp.example.com",
+        Port: 587,
+        From: "app@example.com",
+    })
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Queue</h2>
+<p class="text-slate-600 mb-2">The <code class="bg-slate-100 px-1 rounded">queue</code> package provides background job processing.</p>
+<pre><code>app.Container.Singleton("queue", func() *queue.Queue {
+    return queue.New()
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Scheduler</h2>
+<p class="text-slate-600 mb-2">The <code class="bg-slate-100 px-1 rounded">scheduler</code> package runs recurring tasks on a cron-like schedule.</p>
+<pre><code>app.Container.Singleton("scheduler", func() *scheduler.Scheduler {
+    return scheduler.New()
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Registering custom services</h2>
+<p class="text-slate-600 mb-2">Any value can be bound into the container. Use <code class="bg-slate-100 px-1 rounded">Bind</code> for transient or <code class="bg-slate-100 px-1 rounded">Singleton</code> for shared instances.</p>
+<pre><code>// Transient: new instance every time
+app.Container.Bind("pdf", func() *PDFGenerator {
+    return NewPDFGenerator()
+})
+
+// Singleton: shared across the app
+app.Container.Singleton("stripe", func() *StripeClient {
+    return NewStripeClient(os.Getenv("STRIPE_KEY"))
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Overriding defaults</h2>
+<p class="text-slate-600 mb-4">To replace a built-in service, call <code class="bg-slate-100 px-1 rounded">Bind</code> or <code class="bg-slate-100 px-1 rounded">Singleton</code> again with the same name. The new constructor replaces the previous one. This is useful for testing or swapping implementations.</p>
+<pre><code>// Override "db" with a test database
+app.Container.Singleton("db", func() (*gorm.DB, error) {
+    return database.Connect("sqlite", ":memory:")
+})</code></pre>

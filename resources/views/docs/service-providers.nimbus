@@ -1,0 +1,83 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Service Providers</h1>
+<p class="text-slate-600 mb-6">Service providers are the central place to configure and bootstrap your application. Every major subsystem (database, mail, queue) should be wired through a provider.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">The Provider interface</h2>
+<p class="text-slate-600 mb-2">A provider must implement two methods defined in the <code class="bg-slate-100 px-1 rounded">nimbus</code> package:</p>
+<pre><code>type Provider interface {
+    Register(app *nimbus.App) error
+    Boot(app *nimbus.App) error
+}</code></pre>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><strong>Register</strong> — runs first for all providers. Bind services into <code class="bg-slate-100 px-1 rounded">app.Container</code>. Do not resolve other services here.</li>
+  <li><strong>Boot</strong> — runs after every provider has registered. Safe to resolve dependencies and perform setup that relies on other services.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Creating a custom provider</h2>
+<p class="text-slate-600 mb-2">Create a struct that satisfies <code class="bg-slate-100 px-1 rounded">nimbus.Provider</code>. In <code class="bg-slate-100 px-1 rounded">Register</code>, bind your service. In <code class="bg-slate-100 px-1 rounded">Boot</code>, run any initialisation that depends on the container.</p>
+<pre><code>package providers
+
+import (
+    "github.com/CodeSyncr/nimbus"
+    "github.com/CodeSyncr/nimbus/database"
+    "gorm.io/gorm"
+)
+
+type DatabaseProvider struct{}
+
+func (p *DatabaseProvider) Register(app *nimbus.App) error {
+    app.Container.Singleton("db", func() (*gorm.DB, error) {
+        return database.Connect(config.Database.Driver, config.Database.DSN)
+    })
+    return nil
+}
+
+func (p *DatabaseProvider) Boot(app *nimbus.App) error {
+    return nil
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Registering providers</h2>
+<p class="text-slate-600 mb-2">Register providers in <code class="bg-slate-100 px-1 rounded">bin/server.go</code> inside the <code class="bg-slate-100 px-1 rounded">Boot()</code> function, after creating the app:</p>
+<pre><code>// bin/server.go
+func Boot() *nimbus.App {
+    config.Load()
+    app := nimbus.New()
+
+    // Register providers in dependency order
+    app.Register(&providers.DatabaseProvider{})
+    app.Register(&providers.CacheProvider{})
+    app.Register(&providers.MailProvider{})
+
+    start.RegisterMiddleware(app)
+    start.RegisterRoutes(app)
+
+    return app
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Provider boot order</h2>
+<p class="text-slate-600 mb-4"><code class="bg-slate-100 px-1 rounded">app.Boot()</code> (called internally by <code class="bg-slate-100 px-1 rounded">app.Run()</code>) executes in two passes:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><strong>Pass 1:</strong> <code class="bg-slate-100 px-1 rounded">Register(app)</code> called on each provider in order. All container bindings are set up.</li>
+  <li><strong>Pass 2:</strong> <code class="bg-slate-100 px-1 rounded">Boot(app)</code> called on each provider in order. Container is fully populated, so any binding can be resolved.</li>
+</ul>
+<p class="text-slate-600 mb-4">This guarantees that a provider's <code class="bg-slate-100 px-1 rounded">Boot</code> method can safely call <code class="bg-slate-100 px-1 rounded">app.Container.Make("db")</code> even if the database provider was registered after it — all registrations happen before any boot.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Accessing the container from providers</h2>
+<p class="text-slate-600 mb-2">Inside <code class="bg-slate-100 px-1 rounded">Boot</code>, resolve any registered service from the container:</p>
+<pre><code>func (p *QueueProvider) Boot(app *nimbus.App) error {
+    db := app.Container.MustMake("db").(*gorm.DB)
+    q := queue.New(db)
+    app.Container.Singleton("queue", func() *queue.Queue {
+        return q
+    })
+    return nil
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">When to use providers</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li>Database connections and ORM setup</li>
+  <li>Mail, queue, and cache driver configuration</li>
+  <li>Event listener registration</li>
+  <li>Third-party SDK initialisation</li>
+  <li>Any service that other parts of the app depend on</li>
+</ul>

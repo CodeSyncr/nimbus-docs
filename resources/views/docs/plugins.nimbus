@@ -1,0 +1,332 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Plugins</h1>
+<p class="text-slate-600 mb-6">Plugins extend your Nimbus application with reusable functionality — routes, middleware, config, events, scheduled tasks, CLI commands, health checks, and more — all packaged as a single Go struct. Build anything from a Stripe integration to a Sentry error tracker.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Overview</h2>
+<p class="text-slate-600 mb-4">A plugin is any struct that implements the <code class="bg-slate-100 px-1 rounded">nimbus.Plugin</code> interface. Plugins are registered with <code class="bg-slate-100 px-1 rounded">app.Use()</code> in <code class="bg-slate-100 px-1 rounded">bin/server.go</code> and automatically integrated into the application lifecycle.</p>
+<p class="text-slate-600 mb-4">Plugins can optionally implement <strong>capability interfaces</strong> to hook into the framework at specific points. You only implement what your plugin needs — everything else is ignored.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Creating a plugin</h2>
+<p class="text-slate-600 mb-2">Use the CLI to scaffold a plugin with a standard folder structure:</p>
+<pre><code>nimbus make:plugin Stripe</code></pre>
+<p class="text-slate-600 mt-2 mb-2">This generates a complete plugin skeleton:</p>
+<pre><code>stripe/
+├── plugin.go       # Core plugin, Register/Boot lifecycle
+├── config.go       # Configuration & defaults
+├── service.go      # Business logic & SDK wrapper
+├── routes.go       # HTTP route registration
+├── handlers.go     # HTTP handlers
+├── middleware.go    # Named middleware
+├── events.go       # Event listeners
+├── commands.go     # CLI commands
+└── README.md       # Documentation</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">The Plugin interface</h2>
+<pre><code>type Plugin interface {
+    Name() string              // unique identifier, e.g. "stripe"
+    Version() string           // semantic version, e.g. "1.0.0"
+    Register(app *App) error   // bind services (don't resolve others yet)
+    Boot(app *App) error       // resolve deps, initialise
+}</code></pre>
+<p class="text-slate-600 mt-2 mb-4">Embed <code class="bg-slate-100 px-1 rounded">nimbus.BasePlugin</code> to get default no-op implementations. Override only the methods you need.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Capability interfaces</h2>
+<p class="text-slate-600 mb-4">Implement any of these optional interfaces to hook into the framework. All are automatically wired during boot.</p>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Interface</th><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Purpose</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">HasRoutes</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">RegisterRoutes(r)</code></td><td class="px-4 py-2">Mount HTTP routes</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">HasMiddleware</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Middleware() map</code></td><td class="px-4 py-2">Named middleware for routes/groups</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">HasConfig</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">DefaultConfig() map</code></td><td class="px-4 py-2">Default configuration values</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">HasMigrations</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Migrations() []Migration</code></td><td class="px-4 py-2">Database migrations</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">HasViews</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">ViewsFS() fs.FS</code></td><td class="px-4 py-2">Embedded view templates</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">HasShutdown</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Shutdown() error</code></td><td class="px-4 py-2">Cleanup on app shutdown</td></tr>
+      <tr class="border-t border-slate-200 bg-amber-50"><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">HasBindings</code></td><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">Bindings(c *container.Container)</code></td><td class="px-4 py-2">Register DI container bindings</td></tr>
+      <tr class="border-t border-slate-200 bg-amber-50"><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">HasCommands</code></td><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">Commands() []cli.Command</code></td><td class="px-4 py-2">CLI commands (<code class="bg-slate-100 px-1 rounded">nimbus stripe:sync</code>)</td></tr>
+      <tr class="border-t border-slate-200 bg-amber-50"><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">HasSchedule</code></td><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">Schedule(s *schedule.Scheduler)</code></td><td class="px-4 py-2">Periodic background tasks</td></tr>
+      <tr class="border-t border-slate-200 bg-amber-50"><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">HasEvents</code></td><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">Listeners() map[string][]Listener</code></td><td class="px-4 py-2">React to application events</td></tr>
+      <tr class="border-t border-slate-200 bg-amber-50"><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">HasHealthChecks</code></td><td class="px-4 py-2"><code class="bg-amber-100 px-1 rounded text-amber-800">HealthChecks() map[string]Check</code></td><td class="px-4 py-2">Report plugin health status</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Real-world example: Stripe plugin</h2>
+<p class="text-slate-600 mb-2">Here's how you'd build a Stripe integration that uses many capabilities:</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">plugin.go — Core lifecycle</h3>
+<pre> <code>package stripe
+
+import (
+    "os"
+    "github.com/CodeSyncr/nimbus"
+    "github.com/CodeSyncr/nimbus/container"
+)
+
+var (
+    _ nimbus.Plugin         = (*Plugin)(nil)
+    _ nimbus.HasBindings    = (*Plugin)(nil)
+    _ nimbus.HasRoutes      = (*Plugin)(nil)
+    _ nimbus.HasEvents      = (*Plugin)(nil)
+    _ nimbus.HasCommands    = (*Plugin)(nil)
+    _ nimbus.HasHealthChecks = (*Plugin)(nil)
+)
+
+type Plugin struct {
+    nimbus.BasePlugin
+    client *StripeClient
+}
+
+func New() *Plugin {
+    return &Plugin{
+        BasePlugin: nimbus.BasePlugin{
+            PluginName:    "stripe",
+            PluginVersion: "1.0.0",
+        },
+    }
+}
+
+func (p *Plugin) Boot(app *nimbus.App) error {
+    p.client = NewStripeClient(os.Getenv("STRIPE_SECRET_KEY"))
+    return nil
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">service.go — Bindings (DI)</h3>
+<pre><code>package stripe
+
+import "github.com/CodeSyncr/nimbus/container"
+
+func (p *Plugin) Bindings(c *container.Container) {
+    c.Singleton("stripe", func() (*StripeClient, error) {
+        return NewStripeClient(os.Getenv("STRIPE_SECRET_KEY")), nil
+    })
+}
+
+type StripeClient struct {
+    apiKey string
+}
+
+func NewStripeClient(apiKey string) *StripeClient {
+    return &StripeClient{apiKey: apiKey}
+}
+
+func (c *StripeClient) CreateCheckout(priceID string) (string, error) {
+    // Create Stripe checkout session…
+    return "https://checkout.stripe.com/session_xxx", nil
+}</code></pre>
+<p class="text-slate-600 mt-2 mb-4">Now any handler can resolve the client: <code class="bg-slate-100 px-1 rounded">app.Container.MustMake("stripe").(*stripe.StripeClient)</code></p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">events.go — Event listeners</h3>
+<pre><code>package stripe
+
+import "github.com/CodeSyncr/nimbus/events"
+
+func (p *Plugin) Listeners() map[string][]events.Listener {
+    return map[string][]events.Listener{
+        "order.placed":    {p.createCheckout},
+        "payment.failed":  {p.handleFailedPayment},
+    }
+}
+
+func (p *Plugin) createCheckout(payload any) error {
+    order := payload.(*Order)
+    url, err := p.client.CreateCheckout(order.PriceID)
+    if err != nil { return err }
+    // redirect user to url…
+    return nil
+}
+
+func (p *Plugin) handleFailedPayment(payload any) error {
+    // send notification, log, retry…
+    return nil
+}</code></pre>
+<p class="text-slate-600 mt-2 mb-4">Fire events from anywhere: <code class="bg-slate-100 px-1 rounded">app.Events.Dispatch("order.placed", order)</code></p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">commands.go — CLI commands</h3>
+<pre><code>package stripe
+
+import "github.com/CodeSyncr/nimbus/cli"
+
+func (p *Plugin) Commands() []cli.Command {
+    return []cli.Command{
+        &SyncCommand{plugin: p},
+    }
+}
+
+type SyncCommand struct{ plugin *Plugin }
+func (c *SyncCommand) Name() string        { return "stripe:sync" }
+func (c *SyncCommand) Description() string { return "Sync products from Stripe" }
+func (c *SyncCommand) Run(ctx *cli.Context) error {
+    ctx.UI.Infof("Syncing products from Stripe…")
+    // sync logic here
+    ctx.UI.Successf("Done! Synced products.")
+    return nil
+}</code></pre>
+<p class="text-slate-600 mt-2 mb-4">Users run: <code class="bg-slate-100 px-1 rounded">nimbus stripe:sync</code></p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">health.go — Health checks</h3>
+<pre><code>package stripe
+
+import (
+    "context"
+    "github.com/CodeSyncr/nimbus/health"
+)
+
+func (p *Plugin) HealthChecks() map[string]health.Check {
+    return map[string]health.Check{
+        "stripe": func(ctx context.Context) error {
+            // ping Stripe API
+            return p.client.Ping(ctx)
+        },
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Events system</h2>
+<p class="text-slate-600 mb-2">The application has a built-in event dispatcher on <code class="bg-slate-100 px-1 rounded">app.Events</code>:</p>
+<pre><code>// Listen for events
+app.Events.Listen("user.created", func(payload any) error {
+    user := payload.(*models.User)
+    return sendWelcomeEmail(user)
+})
+
+// Fire events synchronously (returns first error)
+err := app.Events.Dispatch("user.created", user)
+
+// Fire events asynchronously (runs in goroutines, errors are logged)
+app.Events.DispatchAsync("analytics.track", trackData)
+
+// Package-level helpers (use the global dispatcher)
+events.Listen("user.created", handler)
+events.Dispatch("user.created", user)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Task scheduling</h2>
+<p class="text-slate-600 mb-2">Plugins can register periodic tasks via <code class="bg-slate-100 px-1 rounded">HasSchedule</code>. The scheduler starts automatically when the app runs.</p>
+<pre><code>import (
+    "context"
+    "time"
+    "github.com/CodeSyncr/nimbus/schedule"
+)
+
+func (p *Plugin) Schedule(s *schedule.Scheduler) {
+    // Run every 5 minutes
+    s.Every(5*time.Minute, "stripe-sync", func(ctx context.Context) error {
+        return p.syncProducts(ctx)
+    })
+
+    // Run daily at 3 AM
+    s.Daily("03:00", "stripe-reconcile", func(ctx context.Context) error {
+        return p.reconcile(ctx)
+    })
+
+    // Convenience methods
+    s.Hourly("cache-cleanup", cleanupHandler)
+    s.EveryMinute("heartbeat", pingHandler)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Container bindings</h2>
+<p class="text-slate-600 mb-2">Plugins register services via <code class="bg-slate-100 px-1 rounded">HasBindings</code>. The container supports three binding types:</p>
+<pre><code>func (p *Plugin) Bindings(c *container.Container) {
+    // Singleton — built once, reused
+    c.Singleton("stripe", func() (*StripeClient, error) {
+        return NewStripeClient(os.Getenv("STRIPE_KEY")), nil
+    })
+
+    // Bind — new instance every call
+    c.Bind("mailer", func() (*Mailer, error) {
+        return NewMailer(), nil
+    })
+
+    // Instance — pre-built value
+    c.Instance("logger", myLogger)
+}
+
+// Resolve anywhere:
+client := app.Container.MustMake("stripe").(*StripeClient)
+// Check existence:
+if app.Container.Has("stripe") { … }</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Plugin lifecycle</h2>
+<p class="text-slate-600 mb-2">Plugins participate in the full application boot sequence:</p>
+<pre><code>app.Run()
+  └─ app.Boot()
+       1. Provider.Register()      — all providers
+       2. Plugin.Register()        — all plugins
+          └─ HasBindings applied   — container bindings
+       3. Plugin.DefaultConfig collected
+       4. Provider.Boot()          — all providers
+       5. Plugin.Boot()            — all plugins
+       6. Plugin capabilities applied:
+          ├─ HasRoutes          → routes mounted
+          ├─ HasMiddleware      → named middleware merged
+          ├─ HasCommands        → CLI commands registered
+          ├─ HasSchedule        → tasks added to scheduler
+          ├─ HasEvents          → listeners registered
+          └─ HasHealthChecks    → checks added to health checker
+       7. App-level boot hooks
+  └─ Scheduler.Start()  (if tasks registered)
+  └─ ListenAndServe()
+
+app.Shutdown()
+  └─ Scheduler.Stop()
+  └─ HasShutdown.Shutdown() for each plugin (reverse order)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Registering plugins</h2>
+<p class="text-slate-600 mb-2">Register plugins in <code class="bg-slate-100 px-1 rounded">bin/server.go</code> using <code class="bg-slate-100 px-1 rounded">app.Use()</code>:</p>
+<pre><code>// bin/server.go
+func Boot() *nimbus.App {
+    app := nimbus.New()
+
+    app.Use(
+        stripe.New(),
+        sentry.New(),
+        analytics.New(),
+    )
+
+    start.RegisterMiddleware(app)
+    start.RegisterRoutes(app)
+    return app
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Accessing plugins at runtime</h2>
+<pre><code>// Get a specific plugin by name
+p := app.Plugin("stripe")
+
+// List all plugins
+for _, p := range app.Plugins() {
+    fmt.Printf("  %s v%s\n", p.Name(), p.Version())
+}
+
+// Access config, middleware, events, health
+cfg := app.PluginConfig("stripe")
+mw := app.NamedMiddleware()
+app.Events.Dispatch("order.placed", order)
+result := app.Health.Run(ctx)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Publishing a plugin</h2>
+<p class="text-slate-600 mb-4">A plugin can live inside your app (<code class="bg-slate-100 px-1 rounded">app/plugins/</code>) or be published as a standalone Go module:</p>
+<ol class="list-decimal pl-6 mb-4 text-slate-600 space-y-1">
+  <li>Create a Go module (e.g. <code class="bg-slate-100 px-1 rounded">github.com/you/nimbus-stripe</code>).</li>
+  <li>Implement <code class="bg-slate-100 px-1 rounded">nimbus.Plugin</code> and any capability interfaces.</li>
+  <li>Tag a version (<code class="bg-slate-100 px-1 rounded">git tag v0.1.0</code>).</li>
+  <li>Users install with <code class="bg-slate-100 px-1 rounded">go get github.com/you/nimbus-stripe@latest</code> and register with <code class="bg-slate-100 px-1 rounded">app.Use()</code>.</li>
+</ol>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Plugins vs Providers</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Feature</th><th class="px-4 py-2 text-left font-semibold">Provider</th><th class="px-4 py-2 text-left font-semibold">Plugin</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2">Interface</td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Register + Boot</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Name + Version + Register + Boot</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2">Routes</td><td class="px-4 py-2">Manual</td><td class="px-4 py-2">Automatic via <code class="bg-slate-100 px-1 rounded">HasRoutes</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2">Middleware</td><td class="px-4 py-2">Manual</td><td class="px-4 py-2">Automatic via <code class="bg-slate-100 px-1 rounded">HasMiddleware</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2">Events</td><td class="px-4 py-2">Manual</td><td class="px-4 py-2">Automatic via <code class="bg-slate-100 px-1 rounded">HasEvents</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2">Scheduled tasks</td><td class="px-4 py-2">Manual</td><td class="px-4 py-2">Automatic via <code class="bg-slate-100 px-1 rounded">HasSchedule</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2">CLI commands</td><td class="px-4 py-2">Manual</td><td class="px-4 py-2">Automatic via <code class="bg-slate-100 px-1 rounded">HasCommands</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2">Health checks</td><td class="px-4 py-2">Not supported</td><td class="px-4 py-2">Automatic via <code class="bg-slate-100 px-1 rounded">HasHealthChecks</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2">DI bindings</td><td class="px-4 py-2">Manual in Register()</td><td class="px-4 py-2">Automatic via <code class="bg-slate-100 px-1 rounded">HasBindings</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2">Shutdown</td><td class="px-4 py-2">Not supported</td><td class="px-4 py-2">Automatic via <code class="bg-slate-100 px-1 rounded">HasShutdown</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2">CLI scaffold</td><td class="px-4 py-2">No</td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">nimbus make:plugin</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2">Use case</td><td class="px-4 py-2">Single service binding</td><td class="px-4 py-2">Feature module (full integration)</td></tr>
+    </tbody>
+  </table>
+</div>

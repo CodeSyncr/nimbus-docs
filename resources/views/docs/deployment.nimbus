@@ -1,0 +1,158 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Deployment</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Nimbus compiles to a single binary, making deployment straightforward on any platform. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus deploy</code> for one-command deploys to Fly.io, Railway, AWS, or Docker — or follow the manual steps for Render, Netlify, and systemd.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">One-Command Deploy</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Nimbus provides a built-in deploy command that handles Dockerfile generation, vendoring (for local <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">replace</code> directives), and platform-specific setup:</p>
+<pre data-file="Terminal"><code>nimbus deploy fly      # Deploy to Fly.io
+nimbus deploy railway  # Deploy to Railway
+nimbus deploy aws      # Build for AWS (Docker image)
+nimbus deploy docker   # Build Docker image locally</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">When no target is given, Nimbus prompts interactively for target, app name, region, and migrations.</p>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Deploy Configuration</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Create a config file with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:deploy-config</code> or add <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">deploy.yaml</code> manually:</p>
+<pre data-file="deploy.yaml"><code># nimbus deploy config
+target: fly
+app_name: my-app
+# service: my-app   # Railway only; defaults to app_name
+region: iad
+
+# Run migrations before each deploy (Fly.io release_command)
+migrations: true
+
+# Env vars to set as secrets (from .env, never committed)
+# secrets:
+#   - DATABASE_URL
+#   - REDIS_URL
+
+# Worker processes (Fly.io process groups, Railway services)
+# workers:
+#   - command: queue:work
+#     scale: 1</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4"><strong>Requirements:</strong> Install the platform CLI before deploying — <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">fly</code> for Fly.io, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">railway</code> for Railway, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">docker</code> for AWS/Docker. Railway will prompt for login and project link on first deploy.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4">If your <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">go.mod</code> has a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">replace</code> pointing to a local path (e.g. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">../nimbus</code>), Nimbus runs <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">go mod vendor</code> before deploy so remote builds succeed.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Build for Production</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Compile an optimized binary:</p>
+<pre data-file="Terminal"><code>CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app .</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The resulting <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">app</code> binary is self-contained with no runtime dependencies. Copy it to your server along with your <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/</code>, and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">public/</code> directories.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Environment Variables</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Set production values in your <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code> file or export them in the environment:</p>
+<pre data-file=".env"><code>PORT=8080
+APP_ENV=production
+APP_NAME=myapp
+DB_DRIVER=postgres
+DB_DSN=host=localhost user=myapp password=secret dbname=myapp_prod port=5432 sslmode=disable</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Environment variables set in the system take precedence over <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code> values.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Reverse Proxy with Nginx</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Run Nimbus behind Nginx for TLS termination, static file serving, and load balancing:</p>
+<pre data-file="nginx.conf"><code>server {
+    listen 80;
+    server_name example.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Docker Deployment</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus deploy docker</code> to build, or create a Dockerfile manually. Nimbus generates one if missing — it uses a multi-stage build, supports vendoring for local <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">replace</code> directives, and copies all runtime files (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">public/</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">config/</code>, etc.) into the final image:</p>
+<pre data-file="Dockerfile"><code># Nimbus Go app - multi-stage build
+FROM golang:1.26-alpine AS builder
+WORKDIR /app
+RUN apk add --no-cache gcc musl-dev
+COPY go.mod go.sum ./
+COPY . .
+RUN if [ -d vendor ]; then \
+    CGO_ENABLED=1 go build -mod=vendor -ldflags="-s -w" -o /app/server .; \
+  else \
+    go mod download && CGO_ENABLED=1 go build -ldflags="-s -w" -o /app/server .; \
+  fi
+
+# Minimal runtime image
+FROM alpine:3.19
+RUN apk add --no-cache ca-certificates
+WORKDIR /app
+COPY --from=builder /app/server .
+COPY --from=builder /app/. .
+RUN rm -rf vendor go.mod go.sum
+ENV PORT=8080
+EXPOSE 8080
+CMD ["./server"]</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Build and run the container:</p>
+<pre data-file="Terminal"><code>nimbus deploy docker
+# or manually:
+docker build -t myapp .
+docker run -d -p 8080:8080 --env-file .env myapp</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Systemd Service</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">On Linux servers, use a systemd unit to manage the process:</p>
+<pre data-file="myapp.service"><code>[Unit]
+Description=Nimbus App
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/myapp
+ExecStart=/opt/myapp/app
+Restart=on-failure
+RestartSec=5
+EnvironmentFile=/opt/myapp/.env
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Enable and start the service:</p>
+<pre data-file="Terminal"><code>sudo cp myapp.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable myapp
+sudo systemctl start myapp</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Render</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Render offers free-tier web services with automatic deploys from GitHub. Your app must bind to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">0.0.0.0</code> and use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">PORT</code> environment variable (Render uses port 10000 by default).</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4">In the <a href="https://dashboard.render.com" class="text-amber-600 dark:text-amber-400 hover:underline">Render Dashboard</a>, click <strong>New &gt; Web Service</strong>, connect your repo, and set:</p>
+<pre data-file="Render Dashboard"><code>Build Command:  go build -o app .
+Start Command:  ./app</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">For Inertia apps, add a build step to compile the frontend first:</p>
+<pre data-file="Render Dashboard (Inertia)"><code>Build Command:  npm install &amp;&amp; npm run build &amp;&amp; go build -o app .
+Start Command:  ./app</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Add environment variables (e.g. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">APP_ENV</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">DB_DSN</code>) in the Render dashboard. Attach a PostgreSQL database from the Render add-ons if needed. Every push to your branch triggers a new deploy.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Fly.io</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Fly.io runs your app on lightweight VMs globally. Install <a href="https://fly.io/docs/flyctl/install/" class="text-amber-600 dark:text-amber-400 hover:underline">flyctl</a>, then deploy with one command:</p>
+<pre data-file="Terminal"><code>nimbus deploy fly</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Or manually: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">fly auth login</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">fly launch</code>. Fly detects your Go app and creates a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">fly.toml</code> config. Set secrets with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">fly secrets set</code>:</p>
+<pre data-file="Terminal"><code>fly secrets set APP_ENV=production
+fly secrets set DB_DSN="postgres://..."</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Your app will be live at <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">https://your-app.fly.dev</code>. Add <a href="https://fly.io/docs/postgres/" class="text-amber-600 dark:text-amber-400 hover:underline">Fly Postgres</a> for a managed database.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Railway</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Railway offers simple deploys with automatic builds from your Dockerfile. Install the <a href="https://docs.railway.com/develop/cli" class="text-amber-600 dark:text-amber-400 hover:underline">Railway CLI</a>, then:</p>
+<pre data-file="Terminal"><code>nimbus deploy railway</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">On first deploy, Railway will prompt for login (opens browser) and project link. Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">app_name</code> and optionally <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">service</code> in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">deploy.yaml</code>. Add environment variables (e.g. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">DATABASE_URL</code>) in the Railway dashboard.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Netlify</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Netlify is optimized for static sites and JAMstack. For full Nimbus apps (persistent Go HTTP server), use <strong>Render</strong> or <strong>Fly.io</strong> instead.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4">You can use Netlify in two ways:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><strong>Static site:</strong> If your app serves only static files (e.g. built Inertia assets), connect your repo and set the publish directory to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">public/</code>. Build command: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">npm run build</code> (for Inertia).</li>
+  <li><strong>Go serverless functions:</strong> Netlify supports <a href="https://docs.netlify.com/functions/get-started/?fn-language=go" class="text-amber-600 dark:text-amber-400 hover:underline">Go functions</a> (AWS Lambda). This requires adapting your Nimbus handlers to the Lambda request/response format — use Render or Fly.io for a simpler full-stack deployment.</li>
+</ul>
+<p class="text-slate-600 dark:text-slate-400 mb-4">For a typical Nimbus app with Inertia, deploy the Go backend to Render, Fly.io, or Railway and optionally use Netlify only for hosting the built frontend if you split the architecture.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Deployment Checklist</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">APP_ENV=production</code> in your environment.</li>
+  <li>Use a process manager (systemd, Docker, or supervisor) to auto-restart on crash.</li>
+  <li>Put Nimbus behind a reverse proxy for TLS and static assets.</li>
+  <li>Keep <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code> out of version control — use secrets management in CI/CD.</li>
+  <li>Ensure <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">public/</code>, and other runtime files are included (Docker deploy copies them automatically).</li>
+  <li>Run database migrations before starting the new release.</li>
+</ul>

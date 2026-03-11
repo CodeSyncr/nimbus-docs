@@ -1,0 +1,103 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Health Checks</h1>
+<p class="text-slate-600 mb-6">The <code class="bg-slate-100 px-1 rounded">health</code> package provides a configurable health checker for monitoring database, Redis, external APIs, and plugin dependencies. Use it for load balancer probes, Kubernetes readiness checks, or uptime monitoring.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Overview</h2>
+<p class="text-slate-600 mb-4">The health checker is available on <code class="bg-slate-100 px-1 rounded">app.Health</code>. Plugins that implement <code class="bg-slate-100 px-1 rounded">HasHealthChecks</code> automatically register their checks during boot.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Basic usage</h2>
+<pre><code>checker := health.New()
+checker.DB(database.DB)
+if rdb != nil {
+    checker.Redis(rdb)
+}
+result := checker.Run(ctx)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Built-in checks</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">What it checks</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">DB(db)</code></td><td class="px-4 py-2">Pings the database connection</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Redis(rdb)</code></td><td class="px-4 py-2">Pings the Redis connection</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Custom checks</h2>
+<pre><code>checker.Add("external-api", func(ctx context.Context) error {
+    resp, err := http.Get("https://api.example.com/status")
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+    if resp.StatusCode != 200 {
+        return fmt.Errorf("unexpected status %d", resp.StatusCode)
+    }
+    return nil
+})
+
+checker.Add("disk-space", func(ctx context.Context) error {
+    // check available disk space
+    return nil
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Plugin health checks</h2>
+<p class="text-slate-600 mb-2">Plugins implement <code class="bg-slate-100 px-1 rounded">HasHealthChecks</code> to automatically register checks. These are wired during boot and added to <code class="bg-slate-100 px-1 rounded">app.Health</code>.</p>
+<pre><code>func (p *StripePlugin) HealthChecks() map[string]health.Check {
+    return map[string]health.Check{
+        "stripe": func(ctx context.Context) error {
+            return p.client.Ping(ctx)
+        },
+    }
+}
+
+func (p *RedisPlugin) HealthChecks() map[string]health.Check {
+    return map[string]health.Check{
+        "redis": func(ctx context.Context) error {
+            return p.client.Ping(ctx).Err()
+        },
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Using with app.Health</h2>
+<p class="text-slate-600 mb-2">The app-level health checker aggregates all plugin checks and your custom checks:</p>
+<pre><code>// In start/routes.go
+app.Router.Get("/health", func(c *http.Context) error {
+    result := app.Health.Run(c.Request.Context())
+    code := http.StatusOK
+    if result.Status != "ok" {
+        code = http.StatusServiceUnavailable
+    }
+    return c.JSON(code, result)
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Result format</h2>
+<pre><code>// All healthy:
+{
+    "status": "ok",
+    "checks": {
+        "db": "ok",
+        "redis": "ok",
+        "stripe": "ok"
+    }
+}
+
+// Degraded:
+{
+    "status": "degraded",
+    "checks": {
+        "db": "ok",
+        "redis": "connection refused",
+        "stripe": "ok"
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Response codes</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">200 OK</code> — All checks passed.</li>
+  <li><code class="bg-slate-100 px-1 rounded">503 Service Unavailable</code> — One or more checks failed.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Timeout</h2>
+<p class="text-slate-600 mb-4">If the request context has no deadline, <code class="bg-slate-100 px-1 rounded">Run</code> uses a 5-second timeout to avoid hanging health checks.</p>

@@ -1,0 +1,74 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Dependency Injection</h1>
+<p class="text-slate-600 mb-6">Nimbus ships with an IoC (Inversion of Control) container inspired by AdonisJS and Laravel. It lives in <code class="bg-slate-100 px-1 rounded">container.Container</code> and is available as <code class="bg-slate-100 px-1 rounded">app.Container</code> after <code class="bg-slate-100 px-1 rounded">nimbus.New()</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Binding types</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Behavior</th><th class="px-4 py-2 text-left font-semibold">Use case</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Bind(name, fn)</code></td><td class="px-4 py-2">New instance every call</td><td class="px-4 py-2">Request-scoped, unique IDs</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Singleton(name, fn)</code></td><td class="px-4 py-2">Created once, cached</td><td class="px-4 py-2">DB connections, SDK clients</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Instance(name, value)</code></td><td class="px-4 py-2">Pre-built value, no constructor</td><td class="px-4 py-2">Config objects, loggers</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Transient bindings</h2>
+<pre><code>app.Container.Bind("requestID", func() string {
+    return uuid.New().String()
+})
+
+id1, _ := app.Container.Make("requestID")
+id2, _ := app.Container.Make("requestID")
+// id1 != id2  (new value each time)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Singleton bindings</h2>
+<pre><code>app.Container.Singleton("db", func() (*nimbus.DB, error) {
+    return database.Connect("sqlite", "app.sqlite")
+})
+
+db1, _ := app.Container.Make("db")
+db2, _ := app.Container.Make("db")
+// db1 == db2  (same pointer)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Instance bindings</h2>
+<p class="text-slate-600 mb-2">Register a pre-built value directly without a constructor:</p>
+<pre><code>logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+app.Container.Instance("logger", logger)
+
+// Resolve later:
+l := app.Container.MustMake("logger").(*slog.Logger)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Checking existence</h2>
+<pre><code>if app.Container.Has("stripe") {
+    client := app.Container.MustMake("stripe").(*stripe.Client)
+    // use client
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Resolving bindings</h2>
+<pre><code>// Safe — returns (value, error)
+val, err := app.Container.Make("db")
+
+// Panic on error — use when you're confident the binding exists
+db := app.Container.MustMake("db").(*nimbus.DB)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Plugin bindings (HasBindings)</h2>
+<p class="text-slate-600 mb-2">Plugins can declare container bindings via the <code class="bg-slate-100 px-1 rounded">HasBindings</code> interface. These are registered automatically during the plugin Register phase:</p>
+<pre><code>func (p *StripePlugin) Bindings(c *container.Container) {
+    c.Singleton("stripe", func() (*stripe.Client, error) {
+        return stripe.New(os.Getenv("STRIPE_SECRET_KEY"))
+    })
+}
+
+// Now any handler can resolve it:
+client := app.Container.MustMake("stripe").(*stripe.Client)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Type-safe resolution pattern</h2>
+<p class="text-slate-600 mb-4">Since <code class="bg-slate-100 px-1 rounded">Make</code> returns <code class="bg-slate-100 px-1 rounded">any</code>, write thin helpers for type safety:</p>
+<pre><code>func ResolveDB(c *container.Container) *nimbus.DB {
+    return c.MustMake("db").(*nimbus.DB)
+}
+
+// In handler:
+db := ResolveDB(app.Container)</code></pre>

@@ -1,0 +1,283 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">Mail</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-4">This guide covers sending emails from your Nimbus application. You will learn how to:</p>
+<ul class="list-disc pl-6 mb-6 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Configure SMTP-based mail drivers (SMTP, SES, Mailgun, SendGrid, Postmark).</li>
+  <li>Send emails using the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.Message</code> type.</li>
+  <li>Organize mail configuration in one place (e.g. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code>).</li>
+  <li>Queue emails for background delivery using the queue system.</li>
+  <li>Test email functionality by plugging in a fake driver.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Overview</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail</code> package provides a minimal, transport-agnostic API for sending emails. It is intentionally simple and easy to swap out in production.</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><strong>Message</strong> — represents an email:
+    <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">From string</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">To []string</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Subject string</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Body string</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">HTML bool</code>.
+  </li>
+  <li><strong>Driver</strong> — sends messages. Any type that implements:
+    <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Send(m *mail.Message) error</code>.
+  </li>
+  <li><strong>Default driver</strong> — a global variable <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.Default</code> used by <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.Send</code>.</li>
+</ul>
+
+<p class="text-slate-600 dark:text-slate-400 mb-4">Built-in drivers:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.SMTPDriver</code> — generic SMTP driver.</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.SESDriver</code> — Amazon SES (SMTP-backed).</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.MailgunDriver</code> — Mailgun (SMTP-backed).</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.SendGridDriver</code> — SendGrid (SMTP-backed).</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.PostmarkDriver</code> — Postmark (SMTP-backed).</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Configuration</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Nimbus starter apps keep mail settings in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">config/mail.go</code>. The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">config.Mail</code> struct is populated from environment variables, and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code> wires those settings into the mail driver.</p>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-2">Mail config (config/mail.go)</h3>
+<pre><code>// File: config/mail.go
+package config
+
+var Mail MailConfig
+
+type MailConfig struct {
+    Driver string
+    SMTP   SMTPConfig
+}
+
+type SMTPConfig struct {
+    Host     string
+    Port     int
+    Username string
+    Password string
+    From     string
+    FromName string
+}
+
+func loadMail() {
+    Mail = MailConfig{
+        Driver: env("MAIL_DRIVER", "smtp"),
+        SMTP: SMTPConfig{
+            Host:     env("SMTP_HOST", "localhost"),
+            Port:     envInt("SMTP_PORT", 1025),
+            Username: env("SMTP_USERNAME", ""),
+            Password: env("SMTP_PASSWORD", ""),
+            From:     env("MAIL_FROM", "noreply@example.com"),
+            FromName: env("MAIL_FROM_NAME", "Nimbus App"),
+        },
+    }
+}</code></pre>
+
+<p class="text-slate-600 dark:text-slate-400 mb-4">Example <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code>:</p>
+<pre><code>MAIL_DRIVER=smtp
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USERNAME=user@example.com
+SMTP_PASSWORD=secret
+MAIL_FROM=noreply@example.com
+MAIL_FROM_NAME="Nimbus App"</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-2">Simple SMTP wiring in bin/server.go</h3>
+<pre><code>// File: bin/server.go
+import (
+    "fmt"
+    "net/smtp"
+
+    "github.com/CodeSyncr/nimbus"
+    "github.com/CodeSyncr/nimbus/mail"
+    "nimbus-starter/config"
+)
+
+func Boot() *nimbus.App {
+    config.Load()
+
+    if config.Mail.Driver == "smtp" {
+        host := config.Mail.SMTP.Host
+        port := config.Mail.SMTP.Port
+        if host != "" && port != 0 {
+            addr := fmt.Sprintf("%s:%d", host, port)
+            var auth smtp.Auth
+            if config.Mail.SMTP.Username != "" {
+                auth = smtp.PlainAuth("", config.Mail.SMTP.Username, config.Mail.SMTP.Password, host)
+            }
+            mail.Default = mail.NewSMTPDriver(addr, auth, config.Mail.SMTP.From)
+        }
+    }
+
+    app := nimbus.New()
+    // ...
+    return app
+}</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">If the SMTP addr has no port, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:25</code> is used. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">auth</code> can be nil for unauthenticated SMTP.</p>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-2">Provider-specific drivers (SES, Mailgun, SendGrid, Postmark)</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Provider drivers are thin wrappers around <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SMTPDriver</code> with the right host/port. You still use the same <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.Message</code> type.</p>
+
+<pre><code>// Amazon SES
+import "net/smtp"
+
+host := "email-smtp.us-east-1.amazonaws.com"
+port := "587"
+user := os.Getenv("SES_USER")
+pass := os.Getenv("SES_PASS")
+auth := smtp.PlainAuth("", user, pass, host)
+
+mail.Default = mail.NewSESDriver(host+":"+port, auth, "noreply@example.com")
+
+// Mailgun
+mail.Default = mail.NewMailgunDriver(
+    "smtp.mailgun.org:587",
+    smtp.PlainAuth("", os.Getenv("MAILGUN_USER"), os.Getenv("MAILGUN_PASS"), "smtp.mailgun.org"),
+    "noreply@example.com",
+)
+
+// SendGrid
+mail.Default = mail.NewSendGridDriver(
+    "smtp.sendgrid.net:587",
+    smtp.PlainAuth("", "apikey", os.Getenv("SENDGRID_API_KEY"), "smtp.sendgrid.net"),
+    "noreply@example.com",
+)
+
+// Postmark
+mail.Default = mail.NewPostmarkDriver(
+    "smtp.postmarkapp.com:587",
+    smtp.PlainAuth("", os.Getenv("POSTMARK_USER"), os.Getenv("POSTMARK_API_KEY"), "smtp.postmarkapp.com"),
+    "noreply@example.com",
+)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Sending your first email</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Once <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.Default</code> is configured, sending an email is a single function call:</p>
+
+<pre><code>import (
+    "github.com/CodeSyncr/nimbus/mail"
+    "github.com/CodeSyncr/nimbus/context"
+)
+
+func Welcome(c *http.Context) error {
+    err := mail.Send(&mail.Message{
+        From:    "noreply@example.com",
+        To:      []string{"user@example.com"},
+        Subject: "Welcome to Nimbus",
+        Body:    "Hello from Nimbus!",
+        HTML:    false,
+    })
+    if err != nil {
+        return err
+    }
+    return c.JSON(200, map[string]string{"status": "sent"})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Configuring the message</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.Message</code> struct is intentionally small:</p>
+<pre><code>type Message struct {
+    From    string
+    To      []string
+    Subject string
+    Body    string
+    HTML    bool
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-2">Recipients</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Set one or more recipients via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">To</code>:</p>
+<pre><code>msg := &mail.Message{
+    From:    "noreply@example.com",
+    To:      []string{"a@example.com", "b@example.com"},
+    Subject: "Team update",
+    Body:    "Hello team!",
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-2">Plain text vs HTML</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">HTML</code> to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">true</code> for HTML emails:</p>
+<pre><code>msg := &mail.Message{
+    From:    "noreply@example.com",
+    To:      []string{"user@example.com"},
+    Subject: "Reset your password",
+    Body: `<h1>Reset your password</h1>
+&lt;p&gt;Click &lt;a href="` + resetURL + `"&gt;here&lt;/a&gt; to reset your password.&lt;/p&gt;`,
+    HTML:    true,
+}</code></pre>
+
+<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">For more complex layouts, render HTML using your template engine (e.g. Go templates or a JS frontend) and assign the rendered string to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Body</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Queueing emails</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Sending emails synchronously will block the request until your SMTP provider responds. For production, prefer dispatching a queue job that sends the email in the background.</p>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-2">Example: queue job for welcome email</h3>
+<pre><code>// File: app/jobs/send_welcome_email.go
+package jobs
+
+import (
+    "context"
+
+    "github.com/CodeSyncr/nimbus/mail"
+)
+
+type SendWelcomeEmail struct {
+    Email string
+}
+
+func (j *SendWelcomeEmail) Handle(ctx context.Context) error {
+    return mail.Send(&mail.Message{
+        From:    "noreply@example.com",
+        To:      []string{j.Email},
+        Subject: "Welcome!",
+        Body:    "Thanks for signing up.",
+        HTML:    false,
+    })
+}
+
+// File: start/jobs.go
+package start
+
+import "github.com/CodeSyncr/nimbus/queue"
+import "nimbus-starter/app/jobs"
+
+func RegisterQueueJobs() {
+    m := queue.GetGlobal()
+    if m == nil {
+        return
+    }
+    m.Register(&jobs.SendWelcomeEmail{})
+}</code></pre>
+
+<p class="text-slate-600 dark:text-slate-400 mb-4">Dispatch the job from your controller:</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/queue"
+import "nimbus-starter/app/jobs"
+
+func Register(c *http.Context) error {
+    // ... create user ...
+    _ = queue.Dispatch(&jobs.SendWelcomeEmail{Email: user.Email}).Dispatch(c.Request.Context())
+    return c.JSON(201, user)
+}</code></pre>
+
+<p class="text-slate-600 dark:text-slate-400 mb-4">Run the queue worker:</p>
+<pre><code>nimbus queue:work</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Testing mail</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Because mail drivers implement a simple interface, you can plug in a fake driver in tests to capture outbound messages.</p>
+
+<pre><code>// File: mail_fake_test.go
+type FakeDriver struct {
+    Messages []*mail.Message
+}
+
+func (f *FakeDriver) Send(m *mail.Message) error {
+    f.Messages = append(f.Messages, m)
+    return nil
+}
+
+func TestSendsWelcomeEmail(t *testing.T) {
+    fake := &FakeDriver{}
+    mail.Default = fake
+
+    // Call handler or job that sends email...
+
+    if len(fake.Messages) != 1 {
+        t.Fatalf("expected 1 email, got %d", len(fake.Messages))
+    }
+    msg := fake.Messages[0]
+    if msg.Subject != "Welcome!" {
+        t.Fatalf("unexpected subject: %s", msg.Subject)
+    }
+}</code></pre>
+
+<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">For more advanced scenarios, you can wrap the fake driver in your own test helper and assert on recipients, subjects, and bodies across your test suite.</p>

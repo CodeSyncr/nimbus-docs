@@ -1,0 +1,23 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Serializing Models</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">When returning models in API responses, you often need to exclude sensitive fields or pick specific columns. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Serialize</code> or struct tags to control JSON output.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">database.Serialize</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>m, err := database.Serialize(user, database.SerializeOptions{
+    Omit: []string{"password", "remember_token"},
+})
+return c.JSON(200, m)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Pick specific fields</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>m, _ := database.Serialize(user, database.SerializeOptions{
+    Pick: []string{"id", "name", "email"},
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Struct tags</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Omit fields from all JSON output with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">json:"-"</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type User struct {
+    database.Model
+    Name     string
+    Email    string
+    Password string `json:"-"`  // never serialized
+}</code></pre>

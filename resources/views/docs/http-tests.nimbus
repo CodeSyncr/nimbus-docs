@@ -1,0 +1,158 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">HTTP Tests</h1>
+<p class="text-slate-600 mb-6">The <code class="bg-slate-100 px-1 rounded">testing</code> package in Nimbus provides a <code class="bg-slate-100 px-1 rounded">TestClient</code> that sends requests directly to your router. No running server needed — tests run entirely in-process.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Creating a TestClient</h2>
+<p class="text-slate-600 mb-2">Pass your app's router to <code class="bg-slate-100 px-1 rounded">NewTestClient</code>. The client exposes <code class="bg-slate-100 px-1 rounded">Get</code>, <code class="bg-slate-100 px-1 rounded">Post</code>, and <code class="bg-slate-100 px-1 rounded">Do</code> (for custom requests).</p>
+<pre><code>import nimbustest "github.com/CodeSyncr/nimbus/testing"
+
+app := setupTestApp()
+client := nimbustest.NewTestClient(app.Router)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">GET requests</h2>
+<pre><code>func TestListUsers(t *testing.T) {
+    client := nimbustest.NewTestClient(setupTestApp().Router)
+
+    resp := client.Get("/users")
+
+    if resp.Code != 200 {
+        t.Fatalf("expected 200, got %d", resp.Code)
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">POST requests</h2>
+<p class="text-slate-600 mb-2"><code class="bg-slate-100 px-1 rounded">Post(path, body)</code> sends a POST with <code class="bg-slate-100 px-1 rounded">Content-Type: application/json</code>. Pass <code class="bg-slate-100 px-1 rounded">nil</code> for an empty body.</p>
+<pre><code>func TestCreatePost(t *testing.T) {
+    client := nimbustest.NewTestClient(setupTestApp().Router)
+
+    body := []byte(`{"title":"Hello","content":"World"}`)
+    resp := client.Post("/posts", body)
+
+    if resp.Code != 201 {
+        t.Fatalf("expected 201, got %d", resp.Code)
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">PUT and DELETE with Do</h2>
+<p class="text-slate-600 mb-2">Use <code class="bg-slate-100 px-1 rounded">client.Do(req)</code> for PUT, PATCH, DELETE, or any method with custom headers.</p>
+<pre><code>func TestUpdateUser(t *testing.T) {
+    client := nimbustest.NewTestClient(setupTestApp().Router)
+
+    body := bytes.NewReader([]byte(`{"name":"Bob"}`))
+    req := httptest.NewRequest(http.MethodPut, "/users/1", body)
+    req.Header.Set("Content-Type", "application/json")
+    resp := client.Do(req)
+
+    if resp.Code != 200 {
+        t.Fatalf("expected 200, got %d", resp.Code)
+    }
+}
+
+func TestDeleteUser(t *testing.T) {
+    client := nimbustest.NewTestClient(setupTestApp().Router)
+
+    req := httptest.NewRequest(http.MethodDelete, "/users/1", nil)
+    resp := client.Do(req)
+
+    if resp.Code != 204 {
+        t.Fatalf("expected 204, got %d", resp.Code)
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Asserting JSON response bodies</h2>
+<p class="text-slate-600 mb-2">Read the response body from the recorder and unmarshal it.</p>
+<pre><code>func TestHealthJSON(t *testing.T) {
+    client := nimbustest.NewTestClient(setupTestApp().Router)
+    resp := client.Get("/health")
+
+    var result map[string]string
+    json.Unmarshal(resp.Body.Bytes(), &result)
+
+    if result["status"] != "ok" {
+        t.Errorf("expected status ok, got %s", result["status"])
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Asserting headers</h2>
+<pre><code>func TestContentType(t *testing.T) {
+    client := nimbustest.NewTestClient(setupTestApp().Router)
+    resp := client.Get("/health")
+
+    ct := resp.Header().Get("Content-Type")
+    if ct != "application/json" {
+        t.Errorf("expected application/json, got %s", ct)
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Testing authenticated routes</h2>
+<p class="text-slate-600 mb-2">Set authorization headers on the request before sending it through <code class="bg-slate-100 px-1 rounded">Do</code>.</p>
+<pre><code>func TestProtectedRoute(t *testing.T) {
+    client := nimbustest.NewTestClient(setupTestApp().Router)
+
+    req := httptest.NewRequest(http.MethodGet, "/admin/dashboard", nil)
+    req.Header.Set("Authorization", "Bearer test-token-123")
+    resp := client.Do(req)
+
+    if resp.Code != 200 {
+        t.Fatalf("expected 200, got %d", resp.Code)
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Testing middleware</h2>
+<p class="text-slate-600 mb-2">Register middleware on a test router and verify its effect (e.g. CORS headers, rate limiting).</p>
+<pre><code>func TestCORSMiddleware(t *testing.T) {
+    app := nimbus.New()
+    app.Router.Use(middleware.CORS("https://example.com"))
+    app.Router.Get("/ping", func(c *http.Context) error {
+        return c.String(200, "pong")
+    })
+    client := nimbustest.NewTestClient(app.Router)
+
+    resp := client.Get("/ping")
+    origin := resp.Header().Get("Access-Control-Allow-Origin")
+    if origin != "https://example.com" {
+        t.Errorf("expected CORS origin, got %s", origin)
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Complete example test file</h2>
+<pre><code>package main
+
+import (
+    "encoding/json"
+    "testing"
+
+    "github.com/CodeSyncr/nimbus"
+    "github.com/CodeSyncr/nimbus/middleware"
+    nimbustest "github.com/CodeSyncr/nimbus/testing"
+)
+
+func setupTestApp() *nimbus.App {
+    app := nimbus.New()
+    app.Router.Use(middleware.Recover())
+    app.Router.Get("/health", healthHandler)
+    app.Router.Get("/users", listUsersHandler)
+    app.Router.Post("/users", createUserHandler)
+    return app
+}
+
+func TestHealth(t *testing.T) {
+    client := nimbustest.NewTestClient(setupTestApp().Router)
+    resp := client.Get("/health")
+    if resp.Code != 200 {
+        t.Fatalf("expected 200, got %d", resp.Code)
+    }
+    var body map[string]string
+    json.Unmarshal(resp.Body.Bytes(), &body)
+    if body["status"] != "ok" {
+        t.Errorf("expected ok, got %s", body["status"])
+    }
+}
+
+func TestCreateUser(t *testing.T) {
+    client := nimbustest.NewTestClient(setupTestApp().Router)
+    resp := client.Post("/users", []byte(`{"name":"Alice"}`))
+    if resp.Code != 201 {
+        t.Fatalf("expected 201, got %d", resp.Code)
+    }
+}</code></pre>

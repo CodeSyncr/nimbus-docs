@@ -1,0 +1,60 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Authentication Introduction</h1>
+<p class="text-slate-600 mb-4">Nimbus ships with a flexible authentication system built around two core interfaces: <code class="bg-slate-100 px-1 rounded">auth.Guard</code> and <code class="bg-slate-100 px-1 rounded">auth.User</code>. Guards handle how users are authenticated (sessions, tokens, etc.), while the User interface represents the authenticated identity.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">The User interface</h2>
+<p class="text-slate-600 mb-4">Any type that implements <code class="bg-slate-100 px-1 rounded">GetID() string</code> satisfies the <code class="bg-slate-100 px-1 rounded">auth.User</code> interface. Your application's user model must implement this:</p>
+<pre><code>type AppUser struct {
+    database.Model
+    Name     string
+    Email    string
+    Password string
+}
+
+func (u *AppUser) GetID() string {
+    return fmt.Sprintf("%d", u.ID)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">The Guard interface</h2>
+<p class="text-slate-600 mb-4">A guard provides three methods for managing authentication state:</p>
+<pre><code>type Guard interface {
+    User(ctx context.Context) (User, error)
+    Login(ctx context.Context, user User) error
+    Logout(ctx context.Context) error
+}</code></pre>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">User(ctx)</code> — Resolves the authenticated user from the request context. Returns nil if not authenticated.</li>
+  <li><code class="bg-slate-100 px-1 rounded">Login(ctx, user)</code> — Establishes an authenticated session for the given user.</li>
+  <li><code class="bg-slate-100 px-1 rounded">Logout(ctx)</code> — Removes the authenticated session.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Built-in guards</h2>
+<p class="text-slate-600 mb-4">Nimbus provides <code class="bg-slate-100 px-1 rounded">auth.NewSessionGuard()</code> out of the box, which stores sessions in memory keyed by session ID. You can implement additional guards (e.g. token-based) by satisfying the <code class="bg-slate-100 px-1 rounded">Guard</code> interface.</p>
+<pre><code>guard := auth.NewSessionGuard()</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Protecting routes with RequireAuth</h2>
+<p class="text-slate-600 mb-4">The <code class="bg-slate-100 px-1 rounded">auth.RequireAuth(guard, redirectTo)</code> middleware checks authentication on every request. If no user is found and <code class="bg-slate-100 px-1 rounded">redirectTo</code> is set, it redirects. If <code class="bg-slate-100 px-1 rounded">redirectTo</code> is empty, it returns a 401 JSON response.</p>
+<pre><code>// Redirect unauthenticated users to login page
+app.Router.Use(auth.RequireAuth(guard, "/login"))
+
+// Or return 401 JSON for API routes
+api := app.Router.Group("/api")
+api.Use(auth.RequireAuth(guard, ""))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Getting the authenticated user</h2>
+<p class="text-slate-600 mb-4">After <code class="bg-slate-100 px-1 rounded">RequireAuth</code> runs, retrieve the user in any handler with <code class="bg-slate-100 px-1 rounded">auth.UserFromContext</code>:</p>
+<pre><code>func Dashboard(c *http.Context) error {
+    user := auth.UserFromContext(c.Request.Context())
+    if user == nil {
+        return c.JSON(401, map[string]string{"error": "not authenticated"})
+    }
+    appUser := user.(*AppUser)
+    return c.JSON(200, map[string]string{"welcome": appUser.Name})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Context helpers</h2>
+<p class="text-slate-600 mb-4">Two helper functions manage the user in the request context:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">auth.WithUser(ctx, user)</code> — Sets the user on the context. Used internally by guards and middleware.</li>
+  <li><code class="bg-slate-100 px-1 rounded">auth.UserFromContext(ctx)</code> — Retrieves the user from context. Returns nil if no user is set.</li>
+</ul>

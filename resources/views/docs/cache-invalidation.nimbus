@@ -1,0 +1,41 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Cache Invalidation &amp; ORM Hooks</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Invalidate cache when models change. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.RegisterHooks</code> with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">cache.Delete</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">cache.InvalidatePrefix</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Manual invalidation</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>cache.Delete("user:1")
+cache.InvalidatePrefix("user:")  // Memory &amp; Redis only</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">ORM hooks</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Register hooks to invalidate cache when a model is created, updated, or deleted.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>database.RegisterHooks(db, "users", database.Hooks{
+    AfterCreate: func(db *gorm.DB) {
+        if u, ok := db.Statement.Model.(*User); ok {
+            cache.Delete(fmt.Sprintf("user:%d", u.ID))
+            cache.Delete("users:list")
+        }
+    },
+    AfterUpdate: func(db *gorm.DB) {
+        if u, ok := db.Statement.Model.(*User); ok {
+            cache.Delete(fmt.Sprintf("user:%d", u.ID))
+            cache.Delete("users:list")
+        }
+    },
+    AfterDelete: func(db *gorm.DB) {
+        if u, ok := db.Statement.Model.(*User); ok {
+            cache.Delete(fmt.Sprintf("user:%d", u.ID))
+            cache.Delete("users:list")
+        }
+    },
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Automatic query caching</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.CachedFind</code> for read-heavy queries.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>var users []User
+err := database.CachedFind(
+    database.Get().Model(&amp;User{}).Where("active = ?", true),
+    "users:active",
+    10*time.Minute,
+    &amp;users,
+)</code></pre>
+<p class="text-slate-600 dark:text-slate-400 text-sm">Invalidate <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">users:active</code> in your hooks when users change.</p>

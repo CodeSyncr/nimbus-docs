@@ -1,0 +1,58 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Models Introduction</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">
+  Models are structs that map to database tables. Each model instance represents a row.
+  Nimbus models embed <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Model</code>
+  for ID, timestamps, and soft deletes, and use GORM under the hood for queries and hooks,
+  while exposing framework-agnostic APIs for table names, relations, and metadata.
+</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">What is a model?</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">A model combines:</p>
+<ul class="list-disc list-inside text-slate-600 dark:text-slate-400 mb-4 space-y-1">
+  <li><strong>Table mapping</strong> — Struct fields map to columns (Nimbus convention via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Table()</code> or automatic pluralization)</li>
+  <li><strong>CRUD operations</strong> — Create, Read, Update, Delete via GORM</li>
+  <li><strong>Relationships</strong> — hasMany, belongsTo, manyToMany with eager loading</li>
+  <li><strong>Hooks</strong> — BeforeSave, AfterCreate, etc.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Base model</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Embed <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Model</code> for standard fields (including soft deletes):</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Model struct {
+    ID        uint
+    CreatedAt time.Time
+    UpdatedAt time.Time
+    DeletedAt gorm.DeletedAt  // soft delete (used by GORM + Nimbus helpers)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Defining a model</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Post struct {
+    database.Model
+    Title   string
+    Content string
+    Status  string
+}
+
+// Optional: override logical table name (used by Nimbus helpers).
+func (Post) Table() string { return "posts" }</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">
+  When no <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Table()</code> is defined,
+  Nimbus derives the table name from the struct name using snake_case + pluralization:
+  <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Blog</code> → <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">blogs</code>,
+  <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">UserProfile</code> → <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">user_profiles</code>.
+</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Fillable metadata</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">
+  For mass-assignment and scaffolding, models can optionally implement
+  <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Fillable() []string</code> to declare which
+  fields are safe to assign from input. Nimbus helpers like admin UIs or request binders
+  can use this metadata.
+</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func (Post) Fillable() []string {
+    return []string{"Title", "Content", "Status"}
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Creating a model</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use the CLI:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>nimbus make:model Post</code></pre>

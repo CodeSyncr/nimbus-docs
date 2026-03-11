@@ -1,0 +1,92 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">MCP (Model Context Protocol)</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The MCP plugin enables AI clients (Claude, Cursor, etc.) to interact with your Nimbus application through <strong>tools</strong>, <strong>resources</strong>, and <strong>prompts</strong>. Inspired by <a href="https://laravel.com/docs/12.x/mcp" class="text-amber-600 dark:text-amber-400 hover:underline">Laravel's MCP</a>.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Try the <a href="/demos/mcp" class="text-amber-600 dark:text-amber-400 hover:underline">MCP demo</a> — a weather server with tools and resources you can connect from Cursor or Claude Desktop.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Installation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Add the plugin and register a server in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code>:</p>
+<pre data-file="bin/server.go"><code>import (
+    "github.com/CodeSyncr/nimbus"
+    nimbusmcp "github.com/CodeSyncr/nimbus/plugins/mcp"
+)
+
+func main() {
+    app := nimbus.New()
+
+    mcpPlugin := nimbusmcp.New()
+    mcpPlugin.Web("/mcp/weather", myWeatherServer)
+    app.Use(mcpPlugin)
+
+    // ...
+}</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbusmcp</code> alias to avoid conflict with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">github.com/mark3labs/mcp-go/mcp</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Creating a Server</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Create an MCP server with tools, resources, and prompts:</p>
+<pre data-file="app/mcp/weather_server.go"><code>import (
+    "context"
+    "fmt"
+    nimbusmcp "github.com/CodeSyncr/nimbus/plugins/mcp"
+    "github.com/mark3labs/mcp-go/mcp"
+)
+
+var myWeatherServer = nimbusmcp.NewServer("Weather Server", "1.0.0",
+    nimbusmcp.WithInstructions("Provides weather info."),
+)
+
+func init() {
+    myWeatherServer.AddTool(
+        mcp.NewTool("get_weather",
+            mcp.WithDescription("Get weather for a location"),
+            mcp.WithString("location", mcp.Required()),
+        ),
+        handleGetWeather,
+    )
+}
+
+func handleGetWeather(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+    location, _ := req.RequireString("location")
+    return mcp.NewToolResultText(fmt.Sprintf("Sunny, 72°F in %s", location)), nil
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Tools</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Tools let AI clients perform actions. Define with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mcp.NewTool</code>:</p>
+<pre data-file="app/mcp/server.go"><code>mcp.NewTool("calculate",
+    mcp.WithDescription("Perform arithmetic"),
+    mcp.WithString("operation", mcp.Required(), mcp.Enum("add", "subtract")),
+    mcp.WithNumber("x", mcp.Required()),
+    mcp.WithNumber("y", mcp.Required()),
+)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Resources</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Resources expose data. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">NewResourceTemplate</code> for dynamic URIs:</p>
+<pre data-file="app/mcp/server.go"><code>mcp.NewResourceTemplate("weather://forecast/{location}", "Forecast",
+    mcp.WithTemplateDescription("Weather for a location"),
+    mcp.WithTemplateMIMEType("application/json"),
+)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Prompts</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Prompts provide reusable prompt templates:</p>
+<pre data-file="app/mcp/server.go"><code>mcp.Prompt{
+    Name:        "describe-weather",
+    Description: "Generate a weather description",
+    Arguments: []mcp.PromptArgument{
+        {Name: "location", Description: "City name", Required: true},
+    },
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Connecting from Cursor</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Add the MCP server in Cursor settings. For a server at <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/mcp/weather</code> on localhost (default port 3333):</p>
+<pre data-file="~/.cursor/mcp.json"><code>{
+  "mcpServers": {
+    "nimbus-weather": {
+      "url": "http://localhost:3333/mcp/weather"
+    }
+  }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Transport</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Uses <strong>Streamable HTTP</strong> (MCP spec): POST for JSON-RPC, GET for SSE. Compatible with Cursor, Claude Desktop, and other MCP clients.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Related</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">For text generation and agents, see <a href="/docs/ai" class="text-amber-600 dark:text-amber-400 hover:underline">AI SDK</a>.</p>

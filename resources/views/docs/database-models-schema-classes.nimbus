@@ -1,0 +1,35 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Schema Classes</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Schema classes define the column structure of your models. In Nimbus, your model struct <em>is</em> the schema — you define columns as struct fields with GORM tags for type, constraints, and JSON serialization.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Struct as schema</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">GORM infers column names from field names (snake_case by default). Use struct tags to override:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type User struct {
+    database.Model
+    Name      string `gorm:"size:255"`
+    Email     string `gorm:"uniqueIndex;not null"`
+    Password  string `gorm:"-"`  // ignore in DB
+    Role      string `gorm:"default:user"`
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Common GORM tags</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Tag</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">primaryKey</code></td><td class="px-4 py-2">Primary key</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">uniqueIndex</code></td><td class="px-4 py-2">Unique constraint</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">not null</code></td><td class="px-4 py-2">NOT NULL</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">default:value</code></td><td class="px-4 py-2">Default value</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">size:255</code></td><td class="px-4 py-2">Column size</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">column:db_name</code></td><td class="px-4 py-2">Override column name</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">foreignKey:UserID</code></td><td class="px-4 py-2">Relation foreign key</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">-</code></td><td class="px-4 py-2">Ignore field</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">JSON serialization</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">json</code> tags to control API output:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>Password string `json:"-"`  // omit from JSON
+Email    string `json:"email"`</code></pre>

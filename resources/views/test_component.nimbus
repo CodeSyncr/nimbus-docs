@@ -1,0 +1,4 @@
+@card()
+  <h2>Card title</h2>
+  <p>Card content</p>
+@end

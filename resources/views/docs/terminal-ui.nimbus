@@ -1,0 +1,42 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Terminal UI</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">This guide covers terminal UI helpers for commands. Inspired by <a href="https://docs.adonisjs.com/guides/ace/terminal-ui" target="_blank" rel="noopener" class="text-amber-600 dark:text-amber-400 hover:underline">AdonisJS Ace Terminal UI</a>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Displaying log messages</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Logger()</code> for severity levels: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Debug</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Info</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Success</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Warning</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Error</code>.</p>
+<pre data-file="commands/deploy.go"><code>return command.New("deploy", "Deploy to production").
+	RunE(func(ctx *command.Ctx) error {
+		ctx.Logger().Debug("Loading deployment configuration")
+		ctx.Logger().Info("Deploying application")
+		ctx.Logger().Success("Deployment complete")
+		ctx.Logger().Warning("SSL expires in 30 days")
+		ctx.Logger().Error(err)
+		return nil
+	})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Formatting text with colors</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Colors()</code> for ANSI formatting: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Red</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Green</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Yellow</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Cyan</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Bold</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">BgGreen</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">BgRed</code>.</p>
+<pre data-file="commands/status.go"><code>c := ctx.Colors()
+ctx.Logger().Info(c.Green("[SUCCESS]") + " " + c.Red("[ERROR]"))
+ctx.Logger().Info(c.BgGreen(" CREATED ") + " " + c.BgRed(" FAILED "))
+ctx.Logger().Info(c.Bold("Important") + " " + c.Dim("details"))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Rendering tables</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Render tables with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.UI().Table()</code>. Apply colors to cells.</p>
+<pre data-file="commands/migration-list.go"><code>table := ctx.UI().Table()
+table.Head("Migration", "Duration", "Status")
+table.Row("20260108120000_create_users.go", "2ms", ctx.Colors().Green("DONE"))
+table.Row("20260108120001_add_roles.go", "5ms", ctx.Colors().Red("FAILED"))
+table.Render()</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Creating boxed content with stickers</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Boxed content with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.UI().Sticker()</code>. Step-by-step instructions with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.UI().Instructions()</code>.</p>
+<pre data-file="commands/serve.go"><code>sticker := ctx.UI().Sticker()
+sticker.Add("Started HTTP server").Add("")
+sticker.Add("Local: " + ctx.Colors().Cyan("http://localhost:3333"))
+sticker.Render()
+
+// Instructions (arrow-prefixed)
+steps := ctx.UI().Instructions()
+steps.Add("Run npm install").Add("Copy .env.example to .env").Add("Run go run . migrate")
+steps.Render()</code></pre>

@@ -1,0 +1,122 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Application Lifecycle</h1>
+<p class="text-slate-600 mb-6">Nimbus follows an AdonisJS-style boot sequence. Understanding the lifecycle helps you know where to put configuration, middleware, routes, and plugin setup.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Entry point: main.go</h2>
+<p class="text-slate-600 mb-2"><code class="bg-slate-100 px-1 rounded">main.go</code> is the minimal bootstrap. It delegates everything to <code class="bg-slate-100 px-1 rounded">bin/server.go</code>:</p>
+<pre><code>package main
+
+import "myapp/bin"
+
+func main() {
+    app := bin.Boot()
+    _ = app.Run()
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Boot sequence: bin/server.go</h2>
+<pre><code>package bin
+
+import (
+    "github.com/CodeSyncr/nimbus"
+    "github.com/CodeSyncr/nimbus/database"
+    "myapp/config"
+    "myapp/start"
+)
+
+func Boot() *nimbus.App {
+    config.Load()
+    app := nimbus.New()
+
+    // Register plugins
+    app.Use(
+        stripe.New(),
+        analytics.New(),
+    )
+
+    start.RegisterMiddleware(app)
+    start.RegisterRoutes(app)
+    _, _ = database.Connect(config.Database.Driver, config.Database.DSN)
+
+    return app
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">What app.Run() does</h2>
+<p class="text-slate-600 mb-2">When you call <code class="bg-slate-100 px-1 rounded">app.Run()</code>, Nimbus executes the full boot sequence:</p>
+<pre><code>app.Run()
+  ├─ configureGOGCFromEnv()
+  ├─ startPprofIfEnabled()
+  └─ app.Boot()
+       1. Provider.Register()        — all providers bind services
+       2. Plugin.Register()          — all plugins
+          └─ HasBindings applied     — container bindings registered
+       3. Plugin.DefaultConfig       — default configs collected
+       4. Provider.Boot()            — all providers resolve deps
+       5. Plugin.Boot()              — all plugins initialise
+       6. Plugin capabilities:
+          ├─ HasRoutes               → routes mounted on router
+          ├─ HasMiddleware           → named middleware merged
+          ├─ HasCommands             → CLI commands registered
+          ├─ HasSchedule             → tasks added to scheduler
+          ├─ HasEvents               → listeners registered on event bus
+          └─ HasHealthChecks         → checks added to health checker
+       7. App-level boot hooks       → OnBoot callbacks
+  └─ Start hooks                     → OnStart callbacks
+  └─ Scheduler.Start()              → if tasks registered
+  └─ ListenAndServe()               → accept connections
+
+Shutdown (SIGINT/SIGTERM):
+  └─ Server.Shutdown(ctx)            → graceful drain
+  └─ Scheduler.Stop()               → cancel background tasks
+  └─ HasShutdown.Shutdown()          → each plugin (reverse order)
+  └─ OnShutdown hooks               → app-level cleanup</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Middleware: start/kernel.go</h2>
+<pre><code>func RegisterMiddleware(app *nimbus.App) {
+    app.Router.Use(
+        middleware.Logger(),
+        middleware.Recover(),
+    )
+}
+
+var Middleware = map[string]router.Middleware{
+    // "auth": middleware.RequireAuth(),
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Routes: start/routes.go</h2>
+<pre><code>func RegisterRoutes(app *nimbus.App) {
+    app.Router.Get("/", homeHandler)
+    app.Router.Get("/health", healthHandler)
+    app.Router.Resource("posts", &controllers.Posts{})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Lifecycle hooks</h2>
+<p class="text-slate-600 mb-2">Register callbacks at specific points in the lifecycle:</p>
+<pre><code>// After all plugins/providers have booted, before server starts
+app.OnBoot(func(a *nimbus.App) {
+    log.Println("App booted with", len(a.Plugins()), "plugins")
+})
+
+// Right before the HTTP server begins serving
+app.OnStart(func(a *nimbus.App) {
+    log.Println("Server starting on port", a.Config.App.Port)
+})
+
+// During graceful shutdown
+app.OnShutdown(func(a *nimbus.App) {
+    log.Println("Cleaning up resources...")
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Runtime configuration</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">NIMBUS_GOGC</code> — GC aggressiveness (<code class="bg-slate-100 px-1 rounded">50</code>=aggressive, <code class="bg-slate-100 px-1 rounded">100</code>=default, <code class="bg-slate-100 px-1 rounded">200</code>=fewer cycles, <code class="bg-slate-100 px-1 rounded">off</code>=disabled)</li>
+  <li><code class="bg-slate-100 px-1 rounded">NIMBUS_PPROF</code> — enable pprof server (e.g. <code class="bg-slate-100 px-1 rounded">:6060</code> or <code class="bg-slate-100 px-1 rounded">127.0.0.1:6060</code>)</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Request lifecycle</h2>
+<pre><code>incoming request
+  → server middleware (Logger, Recover, etc.)
+  → route match
+  → group middleware
+  → named middleware (if assigned)
+  → handler(ctx *http.Context) error
+  → response</code></pre>

@@ -1,0 +1,81 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Scheduler</h1>
+<p class="text-slate-600 mb-6">The <code class="bg-slate-100 px-1 rounded">schedule</code> package provides a lightweight cron-style task scheduler. Register periodic tasks that run automatically in the background when your app starts.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Overview</h2>
+<p class="text-slate-600 mb-4">The scheduler is available on <code class="bg-slate-100 px-1 rounded">app.Scheduler</code>. Tasks registered by plugins (via <code class="bg-slate-100 px-1 rounded">HasSchedule</code>) or directly in your app are started automatically when <code class="bg-slate-100 px-1 rounded">app.Run()</code> launches the server.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Registering tasks</h2>
+<pre><code>import (
+    "context"
+    "time"
+    "github.com/CodeSyncr/nimbus/schedule"
+)
+
+// In a plugin (HasSchedule)
+func (p *Plugin) Schedule(s *schedule.Scheduler) {
+    s.Every(5*time.Minute, "sync-data", func(ctx context.Context) error {
+        return p.syncData(ctx)
+    })
+
+    s.Daily("03:00", "nightly-cleanup", func(ctx context.Context) error {
+        return p.cleanup(ctx)
+    })
+}
+
+// Or directly via the app
+app.Scheduler.Every(30*time.Second, "heartbeat", func(ctx context.Context) error {
+    return pingExternalService(ctx)
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Convenience methods</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Interval</th><th class="px-4 py-2 text-left font-semibold">Example</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Every(duration, name, fn)</code></td><td class="px-4 py-2">Custom interval</td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Every(10*time.Second, ...)</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">EveryMinute(name, fn)</code></td><td class="px-4 py-2">1 minute</td><td class="px-4 py-2">Health pings</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">EveryFiveMinutes(name, fn)</code></td><td class="px-4 py-2">5 minutes</td><td class="px-4 py-2">Cache cleanup</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Hourly(name, fn)</code></td><td class="px-4 py-2">1 hour</td><td class="px-4 py-2">Metrics flush</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Daily(at, name, fn)</code></td><td class="px-4 py-2">24 hours at specific time</td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">Daily("03:00", ...)</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Daily tasks with specific times</h2>
+<p class="text-slate-600 mb-2">Use <code class="bg-slate-100 px-1 rounded">Daily()</code> with an "HH:MM" string in local timezone:</p>
+<pre><code>// Run at 3:00 AM every day
+s.Daily("03:00", "send-reports", func(ctx context.Context) error {
+    return reportService.SendDailyDigest(ctx)
+})
+
+// Run at midnight
+s.Daily("00:00", "rotate-logs", func(ctx context.Context) error {
+    return logManager.Rotate(ctx)
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">How it works</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li>Each task runs in its own goroutine with a <code class="bg-slate-100 px-1 rounded">time.Ticker</code>.</li>
+  <li>Tasks include <strong>panic recovery</strong> — a panicking task won't crash the app.</li>
+  <li>Errors are logged via <code class="bg-slate-100 px-1 rounded">log.Printf</code>.</li>
+  <li>The scheduler starts automatically in <code class="bg-slate-100 px-1 rounded">app.Run()</code> if any tasks are registered.</li>
+  <li>On shutdown (<code class="bg-slate-100 px-1 rounded">SIGINT</code>/<code class="bg-slate-100 px-1 rounded">SIGTERM</code>), the scheduler is stopped gracefully via context cancellation.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Standalone usage</h2>
+<p class="text-slate-600 mb-2">You can also use the scheduler outside of the app lifecycle:</p>
+<pre><code>s := schedule.New()
+s.EveryMinute("ping", pingHandler)
+s.Hourly("metrics", metricsHandler)
+s.Start(ctx)     // non-blocking, runs in background
+defer s.Stop()   // graceful shutdown</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Plugin integration</h2>
+<p class="text-slate-600 mb-2">Plugins implement <code class="bg-slate-100 px-1 rounded">HasSchedule</code> to register tasks that start automatically:</p>
+<pre><code>type AnalyticsPlugin struct { nimbus.BasePlugin }
+
+func (p *AnalyticsPlugin) Schedule(s *schedule.Scheduler) {
+    s.Every(5*time.Minute, "analytics-flush", p.flushMetrics)
+    s.Daily("02:00", "analytics-aggregate", p.aggregateDaily)
+}</code></pre>

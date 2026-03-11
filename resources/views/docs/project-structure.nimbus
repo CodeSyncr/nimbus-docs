@@ -1,0 +1,48 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Project Structure</h1>
+<p class="text-slate-600 mb-6">A new Nimbus app follows an AdonisJS-inspired layout. Each directory has a clear purpose, and the CLI scaffolds the same structure as the starter you are reading.</p>
+
+<pre><code>├── app/
+│   ├── controllers/
+│   ├── models/
+│   ├── middleware/
+│   └── jobs/
+├── bin/
+│   └── server.go
+├── config/
+│   ├── config.go
+│   ├── app.go
+│   └── database.go
+├── database/
+│   ├── migrations/
+│   │   └── registry.go
+│   └── seeders/
+├── start/
+│   ├── kernel.go
+│   ├── routes.go
+│   └── jobs.go
+├── resources/
+│   ├── views/
+│   ├── css/
+│   └── js/
+├── public/
+├── main.go
+├── go.mod
+├── .env
+└── .air.toml</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Directory reference</h2>
+<ul class="text-slate-600 space-y-2 mb-6">
+  <li><strong class="text-slate-800">app/controllers/</strong> — HTTP controllers wired from <code class="bg-slate-100 px-1 rounded">start/routes.go</code>.</li>
+  <li><strong class="text-slate-800">app/models/</strong> — GORM models (embed <code class="bg-slate-100 px-1 rounded">database.Model</code>).</li>
+  <li><strong class="text-slate-800">app/middleware/</strong> — Custom middleware (e.g. auth, logging).</li>
+  <li><strong class="text-slate-800">app/jobs/</strong> — Queue jobs implementing <code class="bg-slate-100 px-1 rounded">queue.Job</code>.</li>
+  <li><strong class="text-slate-800">config/</strong> — Typed config structs loaded from <code class="bg-slate-100 px-1 rounded">.env</code> via <code class="bg-slate-100 px-1 rounded">config.Load()</code>.</li>
+  <li><strong class="text-slate-800">database/migrations/</strong> — Migration definitions registered in <code class="bg-slate-100 px-1 rounded">registry.go</code>.</li>
+  <li><strong class="text-slate-800">database/seeders/</strong> — Seed logic for initial or test data.</li>
+  <li><strong class="text-slate-800">start/</strong> — Optional: route registration, kernel (e.g. start/routes.go).</li>
+  <li><strong class="text-slate-800">resources/views/</strong> — <code class="bg-slate-100 px-1 rounded">.nimbus</code> templates for your pages and layouts.</li>
+  <li><strong class="text-slate-800">resources/css/</strong> — Stylesheets for your views (optional, organize as you like).</li>
+  <li><strong class="text-slate-800">resources/js/</strong> — JavaScript for your views or small sprinkles of interactivity.</li>
+  <li><strong class="text-slate-800">public/</strong> — Static assets (if you serve them via router or file server).</li>
+</ul>

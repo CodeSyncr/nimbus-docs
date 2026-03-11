@@ -1,0 +1,41 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Model Hooks</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Hooks run at specific points in a model's lifecycle. Use them to hash passwords, validate data, send notifications, or clean up related records.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Overview</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Nimbus provides <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.RegisterHooks</code> to attach GORM callbacks. Hooks receive the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*gorm.DB</code> and can inspect or modify the statement.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Available hooks</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Hook</th><th class="px-4 py-2 text-left font-semibold">When</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">BeforeCreate</td><td class="px-4 py-2">Before INSERT</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">AfterCreate</td><td class="px-4 py-2">After INSERT</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">BeforeUpdate</td><td class="px-4 py-2">Before UPDATE</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">AfterUpdate</td><td class="px-4 py-2">After UPDATE</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">BeforeSave</td><td class="px-4 py-2">Before INSERT or UPDATE</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">AfterSave</td><td class="px-4 py-2">After INSERT or UPDATE</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">BeforeDelete</td><td class="px-4 py-2">Before DELETE</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">AfterDelete</td><td class="px-4 py-2">After DELETE</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Registering hooks</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>database.RegisterHooks(database.Get(), "users", database.Hooks{
+    BeforeCreate: func(db *gorm.DB) {
+        // Access model via db.Statement.Dest
+        if u, ok := db.Statement.Dest.(*User); ok && u.Password != "" {
+            hashed, _ := hash.Make(u.Password)
+            u.Password = hashed
+        }
+    },
+    AfterCreate: func(db *gorm.DB) {
+        // Send welcome email, etc.
+    },
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">GORM callbacks</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">For model-specific hooks, use GORM's <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Callback</code> API directly on the model:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db.Callback().Create().Before("gorm:before_create").Register("hash_password", hashPasswordFn)</code></pre>

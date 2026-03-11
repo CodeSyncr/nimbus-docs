@@ -1,0 +1,35 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Auth & Guards</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus provides session-based auth with persistent storage. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:auth</code> to scaffold User model, AuthController, and login/register views. Requires <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">session.Middleware</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">auth.NewSessionGuardWithLoader</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Quick Start</h2>
+<pre data-file="Terminal"><code>nimbus make:auth</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Add migration to registry, wire session middleware and auth routes, run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus db:migrate</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Session Guard with Loader</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">auth.NewSessionGuardWithLoader(models.UserByID(db))</code> to load user from DB. Requires <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">session.Middleware</code>.</p>
+<pre data-file="start/routes.go"><code>guard := auth.NewSessionGuardWithLoader(models.UserByID(database.DB))
+authCtrl := &controllers.AuthController{DB: database.DB, Guard: guard}
+app.Router.Get("/login", authCtrl.LoginForm)
+app.Router.Post("/login", authCtrl.Login)
+app.Router.Post("/logout", authCtrl.Logout)
+dashboard := app.Router.Group("/dashboard", auth.RequireAuth(guard, "/login"))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">User interface</h2>
+<pre data-file="app/models/user.go"><code>type User struct {
+    database.Model
+    Email        string
+    PasswordHash string
+}
+func (u *User) GetID() string { return fmt.Sprintf("%d", u.ID) }</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Policies</h2>
+<p class="text-slate-600 mb-2">Implement <code class="bg-slate-100 px-1 rounded">auth.Policy</code> with <code class="bg-slate-100 px-1 rounded">Allow(ctx, user, action, resource) bool</code> for fine-grained authorization.</p>
+<pre><code>type PostPolicy struct{}
+func (p *PostPolicy) Allow(ctx context.Context, user auth.User, action string, resource any) bool {
+    post := resource.(*Post)
+    if action == "update" || action == "delete" {
+        return post.UserID == user.GetID()
+    }
+    return true
+}</code></pre>

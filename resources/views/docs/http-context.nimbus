@@ -1,0 +1,70 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">HTTP Context</h1>
+<p class="text-slate-600 mb-4">Every Nimbus handler receives a <code class="bg-slate-100 px-1 rounded">*http.Context</code> — a single object that wraps the HTTP request, response writer, and route parameters. It provides convenience methods so you rarely need to interact with the raw <code class="bg-slate-100 px-1 rounded">net/http</code> types directly.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">The Context Struct</h2>
+<p class="text-slate-600 mb-4">The <code class="bg-slate-100 px-1 rounded">context.Context</code> struct is defined in the <code class="bg-slate-100 px-1 rounded">github.com/CodeSyncr/nimbus/context</code> package:</p>
+<pre><code>type Context struct {
+    Request  *http.Request
+    Response http.ResponseWriter
+    Params   map[string]string
+}</code></pre>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li><code class="bg-slate-100 px-1 rounded">Request</code> — the standard <code class="bg-slate-100 px-1 rounded">*http.Request</code> with headers, body, URL, method, and more.</li>
+  <li><code class="bg-slate-100 px-1 rounded">Response</code> — the standard <code class="bg-slate-100 px-1 rounded">http.ResponseWriter</code> for writing the response.</li>
+  <li><code class="bg-slate-100 px-1 rounded">Params</code> — a map of route parameters extracted from the URL path.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Param(name string) string</h2>
+<p class="text-slate-600 mb-4">Returns the value of a named route parameter. Parameters are defined with <code class="bg-slate-100 px-1 rounded">:name</code> in the route path.</p>
+<pre><code>// Route: /users/:id
+app.Router.Get("/users/:id", func(c *http.Context) error {
+    id := c.Param("id") // "42" for /users/42
+    return c.JSON(200, map[string]string{"id": id})
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">JSON(code int, body any) error</h2>
+<p class="text-slate-600 mb-4">Sends a JSON response. Sets <code class="bg-slate-100 px-1 rounded">Content-Type: application/json</code>, writes the status code, and encodes the body as JSON.</p>
+<pre><code>return c.JSON(200, map[string]any{
+    "users": users,
+    "total": len(users),
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">String(code int, s string)</h2>
+<p class="text-slate-600 mb-4">Sends a plain text response with <code class="bg-slate-100 px-1 rounded">Content-Type: text/plain</code>.</p>
+<pre><code>c.String(200, "OK")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">View(name string, data any) error</h2>
+<p class="text-slate-600 mb-4">Renders a <code class="bg-slate-100 px-1 rounded">.nimbus</code> template and sends HTML. The <code class="bg-slate-100 px-1 rounded">name</code> is the template path relative to <code class="bg-slate-100 px-1 rounded">views/</code> (without the <code class="bg-slate-100 px-1 rounded">.nimbus</code> extension). The <code class="bg-slate-100 px-1 rounded">data</code> map provides variables to the template.</p>
+<pre><code>return c.View("posts/show", map[string]any{
+    "title": post.Title,
+    "post":  post,
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Redirect(code int, url string)</h2>
+<p class="text-slate-600 mb-4">Sends an HTTP redirect. Common status codes are <code class="bg-slate-100 px-1 rounded">301</code> (permanent), <code class="bg-slate-100 px-1 rounded">302</code> (temporary), and <code class="bg-slate-100 px-1 rounded">303</code> (see other, used after POST).</p>
+<pre><code>c.Redirect(302, "/login")
+c.Redirect(301, "/new-url")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Status(code int) *Context</h2>
+<p class="text-slate-600 mb-4">Sets the HTTP status code and returns the context for chaining. Useful when you want to set a status before writing the response body manually.</p>
+<pre><code>c.Status(204) // No Content</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Accessing Request and Response Directly</h2>
+<p class="text-slate-600 mb-4">For anything not covered by the helper methods, access the underlying <code class="bg-slate-100 px-1 rounded">net/http</code> types directly:</p>
+<pre><code>// Read a request header
+auth := c.Request.Header.Get("Authorization")
+
+// Set a response header
+c.Response.Header().Set("X-Request-Id", requestID)
+
+// Get the HTTP method
+method := c.Request.Method
+
+// Get the full URL
+url := c.Request.URL.String()</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Handler Signature</h2>
+<p class="text-slate-600 mb-4">All Nimbus handlers follow the same signature. The returned error, if non-nil, results in a 500 Internal Server Error (unless the Recover middleware handles it).</p>
+<pre><code>type HandlerFunc func(*http.Context) error</code></pre>
+<p class="text-slate-600 mb-4">This applies to inline handlers, controller methods, and middleware inner functions alike.</p>

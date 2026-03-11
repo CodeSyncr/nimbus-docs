@@ -1,0 +1,223 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Documentation</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-10">Nimbus is an AdonisJS-style web framework for Go. Explore the guides below to get started.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Start</h2>
+<div class="grid gap-3 sm:grid-cols-2 mb-10">
+  <a href="/docs/introduction" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Introduction</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">What is Nimbus and why it exists.</p>
+  </a>
+  <a href="/docs/installation" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Installation</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Install CLI, create an app, run the server.</p>
+  </a>
+  <a href="/docs/folder-structure" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Folder Structure</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Directories, conventions and layout.</p>
+  </a>
+  <a href="/docs/configuration" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Configuration</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">.env files, config struct, environment.</p>
+  </a>
+  <a href="/docs/deployment" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Deployment</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Build, Docker, nginx, systemd.</p>
+  </a>
+  <a href="/docs/faqs" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">FAQs</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Common questions and answers.</p>
+  </a>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Basics</h2>
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-10">
+  <a href="/docs/routing" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Routing</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Methods, params, groups.</p>
+  </a>
+  <a href="/docs/controllers" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Controllers</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Organize handlers into structs.</p>
+  </a>
+  <a href="/docs/http-context" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">HTTP Context</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Request + response helpers.</p>
+  </a>
+  <a href="/docs/middleware" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Middleware</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Logger, Recover, custom chains.</p>
+  </a>
+  <a href="/docs/validation" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Validation</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Struct tags and request validation.</p>
+  </a>
+  <a href="/docs/exception-handling" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Exception Handling</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Error types, panic recovery.</p>
+  </a>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Nimbus Template</h2>
+<div class="grid gap-3 sm:grid-cols-2 mb-10">
+  <a href="/docs/nimbus-template" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">.nimbus syntax &amp; layouts</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Variables, conditionals, loops, components, layouts.</p>
+  </a>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Inertia</h2>
+<div class="grid gap-3 sm:grid-cols-2 mb-10">
+  <a href="/docs/inertia" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Inertia.js</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Vue, React, Svelte SPAs with server-driven routing.</p>
+  </a>
+  <a href="/docs/inertia-setup" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Inertia Setup</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Add Inertia to an existing app.</p>
+  </a>
+  <a href="/docs/inertia-hmr" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Inertia HMR &amp; Vite</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Hot Module Replacement, React Fast Refresh, troubleshooting.</p>
+  </a>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Data Layer</h2>
+<div class="grid gap-3 sm:grid-cols-3 mb-10">
+  <a href="/docs/database" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Database &amp; ORM</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">GORM, models, queries.</p>
+  </a>
+  <a href="/docs/migrations" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Migrations</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Schema changes over time.</p>
+  </a>
+  <a href="/docs/seeders" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Seeders</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Populate data for dev/testing.</p>
+  </a>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Auth &amp; Security</h2>
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-10">
+  <a href="/docs/shield" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Shield</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">XSS, CSRF, CSP &amp; security headers.</p>
+  </a>
+  <a href="/docs/auth-introduction" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Auth Introduction</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Guards, users, RequireAuth.</p>
+  </a>
+  <a href="/docs/session-guard" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Session Guard</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Cookie-based sessions.</p>
+  </a>
+  <a href="/docs/access-tokens" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Access Tokens</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Bearer token authentication.</p>
+  </a>
+  <a href="/docs/authorization" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Authorization</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Policies and permissions.</p>
+  </a>
+  <a href="/docs/cors" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">CORS</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Cross-origin resource sharing.</p>
+  </a>
+  <a href="/docs/csrf" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">CSRF</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Cross-site request forgery protection.</p>
+  </a>
+  <a href="/docs/rate-limiting" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Rate Limiting</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Throttle incoming requests.</p>
+  </a>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Digging Deeper</h2>
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-10">
+  <a href="/docs/cache" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Cache</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">In-memory cache store.</p>
+  </a>
+  <a href="/docs/storage" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Storage</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">File system driver (low-level).</p>
+  </a>
+  <a href="/docs/drive" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Drive</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">File storage (fs, S3, GCS, R2, Spaces, Supabase).</p>
+  </a>
+  <a href="/docs/transmit" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Transmit</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">SSE for real-time server-to-client push.</p>
+  </a>
+  <a href="/docs/events" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Events</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Event bus, listen and dispatch.</p>
+  </a>
+  <a href="/docs/logger" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Logger</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Structured logging with zap.</p>
+  </a>
+  <a href="/docs/mail" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Mail</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">SMTP driver, send messages.</p>
+  </a>
+  <a href="/docs/queue" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Queue</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Background jobs (sync, Redis, database, SQS, Kafka).</p>
+  </a>
+  <a href="/docs/scheduler" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Scheduler</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Cron-like task scheduling.</p>
+  </a>
+  <a href="/docs/websockets" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">WebSockets</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Real-time communication.</p>
+  </a>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Core Concepts</h2>
+<div class="grid gap-3 sm:grid-cols-2 mb-10">
+  <a href="/docs/application-lifecycle" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Application Lifecycle</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Boot, register, run.</p>
+  </a>
+  <a href="/docs/dependency-injection" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Dependency Injection</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">IoC container, Bind, Singleton.</p>
+  </a>
+  <a href="/docs/service-providers" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Service Providers</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Register and boot services.</p>
+  </a>
+  <a href="/docs/container-services" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Container Services</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Built-in services and custom bindings.</p>
+  </a>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Command Line &amp; Testing</h2>
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-10">
+  <a href="/docs/cli" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">CLI Introduction</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">nimbus new, serve, make:*.</p>
+  </a>
+  <a href="/docs/creating-commands" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Creating Commands</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Custom commands with nimbus/command.</p>
+  </a>
+  <a href="/docs/hot-reload" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Hot Reload</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Air integration, auto-restart.</p>
+  </a>
+  <a href="/docs/testing-introduction" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Testing Introduction</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">go test, TestClient setup.</p>
+  </a>
+  <a href="/docs/http-tests" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">HTTP Tests</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Request assertions and examples.</p>
+  </a>
+</div>

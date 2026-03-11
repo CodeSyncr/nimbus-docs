@@ -1,0 +1,33 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Remember &amp; Type-Safe API</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">cache.Remember</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">cache.RememberT</code> to fetch from cache or compute and store. Values are JSON-serialized for distributed backends.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Remember</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Gets from cache or calls the callback, stores the result, and returns it.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>v, err := cache.Remember("user:1", 10*time.Minute, func() (any, error) {
+    var u User
+    err := database.Get().First(&u, 1).Error
+    return u, err
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">RememberT (type-safe)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Same as Remember but returns a typed value. Use for structs and slices.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>user, err := cache.RememberT("user:1", 10*time.Minute, func() (User, error) {
+    var u User
+    err := database.Get().First(&u, 1).Error
+    return u, err
+})
+
+// For slices
+users, err := cache.RememberT("users:active", 5*time.Minute, func() ([]User, error) {
+    var list []User
+    err := database.Get().Where("active = ?", true).Find(&list).Error
+    return list, err
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Set, Get, Delete</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>cache.Set("key", value, 10*time.Minute)
+if v, ok := cache.Get("key"); ok {
+    // use v
+}
+cache.Delete("key")</code></pre>

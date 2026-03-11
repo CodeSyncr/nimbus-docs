@@ -1,0 +1,107 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Middleware</h1>
+<p class="text-slate-600 mb-6">Middleware in Nimbus is registered in <code class="bg-slate-100 px-1 rounded">start/kernel.go</code>, just like AdonisJS's <code class="bg-slate-100 px-1 rounded">start/kernel.ts</code>. The kernel organises middleware into three layers: server, router, and named.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">The HTTP Kernel</h2>
+<p class="text-slate-600 mb-2"><code class="bg-slate-100 px-1 rounded">start/kernel.go</code> is the single place where all middleware is configured:</p>
+<pre><code>// start/kernel.go
+package start
+
+import (
+    "github.com/CodeSyncr/nimbus"
+    "github.com/CodeSyncr/nimbus/middleware"
+    "github.com/CodeSyncr/nimbus/router"
+)
+
+func RegisterMiddleware(app *nimbus.App) {
+
+    // Server Middleware
+    // Runs on every HTTP request, even if there is no route
+    // registered for the request URL.
+    app.Router.Use(
+        middleware.Logger(),
+        middleware.Recover(),
+    )
+
+    // Router Middleware
+    // Runs on all HTTP requests with a registered route.
+    // app.Router.Use(
+    //     middleware.CORS("*"),
+    //     middleware.CSRF(middleware.NewMemoryCSRFStore()),
+    // )
+}
+
+// Named Middleware
+// Must be explicitly assigned to routes or route groups.
+var Middleware = map[string]router.Middleware{
+    // "auth":  middleware.RequireAuth(),
+    // "guest": guestMiddleware(),
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Server middleware</h2>
+<p class="text-slate-600 mb-4">Server middleware runs on <strong>every</strong> HTTP request — even if no route matches. Use this for logging, panic recovery, and other concerns that apply globally.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Router middleware</h2>
+<p class="text-slate-600 mb-4">Router middleware runs only on requests that match a registered route. CORS, CSRF, body parsing, and session middleware belong here.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Named middleware</h2>
+<p class="text-slate-600 mb-2">Named middleware is defined as a map in <code class="bg-slate-100 px-1 rounded">kernel.go</code> and assigned to individual routes or groups in <code class="bg-slate-100 px-1 rounded">start/routes.go</code>:</p>
+<pre><code>// start/routes.go
+import "myapp/start"
+
+admin := app.Router.Group("/admin", start.Middleware["auth"])
+admin.Get("/dashboard", dashboardHandler)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Built-in middleware</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Logger</h3>
+<p class="text-slate-600 mb-2">Logs method, path, client IP, and duration.</p>
+<pre><code>middleware.Logger()</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Recover</h3>
+<p class="text-slate-600 mb-2">Recovers panics and returns a 500 JSON response.</p>
+<pre><code>middleware.Recover()</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">CORS</h3>
+<p class="text-slate-600 mb-2">Sets Access-Control-Allow-Origin and related headers. Parameter: <code class="bg-slate-100 px-1 rounded">origin string</code>.</p>
+<pre><code>middleware.CORS("*")</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">CSRF</h3>
+<p class="text-slate-600 mb-2">Validates token for non-GET/HEAD/OPTIONS. Token from header <code class="bg-slate-100 px-1 rounded">X-CSRF-Token</code> or form <code class="bg-slate-100 px-1 rounded">csrf_token</code>.</p>
+<pre><code>store := middleware.NewMemoryCSRFStore()
+middleware.CSRF(store)</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">RateLimit</h3>
+<p class="text-slate-600 mb-2">Parameters: <code class="bg-slate-100 px-1 rounded">limit int</code>, <code class="bg-slate-100 px-1 rounded">window time.Duration</code>, <code class="bg-slate-100 px-1 rounded">keyFn func(*http.Request) string</code>. Returns 429 when exceeded.</p>
+<pre><code>middleware.RateLimit(60, time.Minute, func(r *http.Request) string {
+    return r.RemoteAddr
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Custom middleware</h2>
+<p class="text-slate-600 mb-2">Create custom middleware in <code class="bg-slate-100 px-1 rounded">app/middleware/</code>. Middleware has type <code class="bg-slate-100 px-1 rounded">func(HandlerFunc) HandlerFunc</code>:</p>
+<pre><code>// app/middleware/tenant.go
+package middleware
+
+import (
+    "github.com/CodeSyncr/nimbus/context"
+    "github.com/CodeSyncr/nimbus/router"
+)
+
+func Tenant() router.Middleware {
+    return func(next router.HandlerFunc) router.HandlerFunc {
+        return func(c *http.Context) error {
+            // before handler
+            err := next(c)
+            // after handler
+            return err
+        }
+    }
+}</code></pre>
+<p class="text-slate-600 mb-4">Then register it in the kernel:</p>
+<pre><code>// start/kernel.go
+import appmw "myapp/app/middleware"
+
+var Middleware = map[string]router.Middleware{
+    "auth":   middleware.RequireAuth(),
+    "tenant": appmw.Tenant(),
+}</code></pre>

@@ -1,0 +1,98 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Static Files</h1>
+<p class="text-slate-600 mb-6">Serve CSS, JavaScript, images, and other static assets from your project's <code class="bg-slate-100 px-1 rounded">public/</code> directory. Nimbus uses Go's built-in <code class="bg-slate-100 px-1 rounded">http.FileServer</code> under the hood, registered as a route on the Chi router.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Project structure</h2>
+<p class="text-slate-600 mb-2">Place your static assets in the <code class="bg-slate-100 px-1 rounded">public/</code> directory at the project root:</p>
+<pre><code>myapp/
+  public/
+    css/
+      app.css
+    js/
+      app.js
+    images/
+      logo.png
+    favicon.ico
+  views/
+  main.go</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Configuring the file server</h2>
+<p class="text-slate-600 mb-2">Register a wildcard route that serves files from <code class="bg-slate-100 px-1 rounded">public/</code>. Use <code class="bg-slate-100 px-1 rounded">http.StripPrefix</code> so the URL path maps correctly to the file system.</p>
+<pre><code>import (
+    "github.com/CodeSyncr/nimbus"
+    "github.com/go-chi/chi/v5"
+)
+
+func main() {
+    app := nimbus.New()
+
+    // Serve /static/* from the public/ directory
+    fileServer := http.FileServer(http.Dir("public"))
+    app.Router.Handle("/static/*",
+        http.StripPrefix("/static/", fileServer),
+    )
+
+    app.Run()
+}</code></pre>
+<p class="text-slate-600 mb-4">With this setup, <code class="bg-slate-100 px-1 rounded">/static/css/app.css</code> serves the file at <code class="bg-slate-100 px-1 rounded">public/css/app.css</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Referencing assets in templates</h2>
+<p class="text-slate-600 mb-2">In your <code class="bg-slate-100 px-1 rounded">.nimbus</code> templates, reference static assets using the path prefix you configured:</p>
+<pre><code>&lt;link rel="stylesheet" href="/static/css/app.css"&gt;
+&lt;script src="/static/js/app.js"&gt;&lt;/script&gt;
+&lt;img src="/static/images/logo.png" alt="Logo"&gt;</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Setting cache headers</h2>
+<p class="text-slate-600 mb-2">Wrap the file server with a middleware that sets <code class="bg-slate-100 px-1 rounded">Cache-Control</code> headers for better performance in production.</p>
+<pre><code>func cacheControl(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+        next.ServeHTTP(w, r)
+    })
+}
+
+fileServer := http.FileServer(http.Dir("public"))
+cached := cacheControl(http.StripPrefix("/static/", fileServer))
+app.Router.Handle("/static/*", cached)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Serving from the root path</h2>
+<p class="text-slate-600 mb-2">If you prefer serving assets without a prefix (e.g. <code class="bg-slate-100 px-1 rounded">/css/app.css</code> directly), mount the file server at the root. Be careful with route conflicts — define your API and page routes first.</p>
+<pre><code>// Serve files directly from public/ at the root
+fileServer := http.FileServer(http.Dir("public"))
+app.Router.Handle("/*", fileServer)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Serving a single file</h2>
+<p class="text-slate-600 mb-2">For individual files like <code class="bg-slate-100 px-1 rounded">favicon.ico</code> or <code class="bg-slate-100 px-1 rounded">robots.txt</code>, use a dedicated route with <code class="bg-slate-100 px-1 rounded">http.ServeFile</code>.</p>
+<pre><code>app.Router.Get("/favicon.ico", func(c *http.Context) error {
+    http.ServeFile(c.Response, c.Request, "public/favicon.ico")
+    return nil
+})
+
+app.Router.Get("/robots.txt", func(c *http.Context) error {
+    http.ServeFile(c.Response, c.Request, "public/robots.txt")
+    return nil
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Using embedded files (Go 1.16+)</h2>
+<p class="text-slate-600 mb-2">For single-binary deployments, embed static files at compile time using <code class="bg-slate-100 px-1 rounded">embed.FS</code>.</p>
+<pre><code>import "embed"
+
+//go:embed public/*
+var publicFS embed.FS
+
+func main() {
+    app := nimbus.New()
+    sub, _ := fs.Sub(publicFS, "public")
+    fileServer := http.FileServer(http.FS(sub))
+    app.Router.Handle("/static/*",
+        http.StripPrefix("/static/", fileServer),
+    )
+    app.Run()
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Tips</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li>In development, disable caching so changes to CSS/JS are reflected immediately.</li>
+  <li>In production, use long <code class="bg-slate-100 px-1 rounded">max-age</code> values and fingerprinted filenames (e.g. <code class="bg-slate-100 px-1 rounded">app.abc123.css</code>).</li>
+  <li>For large-scale apps, serve static files from a CDN and use Nimbus only for the API and server-rendered pages.</li>
+</ul>

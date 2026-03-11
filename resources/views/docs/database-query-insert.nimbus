@@ -1,0 +1,46 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Insert Query Builder</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">The insert query builder lets you insert rows into tables without using models. Use it for bulk inserts, raw table inserts, or when you need to bypass model hooks and timestamps.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Overview</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Nimbus uses GORM's <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Table().Create()</code> for inserts. You can insert a single map, a struct, or a slice for bulk inserts.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Single insert</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Insert as map (column names as keys)
+db := database.Get()
+result := db.Table("posts").Create(map[string]any{
+    "title":      "Hello World",
+    "content":    "First post content",
+    "status":     "draft",
+    "created_at": time.Now(),
+    "updated_at": time.Now(),
+})
+
+// Insert returns the number of rows affected
+if result.Error != nil {
+    return result.Error
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Bulk insert</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Pass a slice of maps or structs to insert multiple rows in one query.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>rows := []map[string]any{
+    {"title": "Post 1", "content": "Content 1", "status": "draft"},
+    {"title": "Post 2", "content": "Content 2", "status": "draft"},
+}
+db.Table("posts").Create(rows)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Insert with model</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">For models, use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">db.Create(&amp;model)</code></code>. GORM auto-sets timestamps and runs hooks.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>post := Post{Title: "Hello", Content: "World", Status: "draft"}
+db.Create(&post)
+// post.ID is set after insert</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Create in batches</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">CreateInBatches</code> for large inserts to avoid memory issues.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db.CreateInBatches(rows, 100)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Returning inserted ID</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">When using a struct, GORM scans the generated ID back into the struct. For maps, use a model with a pointer or scan the result.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>post := Post{Title: "New", Content: "Post"}
+db.Create(&post)
+fmt.Println(post.ID)  // auto-populated</code></pre>

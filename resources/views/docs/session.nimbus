@@ -1,0 +1,43 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Session</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Sessions persist user-specific data across requests. Nimbus supports cookie (encrypted), memory, and database stores. Use with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">session.Middleware</code> — required for auth.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Stores</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><strong>MemoryStore</strong> — In-memory; sessions lost on restart. Use for development.</li>
+  <li><strong>NewCookieStore</strong> — Encrypted cookie; no server storage. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">session.KeyFromString(APP_KEY)</code> for the key.</li>
+  <li><strong>NewDatabaseStore</strong> — Persists to a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">sessions</code> table. Call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">EnsureTable()</code> to create the table.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Middleware</h2>
+<pre data-file="start/kernel.go"><code>store := session.NewMemoryStore()
+app.Router.Use(session.Middleware(session.Config{
+    Store:       store,
+    CookieName:  "nimbus_session",
+    MaxAge:      7 * 24 * time.Hour,
+    HttpOnly:    true,
+    Secure:      false,
+    SameSite:    session.SameSiteLax,
+}))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Get & Set</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">session.FromContext(ctx)</code> to access the session. Changes are persisted automatically.</p>
+<pre data-file="app/controllers/example.go"><code>sess := session.FromContext(c.Request.Context())
+if sess != nil {
+    sess.Set("user_id", "42")
+    sess.Set("role", "admin")
+    val := sess.Get("user_id")
+    sess.Delete("user_id")
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Regenerate</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">sess.Regenerate()</code> after login to prevent session fixation.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Config</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">CookieName</code> — Default: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus_session</code></li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MaxAge</code> — Session duration (e.g. 7 * 24 * time.Hour)</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">HttpOnly</code> — Prevent JS access (recommended: true)</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Secure</code> — HTTPS only (true in production)</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SameSite</code> — Lax, Strict, or None</li>
+</ul>

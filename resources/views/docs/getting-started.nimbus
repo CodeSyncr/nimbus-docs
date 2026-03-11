@@ -1,0 +1,28 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Getting Started</h1>
+<p class="text-slate-600 mb-6">Install the Nimbus CLI, create a new app, and run the development server.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Install the CLI</h2>
+<p class="text-slate-600 mb-2">From the Nimbus repository directory:</p>
+<pre><code>cd /path/to/nimbus
+go install ./cmd/nimbus</code></pre>
+<p class="text-slate-600 mb-4 text-sm">Ensure <code class="bg-slate-100 px-1 rounded">$HOME/go/bin</code> is in your PATH. For zsh: <code class="bg-slate-100 px-1 rounded">export PATH="$HOME/go/bin:$PATH"</code> (add to <code class="bg-slate-100 px-1 rounded">~/.zshrc</code> if needed).</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Create a new app</h2>
+<pre><code>nimbus new myapp
+cd myapp
+go mod tidy
+nimbus serve</code></pre>
+<p class="text-slate-600 mb-4">The server runs at <code class="bg-slate-100 px-1 rounded">http://localhost:3333</code> (or the port set in <code class="bg-slate-100 px-1 rounded">.env</code>).</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Using Nimbus in an existing project</h2>
+<p class="text-slate-600 mb-2">Add the dependency and bootstrap the app:</p>
+<pre><code>go get github.com/CodeSyncr/nimbus@latest
+
+// In main.go
+app := nimbus.New()
+app.Router.Use(middleware.Logger(), middleware.Recover())
+app.Router.Get("/", func(c *http.Context) error {
+    return c.JSON(http.StatusOK, map[string]string{"hello": "nimbus"})
+})
+app.Run()</code></pre>

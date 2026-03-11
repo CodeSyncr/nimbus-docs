@@ -1,0 +1,66 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">CSRF Protection</h1>
+<p class="text-slate-600 mb-4">Cross-Site Request Forgery (CSRF) attacks trick authenticated users into submitting malicious requests. Nimbus provides <code class="bg-slate-100 px-1 rounded">middleware.CSRF()</code> to protect state-changing routes by requiring a valid token with each request.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">What is CSRF?</h2>
+<p class="text-slate-600 mb-4">A CSRF attack occurs when a malicious site submits a form or request to your application while the user is logged in. Because the browser automatically includes cookies, the server cannot distinguish the forged request from a legitimate one. CSRF tokens solve this by requiring a secret value that only your pages know.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Setting up CSRF middleware</h2>
+<p class="text-slate-600 mb-4">Create a <code class="bg-slate-100 px-1 rounded">CSRFStore</code> and register the middleware. The built-in <code class="bg-slate-100 px-1 rounded">MemoryCSRFStore</code> works for single-server deployments:</p>
+<pre><code>store := middleware.NewMemoryCSRFStore()
+app.Router.Use(middleware.CSRF(store))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">How it works</h2>
+<p class="text-slate-600 mb-4">The middleware skips validation for safe methods (GET, HEAD, OPTIONS). For all other methods (POST, PUT, PATCH, DELETE), it checks for a valid token in:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li>The <code class="bg-slate-100 px-1 rounded">X-CSRF-Token</code> request header</li>
+  <li>The <code class="bg-slate-100 px-1 rounded">csrf_token</code> form field</li>
+</ul>
+<p class="text-slate-600 mb-4">If no valid token is found, the middleware responds with <code class="bg-slate-100 px-1 rounded">403 Forbidden</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Generating tokens</h2>
+<p class="text-slate-600 mb-4">Use <code class="bg-slate-100 px-1 rounded">store.Create()</code> to generate and register a new token, or <code class="bg-slate-100 px-1 rounded">middleware.GenerateCSRFToken()</code> for a standalone token. Pass the token to your templates or API responses:</p>
+<pre><code>func FormPage(c *http.Context) error {
+    token := store.Create()
+    return c.View("form", map[string]any{
+        "csrfToken": token,
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Including CSRF token in forms</h2>
+<p class="text-slate-600 mb-4">Add a hidden input field named <code class="bg-slate-100 px-1 rounded">csrf_token</code> to your HTML forms. The value should be the token generated on the server:</p>
+<pre><code>&lt;form method="POST" action="/posts"&gt;
+    &lt;input type="hidden" name="csrf_token" value="TOKEN_VALUE_HERE"&gt;
+    &lt;input type="text" name="title"&gt;
+    &lt;button type="submit"&gt;Create&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">CSRF for AJAX requests</h2>
+<p class="text-slate-600 mb-4">For JavaScript requests, include the token in the <code class="bg-slate-100 px-1 rounded">X-CSRF-Token</code> header:</p>
+<pre><code>fetch("/api/posts", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken
+    },
+    body: JSON.stringify({ title: "My Post" })
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Excluding routes from CSRF</h2>
+<p class="text-slate-600 mb-4">Apply CSRF middleware to specific route groups rather than globally. Routes outside the group are not checked:</p>
+<pre><code>// CSRF only on web routes
+web := app.Router.Group("")
+web.Use(middleware.CSRF(store))
+web.Post("/posts", CreatePost)
+web.Post("/settings", UpdateSettings)
+
+// API routes use token auth instead — no CSRF needed
+api := app.Router.Group("/api")
+api.Use(auth.RequireAuth(tokenGuard, ""))
+api.Post("/posts", APICreatePost)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Custom CSRF store</h2>
+<p class="text-slate-600 mb-4">Implement the <code class="bg-slate-100 px-1 rounded">middleware.CSRFStore</code> interface to use Redis, a database, or another backend for token storage:</p>
+<pre><code>type CSRFStore interface {
+    Valid(ctx context.Context, token string) bool
+}</code></pre>

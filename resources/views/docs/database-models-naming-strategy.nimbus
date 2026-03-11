@@ -1,0 +1,26 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Naming Strategy</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">GORM converts struct and field names to database identifiers. By default, struct names are pluralized and snake_cased for table names; field names become snake_case column names.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Default behavior</h2>
+<ul class="list-disc list-inside text-slate-600 dark:text-slate-400 mb-4 space-y-1">
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Post</code> → table <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">posts</code></li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">UserProfile</code> → table <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">user_profiles</code></li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">CreatedAt</code> → column <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">created_at</code></li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Overriding table name</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func (Post) TableName() string {
+    return "posts"
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Overriding column names</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>Email string `gorm:"column:email_address"`</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Custom naming in GORM</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Configure GORM at connect time with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">NamingStrategy</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db, err := gorm.Open(dialector, &gorm.Config{
+    NamingStrategy: schema.NamingStrategy{
+        SingularTable: true,  // Post → post, not posts
+    },
+})</code></pre>

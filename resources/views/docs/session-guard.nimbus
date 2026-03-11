@@ -1,0 +1,61 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Session Guard</h1>
+<p class="text-slate-600 mb-4">The <code class="bg-slate-100 px-1 rounded">SessionGuard</code> is Nimbus's built-in session-based authentication guard. It stores user sessions in memory, mapping session IDs to authenticated users. The session ID is expected to come from a cookie set by your session middleware.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">How it works</h2>
+<p class="text-slate-600 mb-4">The <code class="bg-slate-100 px-1 rounded">SessionGuard</code> maintains a thread-safe in-memory map of session IDs to <code class="bg-slate-100 px-1 rounded">auth.User</code> values. When a request arrives, it reads the <code class="bg-slate-100 px-1 rounded">session_id</code> from the request context (set by your cookie/session middleware) and looks up the corresponding user.</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
+  <li>On <code class="bg-slate-100 px-1 rounded">Login</code>: stores the user under the current session ID.</li>
+  <li>On <code class="bg-slate-100 px-1 rounded">User</code>: looks up the user by session ID from context.</li>
+  <li>On <code class="bg-slate-100 px-1 rounded">Logout</code>: removes the session ID entry from the map.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Setting up the guard</h2>
+<pre><code>guard := auth.NewSessionGuard()
+
+// Protect routes — redirect to /login if not authenticated
+app.Router.Use(auth.RequireAuth(guard, "/login"))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Login flow</h2>
+<p class="text-slate-600 mb-4">In your login handler, validate credentials, then call <code class="bg-slate-100 px-1 rounded">guard.Login</code> to associate the user with the current session:</p>
+<pre><code>func HandleLogin(c *http.Context, guard *auth.SessionGuard) error {
+    email := c.FormValue("email")
+    password := c.FormValue("password")
+
+    var user AppUser
+    if err := db.Where("email = ?", email).First(&user).Error; err != nil {
+        return c.JSON(401, map[string]string{"error": "invalid credentials"})
+    }
+
+    if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+        return c.JSON(401, map[string]string{"error": "invalid credentials"})
+    }
+
+    guard.Login(c.Request.Context(), &user)
+    return c.Redirect(302, "/dashboard")
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Logout flow</h2>
+<p class="text-slate-600 mb-4">Call <code class="bg-slate-100 px-1 rounded">guard.Logout</code> to remove the session. You should also clear the session cookie on the client:</p>
+<pre><code>func HandleLogout(c *http.Context, guard *auth.SessionGuard) error {
+    guard.Logout(c.Request.Context())
+    http.SetCookie(c.Response, &http.Cookie{
+        Name:   "session_id",
+        Value:  "",
+        MaxAge: -1,
+    })
+    return c.Redirect(302, "/login")
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Checking authentication status</h2>
+<p class="text-slate-600 mb-4">Use <code class="bg-slate-100 px-1 rounded">guard.User(ctx)</code> or <code class="bg-slate-100 px-1 rounded">auth.UserFromContext(ctx)</code> to check if a user is authenticated:</p>
+<pre><code>func ProfileHandler(c *http.Context) error {
+    user := auth.UserFromContext(c.Request.Context())
+    if user == nil {
+        return c.JSON(401, map[string]string{"error": "not authenticated"})
+    }
+    return c.JSON(200, map[string]string{"id": user.GetID()})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Session storage</h2>
+<p class="text-slate-600 mb-4">The built-in <code class="bg-slate-100 px-1 rounded">SessionGuard</code> stores sessions in memory. This works for single-server deployments but sessions are lost on restart. For production, implement the <code class="bg-slate-100 px-1 rounded">auth.Guard</code> interface with a persistent store like Redis or a database table.</p>

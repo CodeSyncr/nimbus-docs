@@ -1,0 +1,9 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Hot Reload</h1>
+<p class="text-slate-600 mb-6"><code class="bg-slate-100 px-1 rounded">nimbus serve</code> runs <a href="https://github.com/air-verse/air" class="text-indigo-600 hover:underline">Air</a>. Edits to .go and .nimbus files restart the app. Config in <code class="bg-slate-100 px-1 rounded">.air.toml</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Configuration</h2>
+<pre><code>silent = true
+include_ext = ["go", "nimbus"]</code></pre>
+
+<p class="text-slate-600 text-sm">Set <code class="bg-slate-100 px-1 rounded">silent = true</code> to hide Air's banner and watching output. include_ext controls which file types trigger a rebuild.</p>

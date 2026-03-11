@@ -1,0 +1,149 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">REPL</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">In this guide, you will learn about the following topics:</p>
+<ul class="list-disc pl-6 mb-6 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Starting the REPL session</li>
+  <li>Evaluating expressions and statements</li>
+  <li>Multi-line input</li>
+  <li>Importing packages and using your app's code</li>
+  <li>Working with models and database queries</li>
+  <li>REPL commands reference</li>
+  <li>Command history and exiting</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Overview</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The Nimbus REPL extends the standard Go REPL with application-aware features. When you run it from your app root, it uses your project's <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">go.mod</code> context, so you can import and evaluate your app's packages, models, and services. The REPL is useful during development for quick experimentation, debugging, and data exploration.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Starting the REPL session</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Start the REPL from your app directory using the Nimbus CLI:</p>
+<pre data-file="Terminal"><code>nimbus repl</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">You'll see a prompt where you can type Go code and press Enter to execute it:</p>
+<pre data-file="Terminal"><code>gore version 0.6.1  :help for help
+gore> </code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The output appears immediately, creating a fast feedback loop for testing and exploration.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Evaluating expressions</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">You can evaluate any Go expression. The result is printed automatically:</p>
+<pre data-file="Terminal"><code>gore> 1 + 2
+3
+
+gore> len("hello")
+5
+
+gore> []string{"a", "b", "c"}[1]
+"b"
+
+gore> map[string]int{"x": 1, "y": 2}["y"]
+2</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Statements and variables</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Declare variables and run statements. Variables persist across the session:</p>
+<pre data-file="Terminal"><code>gore> x := 42
+42
+
+gore> y := "world"
+"world"
+
+gore> x * 2
+84
+
+gore> fmt.Sprintf("Hello, %s", y)
+"Hello, world"</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:import fmt</code> first if <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">fmt</code> is not yet imported.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Multi-line input</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The REPL supports multi-line input. When a line is incomplete (e.g. unclosed brace or parenthesis), the prompt changes to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.....</code> and you can continue typing on the next line:</p>
+<pre data-file="Terminal"><code>gore> func greet(name string) string {
+.....     return "Hello, " + name
+..... }
+""
+
+gore> greet("Nimbus")
+"Hello, Nimbus"</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Press Enter on an empty line to execute the block, or continue typing to add more lines.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Importing packages</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:import</code> command to load packages. Standard library and your app's packages are available:</p>
+<pre data-file="Terminal"><code>gore> :import fmt
+gore> fmt.Println("Hello from REPL")
+Hello from REPL
+17
+2
+nil
+
+gore> :import encoding/json
+gore> b, _ := json.Marshal(map[string]any{"name": "Nimbus"})
+gore> string(b)
+`{"name":"Nimbus"}`</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using your app's models</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Import your app's packages to work with models and types. Replace <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">myapp</code> with your module name from <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">go.mod</code>:</p>
+<pre data-file="Terminal"><code>gore> :import myapp/app/models
+gore> todo := models.Todo{Title: "Learn REPL", Done: false}
+gore> todo.Title
+"Learn REPL"</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">You can inspect struct types, create instances, and pass them to functions.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Database queries</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">To query the database, import the database package, your config, and models. The database must be migrated and reachable. Connect first, then run queries:</p>
+<pre data-file="Terminal"><code>gore> :import github.com/CodeSyncr/nimbus/database
+gore> :import myapp/config
+gore> :import myapp/app/models
+gore> config.Load()
+gore> database.ConnectWithConfig(database.ConnectConfig{
+.....     Driver: config.Database.Driver,
+.....     DSN:    config.Database.DSN,
+..... })
+gore> var todos []models.Todo
+gore> database.Get().Find(&todos)
+gore> len(todos)
+3</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Ensure <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code> is loaded (e.g. via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">godotenv</code> in config) and migrations have been run.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Inspecting types and documentation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:type</code> to print an expression's type and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:doc</code> to view documentation:</p>
+<pre data-file="Terminal"><code>gore> :type todos
+[]models.Todo
+
+gore> :doc database.Get
+func Get() *gorm.DB
+    Get returns the default database connection.
+
+gore> :doc fmt.Println
+func Println(a ...any) (n int, err error)
+    Println formats using the default formats for its operands...</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">REPL commands reference</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">All commands start with a colon:</p>
+<table class="w-full border-collapse border border-slate-200 dark:border-slate-700 mb-6">
+  <thead>
+    <tr class="bg-slate-50 dark:bg-slate-800/50">
+      <th class="border border-slate-200 dark:border-slate-700 px-4 py-2 text-left text-slate-900 dark:text-white font-medium">Command</th>
+      <th class="border border-slate-200 dark:border-slate-700 px-4 py-2 text-left text-slate-900 dark:text-white font-medium">Description</th>
+    </tr>
+  </thead>
+  <tbody class="text-slate-600 dark:text-slate-400">
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:import &lt;pkg&gt;</code></td><td class="border border-slate-200 dark:border-slate-700 px-4 py-2">Import a package</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:type &lt;expr&gt;</code></td><td class="border border-slate-200 dark:border-slate-700 px-4 py-2">Print expression type</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:print</code></td><td class="border border-slate-200 dark:border-slate-700 px-4 py-2">Show accumulated source code</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:write [file]</code></td><td class="border border-slate-200 dark:border-slate-700 px-4 py-2">Write source to file</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:clear</code></td><td class="border border-slate-200 dark:border-slate-700 px-4 py-2">Clear accumulated code</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:doc &lt;expr|pkg&gt;</code></td><td class="border border-slate-200 dark:border-slate-700 px-4 py-2">Show documentation</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:help</code></td><td class="border border-slate-200 dark:border-slate-700 px-4 py-2">List all commands</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:quit</code></td><td class="border border-slate-200 dark:border-slate-700 px-4 py-2">Exit the session</td></tr>
+  </tbody>
+</table>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Command history</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The REPL saves your command history. Use the arrow keys to navigate:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><strong>↑</strong> — Previous command</li>
+  <li><strong>↓</strong> — Next command</li>
+  <li><strong>Ctrl+R</strong> — Reverse search (type to filter history)</li>
+</ul>
+<p class="text-slate-600 dark:text-slate-400 mb-4">History is stored in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">~/.gore/history</code> (or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">$GORE_HOME/history</code>).</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Exiting the session</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Exit using <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:quit</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Ctrl-D</code>:</p>
+<pre data-file="Terminal"><code>gore> :quit</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The REPL does not auto-reload when you change your code. Exit and restart to pick up changes.</p>

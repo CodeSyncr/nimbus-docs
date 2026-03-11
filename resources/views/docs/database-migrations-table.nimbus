@@ -1,0 +1,42 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Table Builder</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">The table builder defines columns within a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">CreateTable</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">AlterTable</code> callback. Each method returns the table for chaining.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Column types</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Increments("id")</code></td><td class="px-4 py-2">Auto-increment primary key</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">BigIncrements("id")</code></td><td class="px-4 py-2">Bigint auto-increment</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">String("name", 255)</code></td><td class="px-4 py-2">VARCHAR(size)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Text("body")</code></td><td class="px-4 py-2">TEXT</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Boolean("active")</code></td><td class="px-4 py-2">BOOLEAN</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Integer("count")</code></td><td class="px-4 py-2">INTEGER</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">BigInteger("big_id")</code></td><td class="px-4 py-2">BIGINT</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Float("price", 8, 2)</code></td><td class="px-4 py-2">FLOAT(precision, scale)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Decimal("amount", 10, 2)</code></td><td class="px-4 py-2">DECIMAL</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Timestamp("published_at")</code></td><td class="px-4 py-2">DATETIME</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Timestamps()</code></td><td class="px-4 py-2">created_at, updated_at</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SoftDeletes()</code></td><td class="px-4 py-2">deleted_at (nullable)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ForeignId("user_id", "users.id")</code></td><td class="px-4 py-2">Foreign key column</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Modifiers</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Chain <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Nullable()</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Default()</code> after a column:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>t.String("status", 50).Default("'draft'")
+t.Text("bio").Nullable()
+t.Integer("views").Default("0")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Example</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>schema.New(db).CreateTable("users", func(t *schema.Table) {
+    t.Increments("id")
+    t.String("name", 255)
+    t.String("email", 255)
+    t.Text("password")
+    t.Boolean("active").Default("1")
+    t.Timestamps()
+    t.SoftDeletes()
+})</code></pre>

@@ -1,0 +1,107 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Drive (Storage)</h1>
+<p class="text-slate-600 mb-6">Nimbus Drive provides a unified API for file storage across multiple backends: local filesystem, Amazon S3, Google Cloud Storage, Cloudflare R2, DigitalOcean Spaces, and Supabase. It allows you to swap storage providers without changing your code.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Installation & Setup</h2>
+<p class="text-slate-600 mb-2">Drive is included by default when creating a new app. If you need to add it manually, install the plugin and register it in <code class="bg-slate-100 px-1 rounded">bin/server.go</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/plugins/drive"
+
+// Register the plugin (uses environment variables for configuration)
+app.Use(drive.New(nil))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Configuration</h2>
+<p class="text-slate-600 mb-4">Set <code class="bg-slate-100 px-1 rounded">DRIVE_DISK</code> in your <code class="bg-slate-100 px-1 rounded">.env</code> file to choose the active storage backend. Then, provide the necessary credentials for that specific provider.</p>
+
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Backend</th><th class="px-4 py-2 text-left font-semibold">DRIVE_DISK value</th><th class="px-4 py-2 text-left font-semibold">Required Env Vars</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2 font-medium">Local Disk</td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">fs</code> (default)</td><td class="px-4 py-2">None</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2 font-medium">Amazon S3</td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">s3</code></td><td class="px-4 py-2"><code class="text-xs">S3_BUCKET, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY</code></td></tr>
+      <tr class="borde  Qr-t border-slate-200"><td class="px-4 py-2 font-medium">Google Cloud</td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">gcs</code></td><td class="px-4 py-2"><code class="text-xs">GCS_BUCKET, GCS_KEY</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2 font-medium">Cloudflare R2</td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">r2</code></td><td class="px-4 py-2"><code class="text-xs">R2_BUCKET, R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2 font-medium">DO Spaces</td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">spaces</code></td><td class="px-4 py-2"><code class="text-xs">SPACES_BUCKET, SPACES_ENDPOINT, SPACES_KEY, SPACES_SECRET</code></td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2 font-medium">Supabase</td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">supabase</code></td><td class="px-4 py-2"><code class="text-xs">SUPABASE_STORAGE_BUCKET, SUPABASE_STORAGE_URL, SUPABASE_STORAGE_KEY</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Usage</h2>
+<p class="text-slate-600 mb-2">The <code class="bg-slate-100 px-1 rounded">drive.Use(disk)</code> function returns a standard <code class="bg-slate-100 px-1 rounded">storage.Driver</code> interface. Passing an empty string <code class="bg-slate-100 px-1 rounded">""</code> automatically uses the default disk specified by <code class="bg-slate-100 px-1 rounded">DRIVE_DISK</code>.</p>
+
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/plugins/drive"
+
+func handleUpload(c *http.Context) error {
+    file, err := c.Request.FormFile("avatar")
+    // ... handle err
+    
+    // Get the default configured disk (e.g., S3 in production, fs locally)
+    disk, err := drive.Use("")
+    
+    // Store the file
+    err = disk.Put("avatars/user-1.jpg", file)
+    
+    // Get the public URL for the newly stored file
+    url, _ := disk.GetUrl("avatars/user-1.jpg")
+    
+    return c.JSON(200, map[string]string{"url": url})
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Disk Operations API</h3>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Signature</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded font-semibold text-blue-700">Put</code></td><td class="px-4 py-2"><code class="text-xs">Put(path string, reader io.Reader) error</code></td><td class="px-4 py-2">Writes a file to the configured disk. Automatically creates parent directories locally.</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded font-semibold text-blue-700">Get</code></td><td class="px-4 py-2"><code class="text-xs">Get(path string) (io.ReadCloser, error)</code></td><td class="px-4 py-2">Streams the file for reading. You must <code class="bg-slate-100 px-1 rounded">Close()</code> it when finished.</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded font-semibold text-blue-700">Delete</code></td><td class="px-4 py-2"><code class="text-xs">Delete(path string) error</code></td><td class="px-4 py-2">Removes the file.</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded font-semibold text-blue-700">Exists</code></td><td class="px-4 py-2"><code class="text-xs">Exists(path string) (bool, error)</code></td><td class="px-4 py-2">Checks if the file exists on the disk.</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded font-semibold text-blue-700">GetUrl</code></td><td class="px-4 py-2"><code class="text-xs">GetUrl(path string) (string, error)</code></td><td class="px-4 py-2">Returns a public URL for the file. For local <code class="bg-slate-100 px-1 rounded">fs</code>, it prefixes with your RouteBasePath (e.g., <code class="bg-slate-100 px-1 rounded">/uploads/...</code>).</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded font-semibold text-blue-700">GetSignedUrl</code></td><td class="px-4 py-2"><code class="text-xs">GetSignedUrl(path string, dur time.Duration)</code></td><td class="px-4 py-2">Generates a temporary, secure URL valid for the specified duration (e.g. for private cloud buckets).</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Local Disk Routing</h2>
+<p class="text-slate-600 mb-2">When using the <code class="bg-slate-100 px-1 rounded">fs</code> driver, Drive will store files in <code class="bg-slate-100 px-1 rounded">storage/app</code>. The plugin automatically registers a static route to serve these files over HTTP if you enable it. By default, it mounts at <code class="bg-slate-100 px-1 rounded">/uploads</code>.</p>
+<p class="text-slate-600 mb-4">To disable serving files or change the route, configure it in the plugin initialization:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>app.Use(drive.New(&drive.Config{
+    DefaultDisk:   "fs",
+    ServeFiles:    true,         // automatically serve files via HTTP
+    RouteBasePath: "/media",     // files will be served at /media/*
+}))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Switching Disks Manually</h2>
+<p class="text-slate-600 mb-2">If your app interacts with multiple storage backends simultaneously (e.g., storing user avatars locally but archiving invoices to S3), you can request a specific disk by name:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Uses the backend defined by DRIVE_DISK
+defaultDisk, _ := drive.Use("")
+
+// Forces the S3 backend
+s3Disk, err := drive.Use("s3")
+err = s3Disk.Put("archives/2026/invoice.pdf", file)
+
+// Forces local filesystem
+localDisk, err := drive.Use("fs")
+err = localDisk.Put("temp/cache.json", file)</code></pre>
+
+<hr class="my-8 border-slate-200" />
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Advanced: Raw Storage Driver</h2>
+<p class="text-slate-600 mb-4">If you are building a CLI tool or a script that completely bypasses the Drive plugin and its cloud features, you can instantiate the low-level <code class="bg-slate-100 px-1 rounded">storage.LocalDriver</code> manually. <strong>This is not recommended for normal web applications.</strong></p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/storage"
+
+func advanced() {
+    driver := storage.NewLocalDriver("storage/app")
+    
+    // Low-level methods
+    err := driver.Put("uploads/photo.jpg", file)
+    ok, _ := driver.Exists("uploads/photo.jpg")
+    driver.Delete("uploads/photo.jpg")
+    
+    rc, err := driver.Get("uploads/photo.jpg")
+    if err == nil {
+        defer rc.Close()
+        // read from io.ReadCloser
+    }
+}</code></pre>
+<p class="text-slate-600 text-sm">Unlike <code class="bg-slate-100 px-1 rounded">drive</code>, the raw <code class="bg-slate-100 px-1 rounded">storage.LocalDriver</code> has no concept of public URLs (<code class="bg-slate-100 px-1 rounded">GetUrl</code>) or signed URLs. It only handles raw file I/O within a specified root directory.</p>

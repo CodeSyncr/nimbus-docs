@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ .title }} · Nimbus</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
+          },
+          colors: { accent: { DEFAULT: '#f59e0b', hover: '#d97706' } }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/unpoly@3.12.0/unpoly.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/unpoly@3.12.0/unpoly.min.js"></script>
+  <style>
+    .code-block {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      margin-bottom: 1rem;
+      border: 1px solid #334155;
+      background: #0f172a;
+    }
+    .dark .code-block { border-color: #334155; }
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+    .code-block-copy {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      background: transparent;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .code-block-copy:hover {
+      background: #334155;
+      color: #e2e8f0;
+      border-color: #475569;
+    }
+    .code-block-copy.copied {
+      color: #86efac;
+      border-color: #86efac;
+    }
+    .dark .code-block-header { background: #1e293b; border-color: #334155; color: #94a3b8; }
+    .dark .code-block-copy { border-color: #334155; color: #94a3b8; }
+    .dark .code-block-copy:hover { background: #334155; color: #e2e8f0; }
+    .docs-content pre {
+      font-size: 0.8125rem;
+      background: #0f172a !important;
+      border: none !important;
+      border-radius: 0;
+      padding: 1rem 1.25rem;
+      margin: 0 !important;
+      overflow-x: auto;
+    }
+    .dark .docs-content pre {
+      background: #0f172a !important;
+      border: none !important;
+    }
+    .docs-content pre code {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      background: transparent !important;
+      padding: 0 !important;
+      color: #e2e8f0 !important;
+    }
+    .docs-content pre code .hljs-keyword { color: #fbbf24; }
+    .docs-content pre code .hljs-type { color: #7dd3fc; }
+    .docs-content pre code .hljs-built_in { color: #7dd3fc; }
+    .docs-content pre code .hljs-string { color: #86efac; }
+    .docs-content pre code .hljs-number { color: #7dd3fc; }
+    .docs-content pre code .hljs-function .hljs-title,
+    .docs-content pre code .hljs-title.function_ { color: #c4b5fd; }
+    .docs-content pre code .hljs-comment { color: #64748b; font-style: italic; }
+    .docs-content pre code .hljs-params { color: #e2e8f0; }
+    .docs-content pre code .hljs-literal { color: #7dd3fc; }
+    .docs-content pre code .hljs-attr { color: #7dd3fc; }
+    .docs-content pre code .hljs-property { color: #7dd3fc; }
+    .docs-content pre code .hljs-variable { color: #fdba74; }
+    .docs-content pre code .hljs-punctuation { color: #e2e8f0; }
+    .docs-content pre code .hljs-selector-class { color: #86efac; }
+    .docs-content pre code .hljs-selector-tag { color: #86efac; }
+    .docs-content pre code .hljs-tag { color: #86efac; }
+
+    .docs-content code:not(pre code) {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 0.8em;
+      background: #f1f5f9;
+      padding: 0.15em 0.4em;
+      border-radius: 0.25rem;
+      color: #0f172a;
+    }
+    .dark .docs-content code:not(pre code) {
+      background: #334155;
+      color: #e2e8f0;
+    }
+
+    .docs-content :target { scroll-margin-top: 5rem; }
+    .docs-content h2 { scroll-margin-top: 5rem; }
+    .docs-content h3 { scroll-margin-top: 5rem; }
+    .nav-section summary { list-style: none; cursor: pointer; }
+    .nav-section summary::-webkit-details-marker { display: none; }
+    .nav-section[open] .nav-chevron { transform: rotate(0deg); }
+    .nav-section:not([open]) .nav-chevron { transform: rotate(-90deg); display: inline-block; }
+
+    up-progress-bar { background-color: #f59e0b; }
+    .dark up-progress-bar { background-color: #fbbf24; }
+
+    [up-nav] a.up-current {
+      background: #fef3c7;
+      color: #b45309;
+      font-weight: 500;
+    }
+    .dark [up-nav] a.up-current {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+    }
+
+    /* Doc content dark mode overrides */
+    .dark .docs-content h1, .dark .docs-content h2, .dark .docs-content h3 { color: #f8fafc !important; }
+    .dark .docs-content p, .dark .docs-content li { color: #94a3b8 !important; }
+    .dark .docs-content a:not(.up-current) { color: #fbbf24 !important; }
+    .dark .docs-content a:not(.up-current):hover { color: #fcd34d !important; }
+    .dark .docs-content table { border-color: #334155 !important; }
+    .dark .docs-content th { background: #1e293b !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+    .dark .docs-content td { border-color: #334155 !important; color: #94a3b8 !important; }
+    .dark .docs-content thead tr { background: #1e293b !important; }
+    .dark .docs-content tbody tr { border-color: #334155 !important; }
+
+    /* AI chat markdown formatting */
+    .docs-ai-response p { margin: 0.5em 0; }
+    .docs-ai-response p:first-child { margin-top: 0; }
+    .docs-ai-response p:last-child { margin-bottom: 0; }
+    .docs-ai-response code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.875em; background: #f1f5f9; color: #0f172a; padding: 0.15em 0.4em; border-radius: 0.25rem; }
+    .dark .docs-ai-response code { background: #334155; color: #e2e8f0; }
+    .docs-ai-response pre { margin: 0.75em 0; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; background: #0f172a; border: 1px solid #334155; }
+    .docs-ai-response pre code { background: transparent; padding: 0; color: #e2e8f0; }
+    .docs-ai-response .code-block { margin: 0.75em 0; }
+    .docs-ai-response .code-block pre { margin: 0; border-radius: 0; border: none; }
+    .docs-ai-response ul, .docs-ai-response ol { margin: 0.5em 0; padding-left: 1.5em; }
+    .docs-ai-response li { margin: 0.25em 0; }
+    .docs-ai-response strong { font-weight: 600; }
+  </style>
+</head>
+<body class="h-screen overflow-hidden bg-white text-slate-800 font-sans antialiased dark:bg-slate-950 dark:text-slate-200 flex flex-col transition-colors duration-300">
+  <!-- Header -->
+  <header class="shrink-0 z-20 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur transition-colors">
+    <div class="flex items-center justify-between h-14 px-4 gap-4">
+      <a href="/" class="flex items-center gap-2 shrink-0">
+        <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-amber-500/30">N</span>
+        <span class="font-semibold text-slate-800 dark:text-white">Nimbus</span>
+      </a>
+      <div class="flex-1 max-w-xl mx-4 hidden sm:block">
+        <button id="docs-search-trigger" type="button" class="w-full flex items-center gap-2 h-9 px-3 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-sm text-left hover:border-slate-300 dark:hover:border-slate-600 transition">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <span>Search docs</span>
+          <kbd class="ml-auto text-xs px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700">⌘K</kbd>
+        </button>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <a href="/" class="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Home</a>
+        <a href="/demos" class="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Demos</a>
+        <button id="theme-toggle" type="button" aria-label="Toggle theme" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-amber-500/50 transition">
+          <svg id="sun-icon" class="w-5 h-5 text-amber-500 hidden dark:block" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/></svg>
+          <svg id="moon-icon" class="w-5 h-5 text-slate-600 dark:text-slate-400 block dark:hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+        </button>
+        <a href="https://github.com/CodeSyncr/nimbus" target="_blank" rel="noopener" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-700 transition border border-slate-700">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Left sidebar -->
+    <aside class="hidden lg:block w-64 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 overflow-y-auto transition-colors" up-nav>
+      <nav class="p-4 space-y-1 text-sm">
+        <details class="nav-section" open>
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            Start
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="/docs/introduction" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
+            <a href="/docs/installation" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Installation</a>
+            <a href="/docs/folder-structure" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Folder Structure</a>
+            <a href="/docs/configuration" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Configuration</a>
+            <a href="/docs/deployment" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Deployment</a>
+            <a href="/docs/faqs" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">FAQs</a>
+          </div>
+        </details>
+        <details class="nav-section">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            Resources
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="https://github.com/CodeSyncr/nimbus/blob/main/CONTRIBUTING.md" target="_blank" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Contributing</a>
+            <a href="https://github.com/CodeSyncr/nimbus/releases" target="_blank" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Releases</a>
+          </div>
+        </details>
+        <div class="pt-3">
+          <span class="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Guides</span>
+        </div>
+        <details class="nav-section">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            Basics
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="/docs/routing" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Routing</a>
+            <a href="/docs/controllers" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Controllers</a>
+            <a href="/docs/http-context" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">HTTP Context</a>
+            <a href="/docs/middleware" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Middleware</a>
+            <a href="/docs/request" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Request</a>
+            <a href="/docs/response" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Response</a>
+            <a href="/docs/body-parser" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Body Parser</a>
+            <a href="/docs/validation" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Validation</a>
+            <a href="/docs/file-uploads" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">File Uploads</a>
+            <a href="/docs/session" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Session</a>
+            <a href="/docs/exception-handling" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Exception Handling</a>
+            <a href="/docs/static-files" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Static Files</a>
+          </div>
+        </details>
+        <details class="nav-section">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            Nimbus Template
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="/docs/nimbus-template" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">.nimbus syntax &amp; layouts</a>
+          </div>
+        </details>
+        <details class="nav-section">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            Inertia
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="/docs/inertia" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
+            <a href="/docs/inertia-setup" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Setup</a>
+            <a href="/docs/inertia-hmr" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">HMR &amp; Vite</a>
+          </div>
+        </details>
+        <details class="nav-section">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            Data Layer
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="/docs/database" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Database &amp; ORM</a>
+            <span class="block px-2 py-1 text-xs font-medium text-slate-400 mt-2">Query builders</span>
+            <a href="/docs/database-query-select" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Select</a>
+            <a href="/docs/database-query-insert" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Insert</a>
+            <a href="/docs/database-query-raw" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Raw</a>
+            <span class="block px-2 py-1 text-xs font-medium text-slate-400 mt-2">Migrations</span>
+            <a href="/docs/database-migrations-intro" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
+            <a href="/docs/database-migrations-schema" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Schema builder</a>
+            <a href="/docs/database-migrations-table" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Table builder</a>
+            <span class="block px-2 py-1 text-xs font-medium text-slate-400 mt-2">Models</span>
+            <a href="/docs/database-models-intro" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
+            <a href="/docs/database-models-schema-classes" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Schema classes</a>
+            <a href="/docs/database-models-crud" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">CRUD operations</a>
+            <a href="/docs/database-models-hooks" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Hooks</a>
+            <a href="/docs/database-models-query-builder" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Query builder</a>
+            <a href="/docs/database-models-naming-strategy" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Naming strategy</a>
+            <a href="/docs/database-models-query-scopes" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Query scopes</a>
+            <a href="/docs/database-models-serializing" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Serializing models</a>
+            <a href="/docs/database-models-relationships" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Relationships</a>
+            <a href="/docs/database-models-factories" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Model factories</a>
+            <a href="/docs/seeders" class="flex items-center gap-2 py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 mt-2">Seeders</a>
+          </div>
+        </details>
+        <details class="nav-section">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            Auth
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="/docs/auth-introduction" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
+            <a href="/docs/session-guard" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Session Guard</a>
+            <a href="/docs/access-tokens" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Access Tokens</a>
+            <a href="/docs/authorization" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Authorization</a>
+          </div>
+        </details>
+        <details class="nav-section">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            Security
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="/docs/shield" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Shield</a>
+            <a href="/docs/cors" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">CORS</a>
+            <a href="/docs/csrf" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">CSRF</a>
+            <a href="/docs/rate-limiting" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Rate Limiting</a>
+          </div>
+        </details>
+        <details class="nav-section">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            Core Concepts
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="/docs/application-lifecycle" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Application Lifecycle</a>
+            <a href="/docs/dependency-injection" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Dependency Injection</a>
+            <a href="/docs/service-providers" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Service Providers</a>
+            <a href="/docs/plugins" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Plugins</a>
+            <a href="/docs/container-services" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Container Services</a>
+          </div>
+        </details>
+        <details class="nav-section">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            Digging Deeper
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="/docs/cache" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Cache</a>
+            <a href="/docs/drive" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Drive (Storage)</a>
+            <a href="/docs/transmit" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Transmit</a>
+            <a href="/docs/events" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Events</a>
+            <a href="/docs/logger" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Logger</a>
+            <a href="/docs/mail" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Mail</a>
+            <a href="/docs/queue" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Queue</a>
+            <a href="/docs/scheduler" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Scheduler</a>
+            <a href="/docs/websockets" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">WebSockets</a>
+          </div>
+        </details>
+        <details class="nav-section">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            AI
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="/docs/ai" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">AI SDK</a>
+            <a href="/docs/mcp" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">MCP</a>
+          </div>
+        </details>
+        <details class="nav-section">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            Command Line
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="/docs/cli" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
+            <a href="/docs/creating-commands" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Creating Commands</a>
+            <a href="/docs/command-arguments" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Command Arguments</a>
+            <a href="/docs/command-flags" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Command Flags</a>
+            <a href="/docs/prompts" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Prompts</a>
+            <a href="/docs/terminal-ui" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Terminal UI</a>
+            <a href="/docs/repl" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Repl</a>
+            <a href="/docs/hot-reload" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Hot Reload</a>
+          </div>
+        </details>
+        <details class="nav-section">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
+            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
+            Testing
+          </summary>
+          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <a href="/docs/testing-introduction" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
+            <a href="/docs/http-tests" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">HTTP Tests</a>
+          </div>
+        </details>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 min-w-0 overflow-y-auto bg-white dark:bg-slate-950 transition-colors" up-main>
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 docs-content">
+        {{ .embed }}
+        @if(or .prevSlug .nextSlug)
+        <nav class="flex flex-col sm:flex-row gap-4 justify-between mt-16 pt-8 border-t border-slate-200 dark:border-slate-800">
+          @if(.prevSlug)
+          <a href="/docs/{{ .prevSlug }}" class="group flex-1 flex items-center gap-2 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-amber-500/50 dark:hover:border-amber-500/50 hover:bg-amber-50/50 dark:hover:bg-amber-500/5 transition-all">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            <div class="min-w-0">
+              <span class="text-xs font-medium uppercase tracking-wider text-slate-400 block">Previous</span>
+              <span class="font-medium text-slate-800 dark:text-white truncate block">{{ .prevTitle }}</span>
+            </div>
+          </a>
+          @else
+          <div class="flex-1"></div>
+          @endif
+          @if(.nextSlug)
+          <a href="/docs/{{ .nextSlug }}" class="group flex-1 flex items-center gap-2 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-amber-500/50 dark:hover:border-amber-500/50 hover:bg-amber-50/50 dark:hover:bg-amber-500/5 transition-all sm:flex-row-reverse text-right sm:text-left">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 shrink-0 sm:order-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <div class="min-w-0 flex-1">
+              <span class="text-xs font-medium uppercase tracking-wider text-slate-400 block">Next</span>
+              <span class="font-medium text-slate-800 dark:text-white truncate block">{{ .nextTitle }}</span>
+            </div>
+          </a>
+          @else
+          <div class="flex-1"></div>
+          @endif
+        </nav>
+        @endif
+        <footer class="border-t border-slate-200 dark:border-slate-800 mt-16 py-6 transition-colors">
+          <div class="text-center text-slate-500 dark:text-slate-400 text-sm">
+            <a href="/docs" class="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300">Documentation</a> · Built with <a href="https://github.com/CodeSyncr/nimbus" class="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300">Nimbus</a> · AdonisJS-style framework for Go
+          </div>
+        </footer>
+      </div>
+    </main>
+
+    <!-- Right sidebar: On This Page -->
+    <aside class="hidden xl:block w-56 shrink-0 border-l border-slate-200 dark:border-slate-800 overflow-y-auto transition-colors" up-hungry up-transition="cross-fade">
+      <div class="p-4">
+        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">On this page</div>
+        <nav id="on-this-page" class="space-y-1.5 text-sm text-slate-600 dark:text-slate-400">
+          <a href="#" class="block py-1 hover:text-amber-600 dark:hover:text-amber-400 transition">Overview</a>
+        </nav>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Search modal -->
+  <div id="docs-search-modal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
+    <div class="fixed inset-0 bg-black/50" id="docs-search-backdrop"></div>
+    <div class="fixed inset-x-4 top-20 sm:inset-x-1/4 sm:top-1/4 max-h-[70vh] overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
+      <div class="p-2 border-b border-slate-200 dark:border-slate-700">
+        <input id="docs-search-input" type="search" placeholder="Search documentation..." autocomplete="off" class="w-full px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border-0 text-slate-900 dark:text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500/50 transition" />
+      </div>
+      <div id="docs-search-results" class="overflow-y-auto max-h-[60vh] p-2 text-sm"></div>
+    </div>
+  </div>
+
+  <!-- AI chat button & centered modal -->
+  <button id="docs-ai-toggle" type="button" aria-label="Ask AI" class="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+  </button>
+  <div id="docs-ai-modal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
+    <div class="fixed inset-0 bg-black/50" id="docs-ai-backdrop"></div>
+    <div class="fixed inset-x-4 top-[10%] bottom-[10%] sm:inset-x-[15%] sm:top-[8%] sm:bottom-[8%] flex flex-col rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-amber-50/50 dark:bg-amber-900/10 shrink-0">
+        <h3 class="font-semibold text-slate-900 dark:text-white">Ask about Nimbus docs</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ask anything related to the documentation.</p>
+        <div id="docs-ai-suggestions" class="flex flex-wrap gap-2 mt-3">
+          <button type="button" class="docs-ai-suggestion px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 text-xs hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400 transition">How do I set up routing?</button>
+          <button type="button" class="docs-ai-suggestion px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 text-xs hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400 transition">How do I use middleware?</button>
+          <button type="button" class="docs-ai-suggestion px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 text-xs hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400 transition">How do I use the cache?</button>
+          <button type="button" class="docs-ai-suggestion px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 text-xs hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400 transition">How do I add authentication?</button>
+          <button type="button" class="docs-ai-suggestion px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 text-xs hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400 transition">How do I run database migrations?</button>
+          <button type="button" class="docs-ai-suggestion px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 text-xs hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400 transition">How do I validate request data?</button>
+        </div>
+      </div>
+      <div id="docs-ai-messages" class="flex-1 overflow-y-auto p-4 space-y-3 min-h-0"></div>
+      <form id="docs-ai-form" class="p-4 border-t border-slate-200 dark:border-slate-700 shrink-0">
+        <div class="flex gap-2">
+          <input id="docs-ai-input" type="text" placeholder="Ask a question..." class="flex-1 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500/50 text-sm" />
+          <button type="submit" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium text-sm transition">Send</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const storageKey = 'theme';
+      const getTheme = () => localStorage.getItem(storageKey) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      const applyTheme = (theme) => {
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        localStorage.setItem(storageKey, theme);
+      };
+      applyTheme(getTheme());
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('#theme-toggle')) {
+          const next = getTheme() === 'dark' ? 'light' : 'dark';
+          applyTheme(next);
+        }
+      });
+    })();
+    function processAiCodeBlocks(container) {
+      if (!container) return;
+      container.querySelectorAll('pre code').forEach(function(codeEl) {
+        var pre = codeEl.parentElement;
+        var text = codeEl.textContent || '';
+        var lines = text.split('\n');
+        var firstLine = lines[0] || '';
+        var match = firstLine.match(/^(\/\/|#)\s*File:\s*(.+)$/);
+        if (match) {
+          pre.setAttribute('data-file', match[2].trim());
+          codeEl.textContent = lines.slice(1).join('\n').replace(/^\n+/, '');
+        }
+      });
+      initCodeBlocks(container);
+      container.querySelectorAll('pre code').forEach(function(el) {
+        if (!el.className || (!el.className.includes('language-') && !el.className.includes('hljs'))) {
+          var t = el.textContent.trim();
+          if (t.match(/^(package |import |func |type |var |const |\/\/)/m)) el.classList.add('language-go');
+          else if (t.match(/^(\$|#|go |nimbus |npm |cd |export |curl )/m)) el.classList.add('language-bash');
+        }
+        if (typeof hljs !== 'undefined') hljs.highlightElement(el);
+      });
+    }
+    function initCodeBlocks(container) {
+      if (!container) return;
+      var pres = container.querySelectorAll('pre:not(.code-block-init)');
+      pres.forEach(function(pre) {
+        pre.classList.add('code-block-init');
+        var wrapper = document.createElement('div');
+        wrapper.className = 'code-block';
+        var file = pre.getAttribute('data-file') || '';
+        var header = document.createElement('div');
+        header.className = 'code-block-header';
+        header.innerHTML = '<span class="code-block-file">' + (file || 'Code') + '</span>' +
+          '<button type="button" class="code-block-copy" aria-label="Copy to clipboard">' +
+          '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>' +
+          '</button>';
+        var btn = header.querySelector('.code-block-copy');
+        btn.addEventListener('click', function() {
+          var code = pre.querySelector('code');
+          var text = code ? code.textContent : pre.textContent;
+          navigator.clipboard.writeText(text).then(function() {
+            btn.classList.add('copied');
+            btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+            setTimeout(function() {
+              btn.classList.remove('copied');
+              btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>';
+            }, 1500);
+          });
+        });
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(header);
+        wrapper.appendChild(pre);
+      });
+    }
+    up.compiler('.docs-content', function(el) {
+      initCodeBlocks(el);
+    });
+    up.compiler('.docs-content pre code', function(el) {
+      if (!el.className || (!el.className.includes('language-') && !el.className.includes('hljs'))) {
+        var text = el.textContent.trim();
+        if (text.match(/^(package |import |func |type |var |const |\/\/)/m)) {
+          el.classList.add('language-go');
+        } else if (text.match(/^(\$|#|go |nimbus |npm |cd |export |curl )/m)) {
+          el.classList.add('language-bash');
+        }
+      }
+      if (typeof hljs !== 'undefined') hljs.highlightElement(el);
+    });
+    up.link.config.followSelectors.push('[up-nav] a[href^="/docs/"]');
+    up.link.config.preloadSelectors.push('[up-nav] a[href^="/docs/"]');
+    up.fragment.config.navigateOptions.transition = 'cross-fade';
+    // Ensure only main content is replaced so sidebar scroll position is preserved
+    document.querySelectorAll('[up-nav] a[href^="/docs/"]').forEach(function(a) {
+      a.setAttribute('up-target', '[up-main]');
+    });
+    up.compiler('.docs-content', function(main) {
+      var toc = document.getElementById('on-this-page');
+      if (!toc) return;
+      var headings = main.querySelectorAll('h2, h3');
+      if (headings.length === 0) return;
+      toc.innerHTML = '';
+      headings.forEach(function(h) {
+        var id = h.id || (h.textContent.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase().replace(/^-|-$/g, ''));
+        if (!h.id) h.id = id;
+        var a = document.createElement('a');
+        a.href = '#' + id;
+        a.className = 'block py-1 hover:text-amber-600 dark:hover:text-amber-400 transition' + (h.tagName === 'H3' ? ' pl-3 text-slate-500 dark:text-slate-400' : '');
+        a.textContent = h.textContent;
+        toc.appendChild(a);
+      });
+    });
+    up.on('up:fragment:inserted', function(event) {
+      var main = document.querySelector('[up-main]');
+      if (main && event.target.closest('[up-main]')) {
+        main.scrollTop = 0;
+        initCodeBlocks(main.querySelector('.docs-content'));
+      }
+    });
+
+    // Docs search (Cmd+K)
+    var docsSearchModal = document.getElementById('docs-search-modal');
+    var docsSearchInput = document.getElementById('docs-search-input');
+    var docsSearchResults = document.getElementById('docs-search-results');
+    var docsSearchBackdrop = document.getElementById('docs-search-backdrop');
+    var docsIndex = [];
+    var docsFuse = null;
+
+    function openDocsSearch() {
+      if (docsSearchModal) {
+        docsSearchModal.classList.remove('hidden');
+        docsSearchModal.setAttribute('aria-hidden', 'false');
+        docsSearchInput.value = '';
+        docsSearchInput.focus();
+        docsSearchResults.innerHTML = '<p class="p-4 text-slate-500 dark:text-slate-400 text-sm">Type to search...</p>';
+      }
+    }
+    function closeDocsSearch() {
+      if (docsSearchModal) {
+        docsSearchModal.classList.add('hidden');
+        docsSearchModal.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    document.getElementById('docs-search-trigger')?.addEventListener('click', openDocsSearch);
+    docsSearchBackdrop?.addEventListener('click', closeDocsSearch);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        if (docsSearchModal?.classList.contains('hidden')) openDocsSearch();
+        else closeDocsSearch();
+      }
+      if (e.key === 'Escape') closeDocsSearch();
+    });
+
+    fetch('/api/docs/index').then(function(r) { return r.json(); }).then(function(data) {
+      docsIndex = data;
+      docsFuse = typeof Fuse !== 'undefined' ? new Fuse(data, { keys: ['title', 'slug'], threshold: 0.3 }) : null;
+    });
+
+    docsSearchInput?.addEventListener('input', function() {
+      var q = this.value.trim();
+      if (!docsFuse || !q) {
+        docsSearchResults.innerHTML = q ? '<p class="p-4 text-slate-500 dark:text-slate-400 text-sm">No results.</p>' : '<p class="p-4 text-slate-500 dark:text-slate-400 text-sm">Type to search...</p>';
+        return;
+      }
+      var hits = docsFuse.search(q).slice(0, 12);
+      docsSearchResults.innerHTML = hits.length ? hits.map(function(h) {
+        return '<a href="/docs/' + h.item.slug + '" class="block px-4 py-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10 text-slate-700 dark:text-slate-300">' + h.item.title + '</a>';
+      }).join('') : '<p class="p-4 text-slate-500 dark:text-slate-400 text-sm">No results.</p>';
+    });
+
+    docsSearchInput?.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeDocsSearch();
+    });
+
+    // AI chat (centered modal like search)
+    var docsAiToggle = document.getElementById('docs-ai-toggle');
+    var docsAiModal = document.getElementById('docs-ai-modal');
+    var docsAiBackdrop = document.getElementById('docs-ai-backdrop');
+    var docsAiForm = document.getElementById('docs-ai-form');
+    var docsAiInput = document.getElementById('docs-ai-input');
+    var docsAiMessages = document.getElementById('docs-ai-messages');
+    var docsCurrentSlug = {{ if .currentSlug }}"{{ .currentSlug }}"{{ else }}""{{ end }};
+
+    function openDocsAi() {
+      if (docsAiModal) {
+        docsAiModal.classList.remove('hidden');
+        docsAiModal.setAttribute('aria-hidden', 'false');
+        docsAiInput.focus();
+      }
+    }
+    function closeDocsAi() {
+      if (docsAiModal) {
+        docsAiModal.classList.add('hidden');
+        docsAiModal.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    docsAiToggle?.addEventListener('click', openDocsAi);
+    docsAiBackdrop?.addEventListener('click', closeDocsAi);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && docsAiModal && !docsAiModal.classList.contains('hidden')) closeDocsAi();
+    });
+
+    document.querySelectorAll('.docs-ai-suggestion').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        docsAiInput.value = this.textContent;
+        docsAiInput.focus();
+      });
+    });
+
+    docsAiForm?.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var msg = docsAiInput.value.trim();
+      if (!msg) return;
+      docsAiInput.value = '';
+      docsAiMessages.innerHTML += '<div class="text-right"><span class="inline-block px-3 py-2 rounded-lg bg-amber-500/20 text-slate-800 dark:text-slate-200 text-sm">' + msg.replace(/</g, '&lt;') + '</span></div>';
+      docsAiMessages.innerHTML += '<div class="text-left"><span class="inline-block px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm">Thinking...</span></div>';
+      docsAiMessages.scrollTop = docsAiMessages.scrollHeight;
+
+      fetch('/api/docs/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, currentPage: docsCurrentSlug })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        var last = docsAiMessages.querySelector('.text-left:last-child');
+        if (last) {
+          var raw = data.text || data.error || 'Error';
+          var html = (typeof marked !== 'undefined' && marked.parse) ? marked.parse(raw) : raw.replace(/</g, '&lt;').replace(/\n/g, '<br>');
+          last.innerHTML = '<div class="inline-block px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm docs-ai-response max-w-full overflow-hidden">' + html + '</div>';
+          var resp = last.querySelector('.docs-ai-response');
+          if (resp) processAiCodeBlocks(resp);
+        }
+        docsAiMessages.scrollTop = docsAiMessages.scrollHeight;
+      }).catch(function(err) {
+        var last = docsAiMessages.querySelector('.text-left:last-child');
+        if (last) last.innerHTML = '<span class="inline-block px-3 py-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm">Failed to get response.</span>';
+      });
+    });
+  </script>
+</body>
+</html>
