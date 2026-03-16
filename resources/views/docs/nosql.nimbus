@@ -1,0 +1,393 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">NoSQL / MongoDB</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus ships a first-class NoSQL layer with a unified <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Driver</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Collection</code> interface and a production-ready MongoDB implementation. The API keeps the same feel as the SQL side — register a connection, grab it by name, and use a fluent query builder or the raw Collection methods.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Documentation</h2>
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+  <div>
+    <span class="text-xs font-semibold uppercase text-slate-400">Related</span>
+    <ul class="mt-1 space-y-1">
+      <li><a href="/docs/nosql-query-builder" class="text-amber-600 dark:text-amber-400 hover:underline">NoSQL Query Builder</a></li>
+      <li><a href="/docs/multi-db" class="text-amber-600 dark:text-amber-400 hover:underline">Multiple DB Connections</a></li>
+      <li><a href="/docs/database" class="text-amber-600 dark:text-amber-400 hover:underline">Database &amp; ORM (SQL)</a></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ── Installation ────────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Installation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The fastest way to get started is with the CLI plugin command. It scaffolds the config, boot wiring, and environment variables for you:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>nimbus plugin:install nosql</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-2">This single command:</p>
+<ul class="list-disc list-inside text-slate-600 dark:text-slate-400 mb-4 space-y-1">
+  <li>Creates <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">config/nosql.go</code> with a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">NoSQLConfig</code> struct</li>
+  <li>Adds a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bootNoSQL(app)</code> function in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code> that connects MongoDB, registers the driver globally, and binds <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*nimbus.NoSQL</code> into the service container</li>
+  <li>Appends <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MONGO_URI</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MONGO_DATABASE</code> to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env.example</code></li>
+  <li>Registers <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">loadNoSQL()</code> in your <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">config/config.go</code></li>
+</ul>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Manual Installation</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">If you prefer manual setup, pull in the NoSQL package and the MongoDB driver:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>go get github.com/CodeSyncr/nimbus/database/nosql
+go get go.mongodb.org/mongo-driver/v2</code></pre>
+
+<!-- ── Configuration ───────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Configuration</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Add <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MONGO_URI</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MONGO_DATABASE</code> to your <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>MONGO_URI=mongodb://localhost:27017
+MONGO_DATABASE=myapp</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Scaffolded Config (plugin:install)</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Running <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus plugin:install nosql</code> creates <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">config/nosql.go</code> with a dedicated config struct:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>package config
+
+var NoSQL NoSQLConfig
+
+type NoSQLConfig struct {
+    MongoURI       string
+    MongoDatabase  string
+    ConnectTimeout string // default: "10s"
+    MaxPoolSize    uint64 // default: 100
+    MinPoolSize    uint64 // default: 0
+}
+
+func loadNoSQL() {
+    NoSQL = NoSQLConfig{
+        MongoURI:       cfg("mongo.uri", ""),
+        MongoDatabase:  cfg("mongo.database", "nimbus"),
+        ConnectTimeout: cfg("mongo.connect_timeout", "10s"),
+    }
+}</code></pre>
+
+<p class="text-slate-600 dark:text-slate-400 mb-2">The generated <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bootNoSQL</code> function in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code> wires everything automatically:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func bootNoSQL(app *nimbus.App) {
+    if config.NoSQL.MongoURI == "" {
+        return // NoSQL not configured — skip silently
+    }
+
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+
+    mongoDriver, err := nosql.ConnectMongo(ctx, nosql.MongoConfig{
+        URI:      config.NoSQL.MongoURI,
+        Database: config.NoSQL.MongoDatabase,
+    })
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "MongoDB connection failed: %v\n", err)
+        os.Exit(1)
+    }
+
+    // Register in the NoSQL connection manager
+    nosql.Register("mongo", mongoDriver)
+
+    // Set the global *nimbus.NoSQL handle
+    nimbus.SetNoSQL(mongoDriver)
+
+    // Bind into the service container for DI
+    app.Container.Singleton("nosql", func() *nimbus.NoSQL {
+        return nimbus.GetNoSQL()
+    })
+}</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Manual Boot (without plugin:install)</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">If you set up manually, connect in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code> or your boot file:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/database/nosql"
+
+mongoDriver, err := nosql.ConnectMongo(ctx, nosql.MongoConfig{
+    URI:      config.Database.MongoURI,
+    Database: config.Database.MongoDatabase,
+})
+if err != nil {
+    log.Fatalf("mongo: %v", err)
+}
+
+nosql.Register("mongo", mongoDriver)
+nimbus.SetNoSQL(mongoDriver) // enable *nimbus.NoSQL app-level access</code></pre>
+
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">MongoConfig field</th><th class="px-4 py-2 text-left font-semibold">Type</th><th class="px-4 py-2 text-left font-semibold">Default</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">URI</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">—</td><td class="px-4 py-2">MongoDB connection string</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Database</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">—</td><td class="px-4 py-2">Default database name</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ConnectTimeout</code></td><td class="px-4 py-2">time.Duration</td><td class="px-4 py-2">10s</td><td class="px-4 py-2">Connection timeout</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MaxPoolSize</code></td><td class="px-4 py-2">uint64</td><td class="px-4 py-2">100</td><td class="px-4 py-2">Max connections in pool</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MinPoolSize</code></td><td class="px-4 py-2">uint64</td><td class="px-4 py-2">0</td><td class="px-4 py-2">Min idle connections</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── Using the Connection ────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Using the Connection</h2>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Application-Level Access (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*nimbus.NoSQL</code>)</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Just like <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*nimbus.DB</code> for SQL, the framework provides <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*nimbus.NoSQL</code> as a high-level handle. Use the global helper or resolve from the container:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Global helper — works anywhere
+store := nimbus.GetNoSQL()                    // *nimbus.NoSQL
+coll  := store.Collection("users")            // nosql.Collection
+
+// Shorthand — collection from the default connection
+coll = nimbus.NoSQLCollection("users")
+
+// Named connection (multi-db)
+analytics := nimbus.NoSQLConnection("analytics") // *nimbus.NoSQL</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Container Injection (Dependency Injection)</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">When <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bootNoSQL</code> runs, it binds <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*nimbus.NoSQL</code> into the service container. Resolve it in controllers or services:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type TodoController struct {
+    Store *nimbus.NoSQL
+}
+
+func NewTodoController(app *nimbus.App) *TodoController {
+    return &TodoController{
+        Store: app.Container.MustMake("nosql").(*nimbus.NoSQL),
+    }
+}
+
+func (tc *TodoController) Index(c *nimbus.Context) error {
+    var todos []Todo
+    tc.Store.Collection("todos").Find(c.Request.Context(), nosql.Filter{"active": true}, &todos)
+    return c.JSON(todos)
+}</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Low-Level Package Access</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">You can also use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nosql</code> package directly:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>store := nosql.Connection("mongo")        // returns nosql.Driver
+coll  := store.Collection("users")        // returns nosql.Collection
+
+// Switch database at runtime
+analytics := store.Database("analytics")  // same client, different DB
+events    := analytics.Collection("events")</code></pre>
+
+<!-- ── CRUD ─────────────────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">CRUD Operations</h2>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Insert</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Model definition — embed nosql.Model just like database.Model for SQL
+type User struct {
+    nosql.Model
+    Name  string
+    Email string
+    Age   int
+}
+
+coll := nimbus.NoSQLCollection("users")
+
+// Insert one
+res, err := coll.InsertOne(ctx, User{Name: "Alice", Email: "alice@example.com", Age: 28})
+fmt.Println(res.InsertedID)
+
+// Insert many
+bulk, err := coll.InsertMany(ctx, []any{
+    User{Name: "Bob", Email: "bob@example.com", Age: 32},
+    User{Name: "Carol", Email: "carol@example.com", Age: 24},
+})</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Find</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Find one
+var user User
+err := coll.FindOne(ctx, nosql.Filter{"email": "alice@example.com"}, &user)
+
+// Find by ID
+err = coll.FindByID(ctx, objectID, &user)
+
+// Find multiple with options
+var users []User
+err = coll.Find(ctx, nosql.Filter{"age": nosql.Document{"$gte": 21}}, &users, nosql.FindOption{
+    Sort:  nosql.Sort{"name": nosql.Ascending},
+    Limit: 50,
+    Skip:  0,
+})
+
+// Count &amp; Exists
+count, _ := coll.Count(ctx, nosql.Filter{"active": true})
+exists, _ := coll.Exists(ctx, nosql.Filter{"email": "alice@example.com"})</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Update</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Update one (auto-wraps in $set)
+res, err := coll.UpdateOne(ctx,
+    nosql.Filter{"email": "alice@example.com"},
+    nosql.Filter{"age": 29},
+)
+
+// Update many
+res, err = coll.UpdateMany(ctx,
+    nosql.Filter{"active": false},
+    nosql.Filter{"status": "archived"},
+)
+
+// Update by ID
+res, err = coll.UpdateByID(ctx, objectID, nosql.Filter{"name": "Alice W."})
+
+// Upsert (insert-or-update)
+res, err = coll.Upsert(ctx,
+    nosql.Filter{"email": "new@example.com"},
+    nosql.Filter{"name": "New User", "email": "new@example.com"},
+)
+
+// Use raw MongoDB operators
+res, err = coll.UpdateOne(ctx,
+    nosql.Filter{"_id": id},
+    nosql.Filter{"$inc": nosql.Document{"login_count": 1}},
+)</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Delete</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Delete one
+res, err := coll.DeleteOne(ctx, nosql.Filter{"email": "alice@example.com"})
+
+// Delete many
+res, err = coll.DeleteMany(ctx, nosql.Filter{"status": "archived"})
+
+// Delete by ID
+res, err = coll.DeleteByID(ctx, objectID)</code></pre>
+
+<!-- ── Aggregation ─────────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Aggregation</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Aggregation pipeline
+pipeline := bson.A{
+    bson.D{{Key: "$match", Value: bson.D{{Key: "status", Value: "active"}}}},
+    bson.D{{Key: "$group", Value: bson.D{
+        {Key: "_id", Value: "$country"},
+        {Key: "count", Value: bson.D{{Key: "$sum", Value: 1}}},
+    }}},
+}
+var results []bson.M
+err := coll.Aggregate(ctx, pipeline, &results)
+
+// Distinct values
+emails, err := coll.Distinct(ctx, "email", nosql.Filter{"active": true})</code></pre>
+
+<!-- ── Indexing ─────────────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Indexing</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Simple index
+name, err := coll.CreateIndex(ctx, nosql.Document{"email": 1})
+
+// Unique index
+name, err = coll.CreateIndex(ctx, nosql.Document{"email": 1}, nosql.IndexOption{
+    Unique: true,
+    Name:   "idx_users_email",
+})
+
+// Compound index
+name, err = coll.CreateIndex(ctx, nosql.Document{"status": 1, "created_at": -1})
+
+// TTL index (expire docs after 24h)
+ttl := int32(86400)
+name, err = coll.CreateIndex(ctx, nosql.Document{"expires_at": 1}, nosql.IndexOption{
+    ExpireAfterSeconds: &ttl,
+})
+
+// Sparse index
+name, err = coll.CreateIndex(ctx, nosql.Document{"phone": 1}, nosql.IndexOption{
+    Sparse: true,
+})
+
+// Drop an index
+err = coll.DropIndex(ctx, "idx_users_email")</code></pre>
+
+<!-- ── Models ──────────────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Models</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Embed <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nosql.Model</code> for standard fields — the same pattern as <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Model</code> on the SQL side:</p>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Base Model</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// nosql.Model provides the same standard fields as database.Model (SQL)
+type Model struct {
+    ID        string      // document _id
+    CreatedAt time.Time
+    UpdatedAt time.Time
+    DeletedAt *time.Time  // soft delete (nil = not deleted)
+}</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Defining a Model</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Post struct {
+    nosql.Model
+    Title   string
+    Body    string
+    Status  string
+}
+
+type Comment struct {
+    nosql.Model
+    PostID  string
+    Content string
+}</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">This mirrors the SQL side where models embed <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Model</code>:</p>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">SQL (database.Model)</th><th class="px-4 py-2 text-left font-semibold">NoSQL (nosql.Model)</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ID uint</code></td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ID string</code> (MongoDB ObjectID)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">CreatedAt time.Time</code></td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">CreatedAt time.Time</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">UpdatedAt time.Time</code></td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">UpdatedAt time.Time</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">DeletedAt gorm.DeletedAt</code></td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">DeletedAt *time.Time</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── Validators ──────────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Validators</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Validation works exactly the same as the SQL side — define a validator struct with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Rules()</code> and call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Validate()</code>. Place validators in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">app/validators/</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>package validators
+
+import "github.com/CodeSyncr/nimbus/validation"
+
+type Post struct {
+    Title   string
+    Body    string
+    Status  string
+}
+
+func (v *Post) Rules() validation.Schema {
+    return validation.Schema{
+        "title":  validation.String().Required().Min(1).Max(255).Trim(),
+        "body":   validation.String().Required().Min(1).Max(5000),
+        "status": validation.String().In("draft", "published", "archived"),
+    }
+}
+
+func (v *Post) Validate() error {
+    return validation.ValidateStruct(v)
+}</code></pre>
+
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use the validator in your controller — same pattern as CRUD with SQL:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func (pc *PostController) Store(ctx *http.Context) error {
+    _ = ctx.Request.ParseForm()
+
+    v := &validators.Post{
+        Title:  strings.TrimSpace(ctx.Request.FormValue("title")),
+        Body:   ctx.Request.FormValue("body"),
+        Status: ctx.Request.FormValue("status"),
+    }
+    if err := v.Validate(); err != nil {
+        return ctx.JSON(http.StatusUnprocessableEntity, map[string]any{"errors": err})
+    }
+
+    post := &models.Post{Title: v.Title, Body: v.Body, Status: v.Status}
+    _, err := pc.Store.Collection("posts").InsertOne(ctx.Request.Context(), post)
+    if err != nil {
+        return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+    }
+    return ctx.JSON(post)
+}</code></pre>
+
+<!-- ── Connection Lifecycle ────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Connection Lifecycle</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Health check
+if err := nosql.Connection("mongo").Ping(ctx); err != nil {
+    log.Println("MongoDB is unreachable:", err)
+}
+
+// Close the default *nimbus.NoSQL handle
+defer nimbus.CloseNoSQL(ctx)
+
+// Or close all registered NoSQL connections
+defer nosql.CloseAll(ctx)</code></pre>
+
+<!-- ── Accessing the Raw Client ────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Accessing the Raw Client</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">For features not exposed by the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Collection</code> interface you can reach the underlying <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*mongo.Client</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>driver := nosql.MustConnection("mongo").(*nosql.MongoDriver)
+client := driver.Client()   // *mongo.Client
+db     := driver.DB()       // *mongo.Database</code></pre>
+
+<p class="text-slate-500 dark:text-slate-500 text-sm mt-8">Next: <a href="/docs/nosql-query-builder" class="text-amber-600 dark:text-amber-400 hover:underline">NoSQL Query Builder →</a></p>

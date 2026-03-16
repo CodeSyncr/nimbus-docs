@@ -1,0 +1,112 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">OpenAPI 3.0 Generation</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Automatically generate an OpenAPI 3.0 specification from your routes. Get interactive API documentation with Swagger UI — no manual spec writing required.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Setup</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Register the OpenAPI plugin in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code>:</p>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/openapi"
+
+app.Use(openapi.New())
+// Spec:    GET /openapi.json
+// Swagger: GET /docs</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">How It Works</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The plugin scans all registered routes and generates a complete OpenAPI 3.0 spec including paths, parameters, request bodies, and responses. Routes are grouped by tags for organization in the Swagger UI.</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Path parameters extracted from <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:param</code> segments</li>
+  <li>Query parameters from route metadata</li>
+  <li>Request/response bodies inferred from handler types</li>
+  <li>Authentication requirements from guard middleware</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Route Metadata</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Add rich metadata to any route for detailed API docs:</p>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>app.Router.Get("/api/products", handler, router.RouteMeta{
+    Summary:     "List products",
+    Description: "Returns a paginated list of products with optional filters",
+    Tags:        []string{"Products"},
+    Params: []router.ParamMeta{
+        {Name: "page", In: "query", Type: "integer", Description: "Page number"},
+        {Name: "per_page", In: "query", Type: "integer", Description: "Items per page"},
+        {Name: "category", In: "query", Type: "string", Description: "Filter by category"},
+    },
+    Responses: map[int]router.ResponseMeta{
+        200: {Description: "Product list", Schema: []Product{}},
+        401: {Description: "Unauthorized"},
+    },
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: E-Commerce API</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>// Product endpoints with full OpenAPI metadata
+api := app.Router.Group("/api/v1")
+
+api.Get("/products", ctrl.Index, router.RouteMeta{
+    Summary: "List products",
+    Tags:    []string{"Products"},
+    Params: []router.ParamMeta{
+        {Name: "search", In: "query", Type: "string", Description: "Search term"},
+        {Name: "min_price", In: "query", Type: "number", Description: "Minimum price"},
+        {Name: "max_price", In: "query", Type: "number", Description: "Maximum price"},
+    },
+})
+
+api.Post("/products", ctrl.Store, router.RouteMeta{
+    Summary:     "Create product",
+    Tags:        []string{"Products"},
+    Description: "Creates a new product. Requires admin role.",
+    Responses: map[int]router.ResponseMeta{
+        201: {Description: "Product created"},
+        422: {Description: "Validation errors"},
+    },
+})
+
+api.Get("/products/:id", ctrl.Show, router.RouteMeta{
+    Summary: "Get product details",
+    Tags:    []string{"Products"},
+    Params: []router.ParamMeta{
+        {Name: "id", In: "path", Type: "integer", Description: "Product ID", Required: true},
+    },
+})
+
+api.Put("/products/:id", ctrl.Update, router.RouteMeta{
+    Summary: "Update product",
+    Tags:    []string{"Products"},
+})
+
+api.Delete("/products/:id", ctrl.Destroy, router.RouteMeta{
+    Summary: "Delete product",
+    Tags:    []string{"Products"},
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Generated Spec</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The generated spec at <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/openapi.json</code> follows the OpenAPI 3.0 standard and can be imported into Postman, Insomnia, or any API client.</p>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "MyApp API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/products": {
+      "get": {
+        "summary": "List products",
+        "tags": ["Products"],
+        "parameters": [
+          {"name": "search", "in": "query", "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {"description": "Product list"}
+        }
+      }
+    }
+  }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Add <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">RouteMeta</code> to all API endpoints for complete documentation</li>
+  <li>Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Tags</code> to group related endpoints in Swagger UI</li>
+  <li>Document all response codes including errors (401, 422, 500)</li>
+  <li>Mark required parameters with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Required: true</code></li>
+  <li>Export the spec for API client generation (Go, TypeScript, Python)</li>
+</ul>

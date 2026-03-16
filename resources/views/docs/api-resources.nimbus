@@ -1,0 +1,138 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">API Resources</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">API Resources provide a transformation layer between your models and the JSON responses sent to clients. They let you control exactly which fields are exposed, add computed properties, and format nested relationships — without modifying your models.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">The Resource Interface</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/resource"
+
+// Resource transforms a model to an API response map.
+type Resource interface {
+    ToJSON() map[string]any
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Creating a Resource</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="app/resources/user_resource.go"><code>package resources
+
+import (
+    "github.com/CodeSyncr/nimbus/resource"
+    "app/models"
+)
+
+type UserResource struct {
+    User *models.User
+}
+
+func (r *UserResource) ToJSON() map[string]any {
+    return map[string]any{
+        "id":         r.User.ID,
+        "name":       r.User.Name,
+        "email":      r.User.Email,
+        "avatar_url": r.User.AvatarURL(),
+        "created_at": r.User.CreatedAt.Format("2006-01-02"),
+    }
+    // Note: Password, tokens, internal fields are NOT exposed
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using in Controllers</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="app/controllers/user_controller.go"><code>// Single resource
+func ShowUser(c *http.Context) error {
+    var user models.User
+    database.Get().First(&user, c.Param("id"))
+
+    r := &resources.UserResource{User: &user}
+    return c.JSON(200, r.ToJSON())
+}
+
+// Response:
+// { "id": 1, "name": "Jane", "email": "jane@example.com", "avatar_url": "...", "created_at": "2024-01-15" }</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Resource Collections</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">resource.Collection()</code> to transform a slice of resources:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func ListUsers(c *http.Context) error {
+    var users []models.User
+    database.Get().Find(&users)
+
+    // Convert to resource slice
+    resources := make([]resource.Resource, len(users))
+    for i := range users {
+        resources[i] = &UserResource{User: &users[i]}
+    }
+
+    return c.JSON(200, resource.Collection(resources))
+}
+
+// Response:
+// [{ "id": 1, "name": "Jane", ... }, { "id": 2, "name": "John", ... }]</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">ResourceFunc (Inline Resources)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">For quick, one-off transformations without defining a struct:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>r := resource.ResourceFunc(func() map[string]any {
+    return map[string]any{
+        "id":    post.ID,
+        "title": post.Title,
+        "slug":  post.Slug,
+    }
+})
+
+return c.JSON(200, r.ToJSON())</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Nested Resources</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type PostResource struct {
+    Post *models.Post
+}
+
+func (r *PostResource) ToJSON() map[string]any {
+    data := map[string]any{
+        "id":         r.Post.ID,
+        "title":      r.Post.Title,
+        "content":    r.Post.Content,
+        "created_at": r.Post.CreatedAt,
+    }
+
+    // Nest the author resource
+    if r.Post.User.ID != 0 {
+        data["author"] = (&UserResource{User: &r.Post.User}).ToJSON()
+    }
+
+    // Nest comment resources
+    if len(r.Post.Comments) > 0 {
+        comments := make([]map[string]any, len(r.Post.Comments))
+        for i, c := range r.Post.Comments {
+            comments[i] = (&CommentResource{Comment: &c}).ToJSON()
+        }
+        data["comments"] = comments
+    }
+
+    return data
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">With Pagination</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func ListPosts(c *http.Context) error {
+    page, _ := strconv.Atoi(c.Query("page", "1"))
+    var posts []models.Post
+
+    paginator := database.Paginate(database.Get(), &posts, page, 15)
+
+    resources := make([]resource.Resource, len(posts))
+    for i := range posts {
+        resources[i] = &PostResource{Post: &posts[i]}
+    }
+
+    return c.JSON(200, map[string]any{
+        "data": resource.Collection(resources),
+        "meta": paginator.Meta(),
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Resources vs Serialize</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Feature</th><th class="px-4 py-2 text-left font-semibold">API Resources</th><th class="px-4 py-2 text-left font-semibold">database.Serialize</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Computed fields</td><td class="px-4 py-2">✅ Full control</td><td class="px-4 py-2">❌ Model fields only</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Nested relations</td><td class="px-4 py-2">✅ Recursive</td><td class="px-4 py-2">❌ Flat only</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Field selection</td><td class="px-4 py-2">✅ Explicit in code</td><td class="px-4 py-2">✅ Pick / Omit options</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Use case</td><td class="px-4 py-2">Public APIs, complex formats</td><td class="px-4 py-2">Quick field filtering</td></tr>
+    </tbody>
+  </table>
+</div>

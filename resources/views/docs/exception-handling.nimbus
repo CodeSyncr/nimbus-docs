@@ -52,8 +52,8 @@ func Show(c *http.Context) error {
 <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Validation errors (422)</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-2">Combine <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">validation</code> helpers with the global handler for consistent 422 responses:</p>
 <pre><code>type CreatePostPayload struct {
-    Title string `json:"title" validate:"required,min=3"`
-    Body  string `json:"body" validate:"required"`
+    Title string `validate:"required,min=3"`
+    Body  string `validate:"required"`
 }
 
 func CreatePost(c *http.Context) error {
@@ -70,8 +70,8 @@ func CreatePost(c *http.Context) error {
 <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Form requests + error handling</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-2">Form requests wrap validation + authorization in a reusable type. They integrate seamlessly with the global error handler:</p>
 <pre><code>type LoginPayload struct {
-    Email    string `json:"email" validate:"required,email"`
-    Password string `json:"password" validate:"required"`
+    Email    string `validate:"required,email"`
+    Password string `validate:"required"`
 }
 
 type LoginRequest struct {
@@ -100,6 +100,47 @@ func Login(c *http.Context) error {
     // use payload.Email, payload.Password ...
     return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Error IDs (AppError)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Every error gets a unique ID for tracking. The ID is logged server-side while the client only sees a safe message and the ID for support reference.</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/errors"
+
+func Show(c *http.Context) error {
+    user, err := findUser(c.Param("id"))
+    if err != nil {
+        // Creates an error with unique ID (e.g. "a1b2c3d4e5f6")
+        return errors.Wrap(500, err)
+    }
+    return c.JSON(200, user)
+}
+
+// Client receives:
+// {"error": "Internal Server Error", "error_id": "a1b2c3d4e5f6"}
+
+// Server logs:
+// error_id=a1b2c3d4e5f6 status=500 database timeout</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-2">You can also create errors directly:</p>
+<pre><code>// New creates an AppError with a unique tracking ID
+appErr := errors.New(503, "service unavailable")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Error reporters</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Register external error reporting services (Sentry, Bugsnag, etc.) to automatically receive errors:</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/errors"
+
+// Built-in log reporter (logs to nimbus logger)
+errors.RegisterReporter(&errors.LogReporter{})
+
+// Custom reporter (e.g. Sentry)
+type SentryReporter struct{}
+func (s *SentryReporter) Report(err error, ctx map[string]any) error {
+    sentry.CaptureException(err)
+    return nil
+}
+errors.RegisterReporter(&SentryReporter{})
+
+// Reports are sent automatically when errors.Handler() catches an AppError.
+// You can also report manually:
+errors.ReportError(err, map[string]any{"user_id": 42})</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Panic recovery</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-2">The built-in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">middleware.Recover()</code> catches panics inside handlers, logs them, and returns a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">500</code> JSON response instead of crashing the server.</p>

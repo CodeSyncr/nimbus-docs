@@ -1,30 +1,103 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Cache Backends</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus supports five cache drivers. Choose based on your deployment: single process, multi-instance, or edge.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus supports five cache drivers, all sharing the same <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">cache.Store</code> interface. Choose based on your deployment: single process, multi-instance, or edge.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Store Interface</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Store interface {
+    Get(ctx context.Context, key string) ([]byte, error)
+    Set(ctx context.Context, key string, value []byte, ttl time.Duration) error
+    Delete(ctx context.Context, key string) error
+    Has(ctx context.Context, key string) bool
+    Flush(ctx context.Context) error
+}</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Memory</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">In-process, single instance. Default. No config.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-2">In-process, zero config. Default driver. Data lost on restart.</p>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>CACHE_DRIVER=memory</code></pre>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>store := cache.NewMemoryStore()
+store.Set(ctx, "user:1", data, 5*time.Minute)
+val, _ := store.Get(ctx, "user:1")</code></pre>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1 text-sm">
+  <li>Automatic cleanup of expired entries</li>
+  <li>Best for: development, single-instance apps, testing</li>
+</ul>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Redis</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Distributed, shared across instances. Supports prefix invalidation.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Distributed, shared across instances. Supports prefix-based invalidation and namespaces.</p>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>CACHE_DRIVER=redis
 REDIS_URL=redis://localhost:6379</code></pre>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/redis/go-redis/v9"
+
+rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+store := cache.NewRedisStore(rdb)
+
+// With custom prefix
+store := cache.NewRedisStoreWithPrefix(rdb, "myapp:")</code></pre>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1 text-sm">
+  <li>Native TTL via Redis SETEX</li>
+  <li>Best for: production multi-instance deployments</li>
+</ul>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Memcached</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Distributed, multi-server. Key limit 250 bytes.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Distributed, multi-server. Key limit 250 bytes, value limit 1MB.</p>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>CACHE_DRIVER=memcached
 MEMCACHED_SERVERS=localhost:11211,10.0.0.2:11211</code></pre>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>store := cache.NewMemcachedStore("localhost:11211", "10.0.0.2:11211")</code></pre>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1 text-sm">
+  <li>Multi-server sharding built-in</li>
+  <li>Best for: high-throughput read-heavy workloads</li>
+</ul>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">DynamoDB</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Serverless, AWS. Create table with partition key <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">pk</code> (string). Optional <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ttl</code> for auto-expiry.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Serverless, AWS-native. Create a DynamoDB table with partition key <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">pk</code> (string) and optional TTL attribute <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ttl</code>.</p>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>CACHE_DRIVER=dynamodb
 CACHE_DYNAMO_TABLE=nimbus-cache
 AWS_REGION=us-east-1</code></pre>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>store := cache.NewDynamoDBStore(cache.DynamoConfig{
+    Table:  "nimbus-cache",
+    Region: "us-east-1",
+})</code></pre>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1 text-sm">
+  <li>Auto-expiry via DynamoDB TTL (enable on <code class="text-xs">ttl</code> attribute)</li>
+  <li>Best for: serverless/Lambda, AWS-native architectures</li>
+</ul>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Cloudflare KV</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Edge-distributed, eventually consistent. Min TTL 60s.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Edge-distributed, eventually consistent. Minimum TTL 60 seconds.</p>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>CACHE_DRIVER=cloudflare
 CLOUDFLARE_ACCOUNT_ID=your_account_id
 CLOUDFLARE_NAMESPACE_ID=your_namespace_id
 CLOUDFLARE_API_TOKEN=your_api_token</code></pre>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>store := cache.NewCloudflareKVStore(cache.CloudflareConfig{
+    AccountID:   os.Getenv("CLOUDFLARE_ACCOUNT_ID"),
+    NamespaceID: os.Getenv("CLOUDFLARE_NAMESPACE_ID"),
+    APIToken:    os.Getenv("CLOUDFLARE_API_TOKEN"),
+})</code></pre>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1 text-sm">
+  <li>Global edge distribution, low-latency reads</li>
+  <li>Best for: CDN-cached content, edge functions</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Comparison</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Driver</th><th class="px-4 py-2 text-left font-semibold">Distributed</th><th class="px-4 py-2 text-left font-semibold">Persistent</th><th class="px-4 py-2 text-left font-semibold">TTL</th><th class="px-4 py-2 text-left font-semibold">Setup</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Memory</td><td class="px-4 py-2">❌</td><td class="px-4 py-2">❌</td><td class="px-4 py-2">✅</td><td class="px-4 py-2">None</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Redis</td><td class="px-4 py-2">✅</td><td class="px-4 py-2">✅</td><td class="px-4 py-2">✅</td><td class="px-4 py-2">Redis server</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Memcached</td><td class="px-4 py-2">✅</td><td class="px-4 py-2">❌</td><td class="px-4 py-2">✅</td><td class="px-4 py-2">Memcached server</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">DynamoDB</td><td class="px-4 py-2">✅</td><td class="px-4 py-2">✅</td><td class="px-4 py-2">✅</td><td class="px-4 py-2">AWS table</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Cloudflare KV</td><td class="px-4 py-2">✅ (edge)</td><td class="px-4 py-2">✅</td><td class="px-4 py-2">✅ (60s min)</td><td class="px-4 py-2">CF namespace</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Namespaces</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">cache.Namespace</code> to prefix keys and invalidate groups:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>ns := cache.NewNamespace(store, "users")
+ns.Set(ctx, "profile:1", data, time.Hour)  // key: "users:profile:1"
+ns.Flush(ctx)  // invalidates all "users:*" keys</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Boot (Auto-config)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">cache.Boot()</code> to auto-select the driver from environment variables:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>store := cache.Boot() // reads CACHE_DRIVER env var</code></pre>

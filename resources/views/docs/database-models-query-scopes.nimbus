@@ -1,25 +1,93 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Query Scopes</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Scopes are reusable query fragments. Define them as functions that accept <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*gorm.DB</code> and return <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*gorm.DB</code>, then apply them with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Scopes()</code>.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Scopes are reusable query fragments. Nimbus provides built-in scopes for common patterns, and you can define custom scopes as functions that accept <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*gorm.DB</code> and return <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*gorm.DB</code>.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Defining a scope</h2>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Custom Scopes</h2>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func Published(db *gorm.DB) *gorm.DB {
     return db.Where("status = ?", "published")
 }
 
 func Recent(db *gorm.DB) *gorm.DB {
     return db.Where("created_at > ?", time.Now().AddDate(0, 0, -30))
-}</code></pre>
+}
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using scopes</h2>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>var posts []Post
+// Usage
+var posts []Post
 db.Model(&Post{}).Scopes(Published, Recent).Find(&posts)</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Scopes with arguments</h2>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Scopes with Arguments</h2>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func Status(status string) func(*gorm.DB) *gorm.DB {
     return func(db *gorm.DB) *gorm.DB {
         return db.Where("status = ?", status)
     }
 }
 
-db.Model(&Post{}).Scopes(Status("draft")).Find(&posts)</code></pre>
+func OlderThan(days int) func(*gorm.DB) *gorm.DB {
+    return func(db *gorm.DB) *gorm.DB {
+        return db.Where("created_at < ?", time.Now().AddDate(0, 0, -days))
+    }
+}
+
+db.Model(&Post{}).Scopes(Status("draft"), OlderThan(7)).Find(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Built-in Scopes</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Nimbus includes pre-built scopes in the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database</code> package:</p>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Scope</th><th class="px-4 py-2 text-left font-semibold">SQL</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereScope(col, val)</code></td><td class="px-4 py-2">WHERE col = val</td><td class="px-4 py-2">Simple equality filter</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">OrderScope(expr)</code></td><td class="px-4 py-2">ORDER BY expr</td><td class="px-4 py-2">Order results</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">LatestScope(col)</code></td><td class="px-4 py-2">ORDER BY col DESC</td><td class="px-4 py-2">Newest first</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">OldestScope(col)</code></td><td class="px-4 py-2">ORDER BY col ASC</td><td class="px-4 py-2">Oldest first</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">LimitScope(n)</code></td><td class="px-4 py-2">LIMIT n</td><td class="px-4 py-2">Limit results</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">WhenScope(cond, scope)</code></td><td class="px-4 py-2">Conditional</td><td class="px-4 py-2">Apply scope only when condition is true</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/database"
+
+// Latest posts
+db.Scopes(database.LatestScope("created_at"), database.LimitScope(10)).Find(&posts)
+
+// Conditional scope (filter by status only if parameter provided)
+status := c.Query("status", "")
+db.Scopes(
+    database.WhenScope(status != "", database.WhereScope("status", status)),
+    database.LatestScope("created_at"),
+).Find(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Soft Delete Scopes</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">When models use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">gorm.DeletedAt</code>, soft-deleted records are auto-excluded. Use these scopes to include them:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Include soft-deleted records
+db.Scopes(database.WithTrashed).Find(&posts)
+
+// Only soft-deleted records
+db.Scopes(database.OnlyTrashed).Find(&posts)
+
+// Restore a soft-deleted record
+database.Restore(db, &post)
+
+// Permanently delete (bypass soft delete)
+database.ForceDelete(db, &post)
+
+// Check if model is soft-deleted
+if database.IsTrashed(&post) {
+    // ...
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Combining Scopes</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Build queries dynamically
+scopes := []func(*gorm.DB) *gorm.DB{
+    database.LatestScope("created_at"),
+}
+
+if filterStatus != "" {
+    scopes = append(scopes, Status(filterStatus))
+}
+if onlyRecent {
+    scopes = append(scopes, Recent)
+}
+
+db.Model(&Post{}).Scopes(scopes...).Find(&posts)</code></pre>

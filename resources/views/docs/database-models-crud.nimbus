@@ -1,43 +1,133 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">CRUD Operations</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Create, Read, Update, and Delete operations on models use GORM's fluent API. All operations go through <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Get()</code> or a passed <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*gorm.DB</code>.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Create, Read, Update, and Delete operations on models through <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Get()</code>. Nimbus extends GORM with type-safe generic helpers for common patterns.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Create</h2>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>post := Post{Title: "Hello", Content: "World", Status: "draft"}
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Single record
+post := Post{Title: "Hello", Content: "World", Status: "draft"}
 result := database.Get().Create(&post)
-// post.ID, post.CreatedAt, post.UpdatedAt are set</code></pre>
+// post.ID, post.CreatedAt, post.UpdatedAt are automatically set
+
+// Batch create
+posts := []Post{
+    {Title: "First", Status: "draft"},
+    {Title: "Second", Status: "published"},
+}
+database.Get().Create(&posts)</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Read</h2>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// By ID
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db := database.Get()
+
+// By primary key
 var post Post
-database.Get().First(&post, 1)
+db.First(&post, 1)
 
-// Find or fail (returns gorm.ErrRecordNotFound)
-database.Get().First(&post, "id = ?", id)
+// By condition
+db.First(&post, "slug = ?", "hello-world")
 
-// Multiple
+// Find or error (returns gorm.ErrRecordNotFound)
+err := db.First(&post, "id = ?", id).Error
+
+// All records
 var posts []Post
-database.Get().Where("status", "published").Find(&posts)</code></pre>
+db.Find(&posts)
+
+// With conditions
+db.Where("status = ?", "published").Find(&posts)
+
+// Count
+var count int64
+db.Model(&Post{}).Where("status = ?", "published").Count(&count)</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Update</h2>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Update single field
 db.Model(&post).Update("title", "New Title")
 
-// Update multiple
-db.Model(&post).Updates(map[string]any{"title": "New", "status": "published"})
+// Update multiple fields
+db.Model(&post).Updates(map[string]any{
+    "title":  "New Title",
+    "status": "published",
+})
 
-// Merge and save (model instance)
-post.Title = "Updated"
+// Update with struct (only non-zero fields)
+db.Model(&post).Updates(Post{Title: "New", Status: "published"})
+
+// Save full model (insert or update)
+post.Title = "Updated Title"
 post.Content = "New content"
 db.Save(&post)</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Delete</h2>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Soft delete (when Model has DeletedAt)
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Soft delete (when model has gorm.DeletedAt field)
 db.Delete(&post)
 
-// Hard delete
-db.Unscoped().Delete(&post)</code></pre>
+// Hard delete (bypass soft delete)
+db.Unscoped().Delete(&post)
+
+// Delete by condition
+db.Where("status = ?", "draft").Delete(&Post{})</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">FirstOrCreate / UpdateOrCreate</h2>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db.Where(Post{Title: "Unique"}).FirstOrCreate(&post)
-db.Where(Post{Email: "a@b.com"}).Assign(attrs).FirstOrCreate(&user)</code></pre>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Find by attributes, or create if not found
+db.Where(Post{Slug: "unique-post"}).FirstOrCreate(&post)
+
+// With additional attributes on create
+db.Where(User{Email: "a@b.com"}).
+    Attrs(User{Name: "Default Name"}).
+    FirstOrCreate(&user)
+
+// Generic helper (type-safe)
+user, err := database.FirstOrCreate[User](db, User{Email: "a@b.com"})
+
+// UpdateOrCreate — upsert (find or create + update)
+user, err := database.UpdateOrCreate[User](db,
+    User{Email: "a@b.com"},               // search attributes
+    map[string]any{"name": "Updated"},     // attributes to update
+)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Generic Helpers</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Function</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">FirstOrCreate[T](db, attrs)</code></td><td class="px-4 py-2">Find or create, returns typed result</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">UpdateOrCreate[T](db, where, update)</code></td><td class="px-4 py-2">Upsert with typed result</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Exists(query)</code></td><td class="px-4 py-2">Returns true if any record matches</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Pluck[T](query, col)</code></td><td class="px-4 py-2">Extract column values as typed slice</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">CountBy(query, col)</code></td><td class="px-4 py-2">Group-count into map[string]int64</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Chunk[T](db, size, fn)</code></td><td class="px-4 py-2">Process records in batches</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">CachedFind[T](db, id, ttl)</code></td><td class="px-4 py-2">Find with in-memory cache</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Check if a slug exists
+if database.Exists(db.Model(&Post{}).Where("slug = ?", slug)) {
+    return c.JSON(409, map[string]string{"error": "slug taken"})
+}
+
+// Get all emails
+emails, _ := database.Pluck[string](db.Model(&User{}), "email")
+
+// Count posts by status
+stats := database.CountBy(db.Model(&Post{}), "status")
+// map[string]int64{"draft": 3, "published": 10, "archived": 2}
+
+// Process 50,000 users in batches of 100
+database.Chunk[User](db, 100, func(users []User) error {
+    for _, u := range users {
+        sendNewsletter(u)
+    }
+    return nil
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Transactions</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>err := database.Transaction(func(tx *gorm.DB) error {
+    if err := tx.Create(&order).Error; err != nil {
+        return err // auto-rollback
+    }
+    if err := tx.Create(&payment).Error; err != nil {
+        return err // auto-rollback
+    }
+    return nil // auto-commit
+})</code></pre>

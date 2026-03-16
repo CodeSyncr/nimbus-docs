@@ -1,9 +1,9 @@
-<div id="ai-result" class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 min-h-[120px]">
+<div id="ai-result" class="p-4 min-h-[120px]">
   @if(.error)
-  <p class="text-red-600 dark:text-red-400 text-sm">{{ .error }}</p>
+  <p class="text-red-500 text-sm">{{ .error }}</p>
   @else if(.text)
-  <p class="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">{{ .text }}</p>
+  <p class="text-sm whitespace-pre-wrap leading-relaxed">{{ .text }}</p>
   @else
-  <p class="text-slate-500 dark:text-slate-400 text-sm">Submit a prompt above to see the AI response.</p>
+  <p class="text-slate-500 text-sm">Submit a prompt above to see the AI response.</p>
   @endif
 </div>

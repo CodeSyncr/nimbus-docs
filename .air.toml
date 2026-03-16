@@ -3,12 +3,12 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-  cmd = "go build -mod=mod -o ./tmp/main ."
+  cmd = "nimbus build && go build -mod=mod -o ./tmp/main ."
   bin = "./tmp/main"
   delay = 1000
-  exclude_dir = ["tmp", "vendor", "node_modules"]
+  exclude_dir = ["tmp", "vendor", "node_modules", "public"]
   exclude_regex = ["_test.go"]
-  include_ext = ["go", "nimbus"]
+  include_ext = ["go", "nimbus", "css", "js"]
   send_interrupt = true
   kill_delay = "1s"
 

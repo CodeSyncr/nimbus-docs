@@ -221,3 +221,39 @@
     <p class="text-sm text-slate-600 dark:text-slate-400">Request assertions and examples.</p>
   </a>
 </div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Advanced Features</h2>
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-10">
+  <a href="/docs/workflow" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Workflow Engine</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Durable step-based workflows with persistence.</p>
+  </a>
+  <a href="/docs/feature-flags" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Feature Flags</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Runtime feature toggling.</p>
+  </a>
+  <a href="/docs/multi-tenancy" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Multi-Tenancy</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Subdomain, header, or path tenancy.</p>
+  </a>
+  <a href="/docs/presence" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Realtime Presence</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Track online users across channels.</p>
+  </a>
+  <a href="/docs/openapi" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">OpenAPI Generation</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Auto-generate OpenAPI 3.0 spec from routes.</p>
+  </a>
+  <a href="/docs/studio" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Studio Admin Panel</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Auto-generated CRUD admin for models.</p>
+  </a>
+  <a href="/docs/edge-functions" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Edge Functions</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Serverless edge handlers.</p>
+  </a>
+  <a href="/docs/metrics" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Runtime Metrics</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Goroutines, heap, GC monitoring.</p>
+  </a>
+</div>

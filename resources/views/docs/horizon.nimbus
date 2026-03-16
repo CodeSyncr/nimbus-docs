@@ -1,0 +1,211 @@
+@layout('layout-docs')
+
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Plugin</span>
+    <span class="px-2.5 py-1 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 text-xs font-semibold">Queues</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Horizon — Queue Dashboard</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">Horizon provides a beautiful dashboard and code-driven configuration for your Nimbus-powered Redis queues. Monitor throughput, runtime, failed jobs, and configure supervisors — all without leaving your application.</p>
+
+  <!-- ── Overview ── -->
+  <h2 id="overview" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Overview
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Horizon exposes the queue dashboard at <code>/horizon</code> with JSON API endpoints for:</p>
+  <div class="grid grid-cols-2 gap-3 mb-6">
+    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+      <div class="font-semibold text-slate-900 dark:text-white text-sm mb-1">📊 Metrics</div>
+      <p class="text-xs text-slate-500 dark:text-slate-400">Total jobs processed, failed count, average runtime, recent throughput</p>
+    </div>
+    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+      <div class="font-semibold text-slate-900 dark:text-white text-sm mb-1">❌ Failed Jobs</div>
+      <p class="text-xs text-slate-500 dark:text-slate-400">List, inspect, retry, or forget individual failed jobs</p>
+    </div>
+    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+      <div class="font-semibold text-slate-900 dark:text-white text-sm mb-1">⚙️ Supervisors</div>
+      <p class="text-xs text-slate-500 dark:text-slate-400">Code-driven config for auto/simple balance strategies</p>
+    </div>
+    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+      <div class="font-semibold text-slate-900 dark:text-white text-sm mb-1">🏷️ Job Tags</div>
+      <p class="text-xs text-slate-500 dark:text-slate-400">Tag and filter jobs by metadata, silence noisy jobs</p>
+    </div>
+  </div>
+
+  <!-- ── Installation ── -->
+  <h2 id="installation" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Installation
+  </h2>
+  <pre><code class="language-bash">$ nimbus plugin:install horizon</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">Manual setup:</p>
+  <pre data-file="bin/server.go"><code class="language-go">import "github.com/CodeSyncr/nimbus/plugins/horizon"
+
+app.Use(horizon.New())</code></pre>
+
+  <!-- ── Configuration ── -->
+  <h2 id="configuration" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Configuration
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Horizon uses a code-driven configuration struct for supervisor definitions:</p>
+  <pre data-file="config/horizon.go"><code class="language-go">package config
+
+import "github.com/CodeSyncr/nimbus/plugins/horizon"
+
+var Horizon = horizon.Config{
+    // Dashboard prefix (default: "/horizon")
+    Prefix: "/horizon",
+
+    // Redis connection name
+    Use: "redis",
+
+    // Supervisor definitions
+    Environments: map[string][]horizon.Supervisor{
+        "production": {
+            {
+                Name:         "default-supervisor",
+                Connection:   "redis",
+                Queue:        []string{"default", "emails", "notifications"},
+                Balance:      "auto",     // "auto", "simple", or "false"
+                MaxProcesses: 10,
+                MinProcesses: 1,
+                Tries:        3,
+                Timeout:      60,
+            },
+        },
+        "local": {
+            {
+                Name:         "local-supervisor",
+                Connection:   "redis",
+                Queue:        []string{"default"},
+                Balance:      "simple",
+                MaxProcesses: 3,
+                MinProcesses: 1,
+                Tries:        1,
+                Timeout:      30,
+            },
+        },
+    },
+}</code></pre>
+
+  <!-- ── Balance Strategies ── -->
+  <h2 id="balance" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Balance Strategies
+  </h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Strategy</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Behavior</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2"><code>auto</code></td>
+          <td class="px-4 py-2">Adjusts worker count per queue based on current workload. Queues with more pending jobs get more workers, scaling between <code>MinProcesses</code> and <code>MaxProcesses</code>.</td>
+        </tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2"><code>simple</code></td>
+          <td class="px-4 py-2">Splits workers evenly between queues. Each queue gets <code>MaxProcesses / len(queues)</code> workers.</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2"><code>false</code></td>
+          <td class="px-4 py-2">No balancing. Workers are assigned in the order of the <code>Queue</code> slice — first queue gets priority.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Failed Jobs ── -->
+  <h2 id="failed-jobs" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Failed Jobs
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Jobs that exceed their retry limit are stored as failed. Horizon provides full lifecycle management:</p>
+  <pre><code class="language-go">// List all failed jobs
+failed, _ := horizon.FailedJobs(redisClient)
+
+// Get details for a specific failed job
+job, _ := horizon.GetFailedJob(redisClient, "job-id-123")
+
+// Retry a failed job (moves it back to its original queue)
+horizon.RetryFailedJob(redisClient, "job-id-123")
+
+// Permanently remove a failed job
+horizon.ForgetFailedJob(redisClient, "job-id-123")</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Each failed job record includes:</p>
+  <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400 mb-4">
+    <li><strong>ID</strong> — Unique job identifier</li>
+    <li><strong>Queue</strong> — Queue the job was assigned to</li>
+    <li><strong>Name</strong> — Job class/type name</li>
+    <li><strong>Connection</strong> — Redis connection used</li>
+    <li><strong>Exception</strong> — Error message and stack trace</li>
+    <li><strong>Payload</strong> — Serialized job data</li>
+    <li><strong>FailedAt</strong> — Timestamp</li>
+  </ul>
+
+  <!-- ── Job Tags ── -->
+  <h2 id="tags" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Job Tags & Silencing
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Tag jobs for easier filtering and monitoring:</p>
+  <pre><code class="language-go">// Jobs can return tags for identification
+type SendWelcomeEmail struct {
+    UserID int
+}
+
+func (j *SendWelcomeEmail) Tags() []string {
+    return []string{
+        fmt.Sprintf("user:%d", j.UserID),
+        "onboarding",
+    }
+}
+
+// Silence noisy jobs from the dashboard
+func (j *PingHealthCheck) ShouldBeUnique() bool { return true }</code></pre>
+
+  <!-- ── Dashboard API ── -->
+  <h2 id="api" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Dashboard API Routes
+  </h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Method</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Route</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>GET</code></td><td class="px-4 py-2"><code>/horizon</code></td><td class="px-4 py-2">Dashboard HTML</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>GET</code></td><td class="px-4 py-2"><code>/horizon/api/stats</code></td><td class="px-4 py-2">Total processed, failed, runtime, throughput</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>GET</code></td><td class="px-4 py-2"><code>/horizon/api/failed</code></td><td class="px-4 py-2">List all failed jobs</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>GET</code></td><td class="px-4 py-2"><code>/horizon/api/failed/:id</code></td><td class="px-4 py-2">Get specific failed job</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>POST</code></td><td class="px-4 py-2"><code>/horizon/api/failed/:id/retry</code></td><td class="px-4 py-2">Retry a failed job</td></tr>
+        <tr><td class="px-4 py-2"><code>DELETE</code></td><td class="px-4 py-2"><code>/horizon/api/failed/:id</code></td><td class="px-4 py-2">Forget a failed job</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Authorization ── -->
+  <h2 id="authorization" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Authorization
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">In production, restrict access to the Horizon dashboard with middleware:</p>
+  <pre><code class="language-go">app.Use(horizon.New(horizon.Config{
+    Prefix: "/horizon",
+    Middleware: []nimbus.Handler{
+        func(c *http.Context) error {
+            user := auth.User(c)
+            if user == nil || !user.IsAdmin {
+                return c.Status(403).SendString("Forbidden")
+            }
+            return c.Next()
+        },
+    },
+}))</code></pre>
+
+  <div class="p-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 mb-8">
+    <p class="text-amber-800 dark:text-amber-400 text-sm"><strong>Requirements:</strong> Horizon requires a Redis connection for queue management. Make sure your <code>config/queue.go</code> is configured with the <code>redis</code> driver.</p>
+  </div>
+</div>

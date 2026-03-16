@@ -1,0 +1,223 @@
+@layout('layout-docs')
+
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Plugin</span>
+    <span class="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">Monitoring</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Pulse — Production Monitoring</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">Pulse is a lightweight production-grade monitoring plugin for Nimbus. It captures request performance with percentile stats, cache hit rates, queue throughput, exception tracking, and slow query detection — all without external dependencies.</p>
+
+  <!-- ── Overview ── -->
+  <h2 id="overview" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Overview
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Unlike <a href="/docs/telescope" class="text-amber-600 hover:text-amber-700 underline">Telescope</a> (which stores individual entries as a debug tool), Pulse aggregates metrics designed for production use:</p>
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+    <div class="p-3 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-500/20 border border-blue-200 dark:border-blue-500/30 text-center">
+      <div class="text-2xl mb-1">📈</div>
+      <div class="text-xs font-semibold text-blue-900 dark:text-blue-300">Request Stats</div>
+      <div class="text-xs text-blue-700 dark:text-blue-400">P50 / P95 / P99</div>
+    </div>
+    <div class="p-3 rounded-lg bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-500/10 dark:to-amber-500/20 border border-amber-200 dark:border-amber-500/30 text-center">
+      <div class="text-2xl mb-1">🗄️</div>
+      <div class="text-xs font-semibold text-amber-900 dark:text-amber-300">Slow Queries</div>
+      <div class="text-xs text-amber-700 dark:text-amber-400">Configurable threshold</div>
+    </div>
+    <div class="p-3 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-500/10 dark:to-green-500/20 border border-green-200 dark:border-green-500/30 text-center">
+      <div class="text-2xl mb-1">💾</div>
+      <div class="text-xs font-semibold text-green-900 dark:text-green-300">Cache Stats</div>
+      <div class="text-xs text-green-700 dark:text-green-400">Hit / Miss rates</div>
+    </div>
+    <div class="p-3 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-500/10 dark:to-purple-500/20 border border-purple-200 dark:border-purple-500/30 text-center">
+      <div class="text-2xl mb-1">📦</div>
+      <div class="text-xs font-semibold text-purple-900 dark:text-purple-300">Queue Stats</div>
+      <div class="text-xs text-purple-700 dark:text-purple-400">Processed / Failed</div>
+    </div>
+    <div class="p-3 rounded-lg bg-gradient-to-br from-red-50 to-red-100 dark:from-red-500/10 dark:to-red-500/20 border border-red-200 dark:border-red-500/30 text-center">
+      <div class="text-2xl mb-1">🚨</div>
+      <div class="text-xs font-semibold text-red-900 dark:text-red-300">Exceptions</div>
+      <div class="text-xs text-red-700 dark:text-red-400">Grouping + Count</div>
+    </div>
+    <div class="p-3 rounded-lg bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-500/10 dark:to-cyan-500/20 border border-cyan-200 dark:border-cyan-500/30 text-center">
+      <div class="text-2xl mb-1">⏱️</div>
+      <div class="text-xs font-semibold text-cyan-900 dark:text-cyan-300">Periods</div>
+      <div class="text-xs text-cyan-700 dark:text-cyan-400">1h / 6h / 24h / 7d</div>
+    </div>
+  </div>
+
+  <!-- ── Installation ── -->
+  <h2 id="installation" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Installation
+  </h2>
+  <pre><code class="language-bash">$ nimbus plugin:install pulse</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">Or add manually:</p>
+  <pre data-file="bin/server.go"><code class="language-go">import "github.com/CodeSyncr/nimbus/plugins/pulse"
+
+app.Use(pulse.New())</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">Access the dashboard at <code>http://localhost:3000/pulse</code>.</p>
+
+  <!-- ── Configuration ── -->
+  <h2 id="configuration" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Configuration
+  </h2>
+  <pre data-file="config/pulse.go"><code class="language-go">package config
+
+import "github.com/CodeSyncr/nimbus/plugins/pulse"
+
+var Pulse = pulse.Config{
+    // Dashboard path (default: "/pulse")
+    Path:  "/pulse",
+
+    // Enable/disable (default: true)
+    Enabled: true,
+
+    // Slow query threshold (queries slower than this are flagged)
+    SlowQueryThreshold: 100 * time.Millisecond, // default: 100ms
+
+    // Maximum recent exceptions to keep
+    MaxExceptions: 50,
+
+    // Maximum slow queries to keep
+    MaxSlowQueries: 50,
+
+    // Request stats retention periods
+    // Stats are auto-bucketed into 1h, 6h, 24h, and 7d windows
+}</code></pre>
+
+  <!-- ── Request Performance ── -->
+  <h2 id="requests" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Request Performance
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Pulse's request middleware automatically captures every HTTP request and computes rolling percentile statistics:</p>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Metric</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>total_requests</code></td><td class="px-4 py-2">Total HTTP requests in this period</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>avg_duration_ms</code></td><td class="px-4 py-2">Average response time</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>p50_ms</code></td><td class="px-4 py-2">50th percentile (median response time)</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>p95_ms</code></td><td class="px-4 py-2">95th percentile (tail latency)</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>p99_ms</code></td><td class="px-4 py-2">99th percentile (worst-case latency)</td></tr>
+        <tr><td class="px-4 py-2"><code>max_duration_ms</code></td><td class="px-4 py-2">Slowest request in this period</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Stats are bucketed into four retention periods:</p>
+  <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400 mb-6">
+    <li><strong>1 hour</strong> — Granular real-time view</li>
+    <li><strong>6 hours</strong> — Short-term trends</li>
+    <li><strong>24 hours</strong> — Daily performance overview</li>
+    <li><strong>7 days</strong> — Weekly trends</li>
+  </ul>
+
+  <!-- ── Cache Stats ── -->
+  <h2 id="cache" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Cache Statistics
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Track how effectively your application uses the cache layer:</p>
+  <pre><code class="language-go">// Automatically tracked by the cache subsystem:
+// - Hits  (cache key found)
+// - Misses (cache key not found)
+// - Writes (cache key set/put)
+
+// The dashboard shows hit rate as a percentage:
+// Hit Rate = Hits / (Hits + Misses) × 100</code></pre>
+
+  <!-- ── Queue Stats ── -->
+  <h2 id="queue" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Queue Statistics
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Monitor job throughput and failure rates:</p>
+  <pre><code class="language-go">// Tracked metrics:
+pulse.RecordJob(true)   // processed successfully
+pulse.RecordJob(false)  // job failed
+
+// Dashboard displays:
+// - Jobs Processed (total)
+// - Jobs Failed (total)
+// - Success Rate percentage</code></pre>
+
+  <!-- ── Exceptions ── -->
+  <h2 id="exceptions" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Exception Tracking
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Pulse captures and groups exceptions with occurrence counts:</p>
+  <pre><code class="language-go">// Record an exception
+pulse.RecordException(err)
+
+// Each exception record includes:
+// - Error type (reflect.TypeOf)
+// - Error message
+// - Occurrence count (auto-incremented for duplicates)
+// - First seen / Last seen timestamps</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Duplicate exceptions are grouped by error type + message, keeping the recent list compact and actionable.</p>
+
+  <!-- ── Slow Queries ── -->
+  <h2 id="slow-queries" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Slow Query Detection
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Database queries exceeding the configured threshold are captured with full SQL:</p>
+  <pre><code class="language-go">// Queries slower than SlowQueryThreshold (default: 100ms) are flagged
+pulse.RecordSlowQuery("SELECT * FROM users WHERE...", 
+    250*time.Millisecond)
+
+// Each slow query record:
+// - SQL statement
+// - Duration (ms)
+// - Timestamp</code></pre>
+
+  <!-- ── API ── -->
+  <h2 id="api" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Dashboard API
+  </h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Route</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>GET /pulse</code></td><td class="px-4 py-2">Dashboard HTML page</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>GET /pulse/api/stats</code></td><td class="px-4 py-2">JSON — full stats object</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>GET /pulse/api/stats?period=1h</code></td><td class="px-4 py-2">Filtered by period (1h, 6h, 24h, 7d)</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>GET /pulse/api/exceptions</code></td><td class="px-4 py-2">Recent exceptions with grouping</td></tr>
+        <tr><td class="px-4 py-2"><code>GET /pulse/api/slow-queries</code></td><td class="px-4 py-2">Slow queries above threshold</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Pulse vs Telescope ── -->
+  <h2 id="vs-telescope" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Pulse vs Telescope
+  </h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Feature</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Pulse</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Telescope</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Purpose</td><td class="px-4 py-2">Production monitoring</td><td class="px-4 py-2">Development debugging</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Data storage</td><td class="px-4 py-2">Aggregated stats</td><td class="px-4 py-2">Individual entries</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Performance</td><td class="px-4 py-2">Minimal overhead</td><td class="px-4 py-2">Higher overhead</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Percentiles</td><td class="px-4 py-2">P50 / P95 / P99</td><td class="px-4 py-2">Not available</td></tr>
+        <tr><td class="px-4 py-2">Watchers</td><td class="px-4 py-2">5 (focused)</td><td class="px-4 py-2">18 (comprehensive)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="p-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 mb-8">
+    <p class="text-amber-800 dark:text-amber-400 text-sm"><strong>Tip:</strong> Use both! <a href="/docs/telescope" class="text-amber-600 hover:text-amber-700">Telescope</a> in development for deep debugging, and Pulse in production for high-level health monitoring.</p>
+  </div>
+</div>

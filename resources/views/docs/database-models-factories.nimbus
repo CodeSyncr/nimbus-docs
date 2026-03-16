@@ -1,33 +1,86 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Model Factories</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Factories generate fake data for tests and seeders. Define a factory once, then create single or multiple records with randomized or overridden attributes.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Factories generate fake data for tests and seeders. Define a factory once, then create single or multiple records with randomized or overridden attributes. Powered by the built-in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Faker</code>.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Defining a factory</h2>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Defining a Factory</h2>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>PostFactory := database.Define("posts", func(f *database.Faker) map[string]any {
     return map[string]any{
         "title":   f.Sentence(),
         "content": f.Paragraph(),
         "status":  "draft",
     }
+})
+
+UserFactory := database.Define("users", func(f *database.Faker) map[string]any {
+    return map[string]any{
+        "name":     f.Word() + " " + f.Word(),
+        "email":    f.Email(),
+        "password": "$2a$10$...",  // pre-hashed
+        "role":     "user",
+    }
 })</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Faker methods</h2>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Faker Methods</h2>
 <div class="overflow-x-auto mb-4">
   <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
-    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Returns</th><th class="px-4 py-2 text-left font-semibold">Example</th></tr></thead>
     <tbody>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Sentence()</code></td><td class="px-4 py-2">Short fake sentence</td></tr>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Paragraph()</code></td><td class="px-4 py-2">Multiple sentences</td></tr>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Email()</code></td><td class="px-4 py-2">Fake email</td></tr>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Word()</code></td><td class="px-4 py-2">Random word</td></tr>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Int(min, max)</code></td><td class="px-4 py-2">Random integer</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Sentence()</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">"The quick brown fox jumps"</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Paragraph()</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">Multiple sentences</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Email()</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">"user42@example.com"</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Word()</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">"lorem"</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Int(min, max)</code></td><td class="px-4 py-2">int</td><td class="px-4 py-2">42</td></tr>
     </tbody>
   </table>
 </div>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Create and CreateMany</h2>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>PostFactory.Create(db)
-PostFactory.CreateMany(db, 10)</code></pre>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Create Records</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db := database.Get()
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Merge (override attributes)</h2>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>PostFactory.Merge(map[string]any{"status": "published"}).Create(db)</code></pre>
+// Create a single record
+PostFactory.Create(db)
+
+// Create many records
+PostFactory.CreateMany(db, 50)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Override Attributes (Merge)</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Override specific fields
+PostFactory.Merge(map[string]any{
+    "status": "published",
+    "title":  "Custom Title",
+}).Create(db)
+
+// Create published posts in bulk
+PostFactory.Merge(map[string]any{"status": "published"}).CreateMany(db, 10)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using in Seeders</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="database/seeders/post_seeder.go"><code>package seeders
+
+import (
+    "gorm.io/gorm"
+)
+
+func SeedPosts(db *gorm.DB) {
+    // Create 5 users
+    UserFactory.CreateMany(db, 5)
+
+    // Create 20 draft posts
+    PostFactory.CreateMany(db, 20)
+
+    // Create 10 published posts
+    PostFactory.Merge(map[string]any{"status": "published"}).CreateMany(db, 10)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using in Tests</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func TestListPublishedPosts(t *testing.T) {
+    db := setupTestDB()
+
+    // Seed test data
+    PostFactory.Merge(map[string]any{"status": "published"}).CreateMany(db, 3)
+    PostFactory.Merge(map[string]any{"status": "draft"}).CreateMany(db, 2)
+
+    // Test
+    var published []Post
+    db.Where("status = ?", "published").Find(&published)
+    assert.Len(t, published, 3)
+}</code></pre>

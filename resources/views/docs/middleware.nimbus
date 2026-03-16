@@ -77,6 +77,43 @@ middleware.CSRF(store)</code></pre>
     return r.RemoteAddr
 })</code></pre>
 
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">RequestID</h3>
+<p class="text-slate-600 mb-2">Generates a unique request ID for every request. Set via <code class="bg-slate-100 px-1 rounded">X-Request-Id</code> response header and stored in context (<code class="bg-slate-100 px-1 rounded">c.Get("request_id")</code>). Reuses incoming <code class="bg-slate-100 px-1 rounded">X-Request-Id</code> when present (useful behind load balancers).</p>
+<pre><code>middleware.RequestID()</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Timeout</h3>
+<p class="text-slate-600 mb-2">Wraps each request with a context deadline. If the handler does not complete within the given duration, the context is cancelled.</p>
+<pre><code>middleware.Timeout(30 * time.Second)</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">BodyLimit</h3>
+<p class="text-slate-600 mb-2">Limits the size of the request body. Returns 413 Request Entity Too Large when exceeded.</p>
+<pre><code>middleware.BodyLimit(10 * 1024 * 1024) // 10 MB</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Gzip</h3>
+<p class="text-slate-600 mb-2">Compresses response bodies using gzip when the client supports it. Responses smaller than 256 bytes are not compressed.</p>
+<pre><code>middleware.Gzip()</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">SecureHeaders</h3>
+<p class="text-slate-600 mb-2">Adds production-ready security headers (HSTS, X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, etc.).</p>
+<pre><code>middleware.SecureHeaders(middleware.SecureHeadersConfig{
+    HSTS:           true,
+    HSTSMaxAge:     31536000, // 1 year
+    FrameOptions:   "DENY",
+    ContentTypeNoSniff: true,
+    XSSProtection:  true,
+})
+
+// Or use defaults:
+middleware.SecureHeaders(middleware.SecureHeadersConfig{})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">TrustedProxies</h3>
+<p class="text-slate-600 mb-2">Strips forwarded-for headers from untrusted proxy IPs. Only preserves <code class="bg-slate-100 px-1 rounded">X-Forwarded-For</code>, <code class="bg-slate-100 px-1 rounded">X-Real-IP</code>, etc. from trusted CIDR ranges.</p>
+<pre><code>middleware.TrustedProxies("10.0.0.0/8", "172.16.0.0/12")</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Metrics</h3>
+<p class="text-slate-600 mb-2">Records Prometheus-compatible HTTP metrics: request count, duration histogram, in-flight gauge, and response size. See the <a href="/docs/metrics" class="text-blue-600 underline">Metrics</a> page for details.</p>
+<pre><code>middleware.Metrics()</code></pre>
+
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Custom middleware</h2>
 <p class="text-slate-600 mb-2">Create custom middleware in <code class="bg-slate-100 px-1 rounded">app/middleware/</code>. Middleware has type <code class="bg-slate-100 px-1 rounded">func(HandlerFunc) HandlerFunc</code>:</p>
 <pre><code>// app/middleware/tenant.go

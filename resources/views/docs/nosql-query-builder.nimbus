@@ -1,0 +1,213 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">NoSQL Query Builder</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">The NoSQL query builder provides a fluent, chainable API for querying document databases — no raw BSON needed. It mirrors the SQL query builder's feel while adapting to document-store semantics.</p>
+
+<!-- ── Getting Started ─────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Getting Started</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/database/nosql"
+
+// Start a query on a registered connection
+var users []User
+nosql.Query("mongo", "users").
+    Where("active", true).
+    Sort("name", nosql.Ascending).
+    Limit(10).
+    Get(ctx, &users)
+
+// Or from the app-level *nimbus.NoSQL handle
+store := nimbus.GetNoSQL()
+nosql.QueryOn(store, "orders").
+    Where("status", "pending").
+    Latest().
+    Get(ctx, &orders)
+
+// Or on a specific driver instance
+nosql.QueryOn(mongoDriver, "orders").
+    Where("status", "pending").
+    Latest().
+    Get(ctx, &orders)</code></pre>
+
+<!-- ── Filter Methods ──────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Filter Methods</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Where(field, value)</code></td><td class="px-4 py-2">Equality filter</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Where(field, op, value)</code></td><td class="px-4 py-2">Operator filter — <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">=</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">!=</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">&gt;</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">&gt;=</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">&lt;</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">&lt;=</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">in</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nin</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">regex</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereIn(field, values...)</code></td><td class="px-4 py-2">Match any of the values (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">$in</code>)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereNotIn(field, values...)</code></td><td class="px-4 py-2">Exclude values (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">$nin</code>)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereBetween(field, min, max)</code></td><td class="px-4 py-2">Range filter (inclusive)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereExists(field, bool)</code></td><td class="px-4 py-2">Check field existence</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereNull(field)</code></td><td class="px-4 py-2">Field is null/missing</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereNotNull(field)</code></td><td class="px-4 py-2">Field exists and is not null</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereRegex(field, pattern)</code></td><td class="px-4 py-2">Regex match</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereRaw(field, Document)</code></td><td class="px-4 py-2">Raw MongoDB operator map</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">OrWhere(conditions...)</code></td><td class="px-4 py-2">Combines filters with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">$or</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Examples</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Equality
+nosql.Query("mongo", "users").Where("active", true)
+
+// Comparison operators
+nosql.Query("mongo", "users").Where("age", ">=", 21)
+
+// $in
+nosql.Query("mongo", "orders").WhereIn("status", "pending", "processing")
+
+// Range
+nosql.Query("mongo", "products").WhereBetween("price", 10, 100)
+
+// Regex
+nosql.Query("mongo", "users").WhereRegex("name", "^Al")
+
+// $or
+nosql.Query("mongo", "users").OrWhere(
+    nosql.Filter{"role": "admin"},
+    nosql.Filter{"role": "superadmin"},
+)
+
+// Field existence
+nosql.Query("mongo", "users").WhereExists("phone", true)
+nosql.Query("mongo", "users").WhereNull("deleted_at")
+
+// Raw operator
+nosql.Query("mongo", "places").WhereRaw("location", nosql.Document{
+    "$near": nosql.Document{
+        "$geometry":    nosql.Document{"type": "Point", "coordinates": []float64{-73.97, 40.77}},
+        "$maxDistance": 1000,
+    },
+})</code></pre>
+
+<!-- ── Sort / Limit / Pagination ───────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Sort, Limit &amp; Pagination</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Sort(field, order)</code></td><td class="px-4 py-2">Add a sort — <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nosql.Ascending</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nosql.Descending</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Latest(field?)</code></td><td class="px-4 py-2">Sort descending (default: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">created_at</code>)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Oldest(field?)</code></td><td class="px-4 py-2">Sort ascending (default: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">created_at</code>)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Limit(n)</code></td><td class="px-4 py-2">Limit results</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Skip(n)</code></td><td class="px-4 py-2">Skip N documents</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Select(fields...)</code></td><td class="px-4 py-2">Include only specified fields</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Exclude(fields...)</code></td><td class="px-4 py-2">Exclude fields from results</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Latest 20 active users, only name &amp; email
+var users []User
+nosql.Query("mongo", "users").
+    Where("active", true).
+    Latest().
+    Limit(20).
+    Select("name", "email").
+    Get(ctx, &users)
+
+// Paginate (page 2, 15 per page)
+var orders []Order
+page, err := nosql.Query("mongo", "orders").
+    Where("status", "pending").
+    Sort("created_at", nosql.Descending).
+    Paginate(ctx, &orders, 2, 15)
+
+fmt.Println(page.Total)       // total matching docs
+fmt.Println(page.CurrentPage) // 2
+fmt.Println(page.LastPage)    // calculated
+fmt.Println(page.HasMore())   // true/false</code></pre>
+
+<!-- ── Terminal Methods ─────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Terminal Methods</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Returns</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Get(ctx, &dest)</code></td><td class="px-4 py-2">error</td><td class="px-4 py-2">Fetch all matching documents</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">First(ctx, &dest)</code></td><td class="px-4 py-2">error</td><td class="px-4 py-2">Fetch the first matching document</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">FindByID(ctx, id, &dest)</code></td><td class="px-4 py-2">error</td><td class="px-4 py-2">Fetch a document by its ID</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Count(ctx)</code></td><td class="px-4 py-2">int64, error</td><td class="px-4 py-2">Count matching documents</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Exists(ctx)</code></td><td class="px-4 py-2">bool, error</td><td class="px-4 py-2">Check if any match exists</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Distinct(ctx, field)</code></td><td class="px-4 py-2">[]any, error</td><td class="px-4 py-2">Get distinct values for a field</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── Mutation Methods ─────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Mutation Methods</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Returns</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Insert(ctx, doc)</code></td><td class="px-4 py-2">*InsertResult, error</td><td class="px-4 py-2">Insert one document</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">InsertMany(ctx, docs)</code></td><td class="px-4 py-2">*InsertManyResult, error</td><td class="px-4 py-2">Insert multiple documents</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Update(ctx, update)</code></td><td class="px-4 py-2">*UpdateResult, error</td><td class="px-4 py-2">Update first match</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">UpdateMany(ctx, update)</code></td><td class="px-4 py-2">*UpdateResult, error</td><td class="px-4 py-2">Update all matches</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Upsert(ctx, doc)</code></td><td class="px-4 py-2">*UpdateResult, error</td><td class="px-4 py-2">Insert or update</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Delete(ctx)</code></td><td class="px-4 py-2">*DeleteResult, error</td><td class="px-4 py-2">Delete first match</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">DeleteMany(ctx)</code></td><td class="px-4 py-2">*DeleteResult, error</td><td class="px-4 py-2">Delete all matches</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Insert via builder
+res, _ := nosql.Query("mongo", "users").Insert(ctx, User{
+    Name: "Dave", Email: "dave@example.com",
+})
+
+// Update matching docs
+nosql.Query("mongo", "users").
+    Where("role", "trial").
+    Update(ctx, nosql.Filter{"role": "free"})
+
+// Upsert
+nosql.Query("mongo", "settings").
+    Where("key", "site_name").
+    Upsert(ctx, nosql.Filter{"key": "site_name", "value": "My App"})
+
+// Delete inactive users
+nosql.Query("mongo", "users").
+    Where("active", false).
+    DeleteMany(ctx)</code></pre>
+
+<!-- ── Aggregation via Builder ──────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Aggregation</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Run an aggregation pipeline through the builder
+pipeline := bson.A{
+    bson.D{{Key: "$group", Value: bson.D{
+        {Key: "_id", Value: "$category"},
+        {Key: "total", Value: bson.D{{Key: "$sum", Value: "$amount"}}},
+    }}},
+}
+var results []bson.M
+nosql.Query("mongo", "orders").Aggregate(ctx, pipeline, &results)
+
+// Distinct values
+statuses, _ := nosql.Query("mongo", "orders").
+    Where("year", 2024).
+    Distinct(ctx, "status")</code></pre>
+
+<!-- ── Pagination ───────────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Pagination</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Paginate</code> counts total documents, skips to the requested page, and returns a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">NoSQLPaginator</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>var posts []Post
+paginator, err := nosql.Query("mongo", "posts").
+    Where("published", true).
+    Latest().
+    Paginate(ctx, &posts, 1, 20)    // page 1, 20 per page
+
+// NoSQLPaginator fields
+paginator.Data        // the posts slice
+paginator.Total       // total matching count
+paginator.PerPage     // 20
+paginator.CurrentPage // 1
+paginator.LastPage    // ceil(total / perPage)
+paginator.HasMore()   // true if more pages exist</code></pre>
+
+<p class="text-slate-500 dark:text-slate-500 text-sm mt-8">
+  <a href="/docs/nosql" class="text-amber-600 dark:text-amber-400 hover:underline">← NoSQL / MongoDB</a> &nbsp;|&nbsp;
+  <a href="/docs/multi-db" class="text-amber-600 dark:text-amber-400 hover:underline">Multiple DB Connections →</a>
+</p>

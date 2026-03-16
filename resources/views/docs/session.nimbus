@@ -1,43 +1,99 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Session</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Sessions persist user-specific data across requests. Nimbus supports cookie (encrypted), memory, and database stores. Use with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">session.Middleware</code> — required for auth.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Sessions persist user-specific data across requests. Nimbus provides four session stores — Memory, Cookie (AES-256-GCM encrypted), Database (GORM), and Redis — all behind a unified <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Store</code> interface. Sessions are required for authentication.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Stores</h2>
-<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
-  <li><strong>MemoryStore</strong> — In-memory; sessions lost on restart. Use for development.</li>
-  <li><strong>NewCookieStore</strong> — Encrypted cookie; no server storage. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">session.KeyFromString(APP_KEY)</code> for the key.</li>
-  <li><strong>NewDatabaseStore</strong> — Persists to a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">sessions</code> table. Call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">EnsureTable()</code> to create the table.</li>
-</ul>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Store Interface</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Store interface {
+    Get(ctx context.Context, id string) (map[string]any, error)
+    Set(ctx context.Context, id string, data map[string]any, maxAge time.Duration) (string, error)
+    Destroy(ctx context.Context, id string) error
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Available Stores</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Store</th><th class="px-4 py-2 text-left font-semibold">Constructor</th><th class="px-4 py-2 text-left font-semibold">Best For</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Memory</td><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">NewMemoryStore()</code></td><td class="px-4 py-2">Development, single instance (lost on restart)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Cookie</td><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">NewCookieStore(key)</code></td><td class="px-4 py-2">Small payloads, no server storage needed</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Database</td><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">NewDatabaseStore(db, table)</code></td><td class="px-4 py-2">Persistent sessions, multi-instance</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Redis</td><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">NewRedisStore(client)</code></td><td class="px-4 py-2">Fast, distributed, multi-instance production</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Memory Store</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">In-process, auto-cleans expired sessions every minute. Sessions lost on restart.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>store := session.NewMemoryStore()</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Cookie Store (Encrypted)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Data encrypted with AES-256-GCM in the cookie itself. No server-side storage. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">KeyFromString</code> to derive a 32-byte key from your APP_KEY:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>key := session.KeyFromString(os.Getenv("APP_KEY"))
+store := session.NewCookieStore(key)</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">If the key isn't exactly 32 bytes, it's hashed with SHA-256 automatically.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Database Store</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Persists sessions to a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">sessions</code> table. Call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">EnsureTable()</code> to auto-migrate:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>store := session.NewDatabaseStore(database.Get(), "sessions")
+store.EnsureTable() // CREATE TABLE IF NOT EXISTS sessions (id, payload, expires_at)
+
+// Schema:
+// id         VARCHAR(64) PRIMARY KEY
+// payload    TEXT (JSON-encoded session data)
+// expires_at DATETIME (indexed, auto-cleaned)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Redis Store</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Fast, distributed sessions using Redis with automatic TTL expiration:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/redis/go-redis/v9"
+
+rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+
+// Default prefix: "nimbus:session:"
+store := session.NewRedisStore(rdb)
+
+// Custom prefix
+store := session.NewRedisStoreWithPrefix(rdb, "myapp:sess:")</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Middleware</h2>
-<pre data-file="start/kernel.go"><code>store := session.NewMemoryStore()
-app.Router.Use(session.Middleware(session.Config{
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="start/kernel.go"><code>app.Router.Use(session.Middleware(session.Config{
     Store:       store,
     CookieName:  "nimbus_session",
     MaxAge:      7 * 24 * time.Hour,
     HttpOnly:    true,
-    Secure:      false,
+    Secure:      true,   // true in production (HTTPS)
     SameSite:    session.SameSiteLax,
 }))</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Get & Set</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">session.FromContext(ctx)</code> to access the session. Changes are persisted automatically.</p>
-<pre data-file="app/controllers/example.go"><code>sess := session.FromContext(c.Request.Context())
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Session API</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="app/controllers/example.go"><code>sess := session.FromContext(c.Request.Context())
 if sess != nil {
+    // Set values
     sess.Set("user_id", "42")
     sess.Set("role", "admin")
-    val := sess.Get("user_id")
-    sess.Delete("user_id")
+    sess.Set("cart", []string{"item-1", "item-2"})
+
+    // Get values
+    userID := sess.Get("user_id")    // returns any
+    role := sess.Get("role")
+
+    // Delete a key
+    sess.Delete("cart")
+
+    // Regenerate session ID (call after login to prevent fixation)
+    sess.Regenerate()
 }</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Regenerate</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">sess.Regenerate()</code> after login to prevent session fixation.</p>
-
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Config</h2>
-<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">CookieName</code> — Default: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus_session</code></li>
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MaxAge</code> — Session duration (e.g. 7 * 24 * time.Hour)</li>
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">HttpOnly</code> — Prevent JS access (recommended: true)</li>
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Secure</code> — HTTPS only (true in production)</li>
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SameSite</code> — Lax, Strict, or None</li>
-</ul>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Config Options</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Field</th><th class="px-4 py-2 text-left font-semibold">Type</th><th class="px-4 py-2 text-left font-semibold">Default</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs">Store</code></td><td class="px-4 py-2">Store</td><td class="px-4 py-2">—</td><td class="px-4 py-2">Session backend (required)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs">CookieName</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2"><code class="text-xs">nimbus_session</code></td><td class="px-4 py-2">Cookie name in browser</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs">MaxAge</code></td><td class="px-4 py-2">time.Duration</td><td class="px-4 py-2">7 days</td><td class="px-4 py-2">Session lifetime</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs">HttpOnly</code></td><td class="px-4 py-2">bool</td><td class="px-4 py-2">true</td><td class="px-4 py-2">Prevent JavaScript access</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs">Secure</code></td><td class="px-4 py-2">bool</td><td class="px-4 py-2">false</td><td class="px-4 py-2">HTTPS only (set true in production)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs">SameSite</code></td><td class="px-4 py-2">SameSite</td><td class="px-4 py-2">Lax</td><td class="px-4 py-2">Lax, Strict, or None</td></tr>
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,105 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Localization (i18n)</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">locale</code> package provides internationalization support. Register translations per locale, resolve strings with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">T()</code>, and auto-detect locale from <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Accept-Language</code> headers via middleware.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Setup</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="start/kernel.go"><code>import "github.com/CodeSyncr/nimbus/locale"
+
+func init() {
+    // Set default locale
+    locale.SetDefault("en")
+
+    // Register English translations
+    locale.AddTranslations("en", map[string]string{
+        "welcome":       "Welcome, %s!",
+        "items.count":   "You have %d items",
+        "auth.login":    "Log In",
+        "auth.logout":   "Log Out",
+        "errors.not_found": "Page not found",
+    })
+
+    // Register Spanish translations
+    locale.AddTranslations("es", map[string]string{
+        "welcome":       "¡Bienvenido, %s!",
+        "items.count":   "Tienes %d artículos",
+        "auth.login":    "Iniciar sesión",
+        "auth.logout":   "Cerrar sesión",
+        "errors.not_found": "Página no encontrada",
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Translating Strings</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">T()</code> with the default locale, or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">TLocale()</code> for a specific locale:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Uses default locale ("en")
+msg := locale.T("welcome", "Jane")   // "Welcome, Jane!"
+count := locale.T("items.count", 5)  // "You have 5 items"
+
+// Specific locale
+msg = locale.TLocale("es", "welcome", "Jane")  // "¡Bienvenido, Jane!"
+
+// Key fallback — if key not found, returns the key itself
+msg = locale.T("unknown.key")  // "unknown.key"</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Middleware (Auto-detect)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The locale middleware parses <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Accept-Language</code> and stores the locale in the request context:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="start/kernel.go"><code>// Add to global middleware
+app.Router.Use(locale.Middleware())</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Context Helpers</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// In a controller — get locale from request context
+func Dashboard(c *http.Context) error {
+    loc := locale.FromContext(c.Request.Context())
+    // loc might be "es", "fr", "en", etc.
+
+    welcome := locale.TLocale(loc, "welcome", user.Name)
+    return c.View("dashboard", map[string]any{
+        "welcome": welcome,
+    })
+}
+
+// Manually set locale on a context
+ctx := locale.WithLocale(c.Request.Context(), "fr")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">API Reference</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Function</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">SetDefault(loc)</code></td><td class="px-4 py-2">Set the default locale (e.g. <code class="text-xs">"en"</code>)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">AddTranslations(loc, msgs)</code></td><td class="px-4 py-2">Register key→message pairs for a locale</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">T(key, args...)</code></td><td class="px-4 py-2">Translate using default locale; supports <code class="text-xs">fmt.Sprintf</code> args</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">TLocale(loc, key, args...)</code></td><td class="px-4 py-2">Translate using a specific locale</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">WithLocale(ctx, loc)</code></td><td class="px-4 py-2">Store locale in context</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">FromContext(ctx)</code></td><td class="px-4 py-2">Retrieve locale from context (empty string if not set)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Middleware()</code></td><td class="px-4 py-2">Auto-detect locale from <code class="text-xs">Accept-Language</code> header</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using in Templates</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>{{-- Pass translated strings from controller --}}
+&lt;h1&gt;{{ welcome }}&lt;/h1&gt;
+&lt;a href="/login"&gt;{{ loginText }}&lt;/a&gt;</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Organizing Translations</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">For larger apps, organize translation files by locale and load them at boot:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="resources/lang/en.go"><code>package lang
+
+var EN = map[string]string{
+    "welcome":          "Welcome, %s!",
+    "items.count":      "You have %d items",
+    "auth.login":       "Log In",
+    "auth.logout":      "Log Out",
+    "auth.register":    "Register",
+    "nav.dashboard":    "Dashboard",
+    "nav.settings":     "Settings",
+    "errors.not_found": "Page not found",
+    "errors.forbidden": "Access denied",
+}
+
+// In kernel.go:
+// locale.AddTranslations("en", lang.EN)
+// locale.AddTranslations("es", lang.ES)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">String Interpolation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Translation values use Go's <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">fmt.Sprintf</code> formatting. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">%s</code> for strings, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">%d</code> for integers, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">%f</code> for floats. If no args are passed, the message is returned as-is. If the key is not found, the key itself is returned — which makes it safe to use untranslated keys during development.</p>

@@ -5,8 +5,8 @@
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Parsing JSON bodies</h2>
 <p class="text-slate-600 mb-2">Use <code class="bg-slate-100 px-1 rounded">encoding/json</code> to decode the request body into a struct or map. The body is available at <code class="bg-slate-100 px-1 rounded">c.Request.Body</code>.</p>
 <pre><code>type CreateUserInput struct {
-    Name  string `json:"name"`
-    Email string `json:"email"`
+    Name  string
+    Email string
 }
 
 func createUser(c *http.Context) error {
@@ -56,7 +56,7 @@ func createUser(c *http.Context) error {
 }</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Binding JSON to a struct</h2>
-<p class="text-slate-600 mb-2">A common pattern is to define a request struct with <code class="bg-slate-100 px-1 rounded">json</code> tags and a helper function that decodes and validates in one step.</p>
+<p class="text-slate-600 mb-2">A common pattern is to define a request struct and a helper function that decodes and validates in one step.</p>
 <pre><code>func bindJSON(r *http.Request, dest any) error {
     decoder := json.NewDecoder(r.Body)
     decoder.DisallowUnknownFields()
@@ -64,8 +64,8 @@ func createUser(c *http.Context) error {
 }
 
 type UpdatePostInput struct {
-    Title   string `json:"title"`
-    Content string `json:"content"`
+    Title   string
+    Content string
 }
 
 func updatePost(c *http.Context) error {

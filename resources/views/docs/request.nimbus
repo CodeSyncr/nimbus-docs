@@ -41,8 +41,8 @@ file, header, err := c.Request.FormFile("avatar")</code></pre>
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">JSON Body</h2>
 <p class="text-slate-600 mb-4">Decode a JSON request body into a Go struct using <code class="bg-slate-100 px-1 rounded">json.NewDecoder</code>:</p>
 <pre><code>type CreatePostInput struct {
-    Title string `json:"title"`
-    Body  string `json:"body"`
+    Title string
+    Body  string
 }
 
 func createPost(c *http.Context) error {

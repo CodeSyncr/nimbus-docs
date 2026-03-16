@@ -1,0 +1,272 @@
+@layout('layout-docs')
+
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Plugin</span>
+    <span class="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">Auth</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Socialite — OAuth Authentication</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">Social authentication for Nimbus. Sign in with GitHub, Google, Discord, Apple — and more — using a clean, unified API inspired by Laravel Socialite.</p>
+
+  <!-- ── Overview ── -->
+  <h2 id="overview" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Overview
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Socialite handles the entire OAuth2 flow — redirect, callback, user profile retrieval — so you can add social login with just a few lines of code. It ships as a first-party Nimbus plugin with built-in support for:</p>
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div class="text-center p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+      <div class="text-2xl mb-1">🐙</div>
+      <div class="text-sm font-medium text-slate-700 dark:text-slate-300">GitHub</div>
+    </div>
+    <div class="text-center p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+      <div class="text-2xl mb-1">🔍</div>
+      <div class="text-sm font-medium text-slate-700 dark:text-slate-300">Google</div>
+    </div>
+    <div class="text-center p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+      <div class="text-2xl mb-1">💬</div>
+      <div class="text-sm font-medium text-slate-700 dark:text-slate-300">Discord</div>
+    </div>
+    <div class="text-center p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+      <div class="text-2xl mb-1">🍎</div>
+      <div class="text-sm font-medium text-slate-700 dark:text-slate-300">Apple</div>
+    </div>
+  </div>
+
+  <!-- ── Installation ── -->
+  <h2 id="installation" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Installation
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Install the Socialite plugin using the CLI:</p>
+  <pre><code class="language-bash">$ nimbus plugin:install socialite</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">This will:</p>
+  <ol class="list-decimal list-inside space-y-1 text-slate-600 dark:text-slate-400 mb-4">
+    <li>Add the <code>socialite</code> import to <code>bin/server.go</code></li>
+    <li>Register the plugin with <code>app.Use(socialite.NewPlugin(...))</code></li>
+    <li>Scaffold <code>config/socialite.go</code> with provider configuration</li>
+    <li>Add required environment variables to <code>.env</code></li>
+  </ol>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Or install manually:</p>
+  <pre><code class="language-bash">$ go get github.com/CodeSyncr/nimbus/auth/socialite</code></pre>
+
+  <!-- ── Configuration ── -->
+  <h2 id="configuration" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Configuration
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">After installation, configure your OAuth providers in <code>config/socialite.go</code>:</p>
+  <pre data-file="config/socialite.go"><code class="language-go">package config
+
+import (
+    "os"
+    "github.com/CodeSyncr/nimbus/auth/socialite"
+)
+
+// SocialiteProviders returns the configured OAuth providers.
+func SocialiteProviders() map[string]socialite.ProviderConfig {
+    providers := make(map[string]socialite.ProviderConfig)
+
+    if id := os.Getenv("GITHUB_CLIENT_ID"); id != "" {
+        providers["github"] = socialite.ProviderConfig{
+            ClientID:     id,
+            ClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
+            RedirectURL:  os.Getenv("GITHUB_REDIRECT_URL"),
+        }
+    }
+
+    if id := os.Getenv("GOOGLE_CLIENT_ID"); id != "" {
+        providers["google"] = socialite.ProviderConfig{
+            ClientID:     id,
+            ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+            RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
+        }
+    }
+
+    if id := os.Getenv("DISCORD_CLIENT_ID"); id != "" {
+        providers["discord"] = socialite.ProviderConfig{
+            ClientID:     id,
+            ClientSecret: os.Getenv("DISCORD_CLIENT_SECRET"),
+            RedirectURL:  os.Getenv("DISCORD_REDIRECT_URL"),
+        }
+    }
+
+    if id := os.Getenv("APPLE_CLIENT_ID"); id != "" {
+        providers["apple"] = socialite.ProviderConfig{
+            ClientID:     id,
+            ClientSecret: os.Getenv("APPLE_CLIENT_SECRET"),
+            RedirectURL:  os.Getenv("APPLE_REDIRECT_URL"),
+        }
+    }
+
+    return providers
+}</code></pre>
+
+  <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">Add the required environment variables to your <code>.env</code>:</p>
+  <pre data-file=".env"><code class="language-bash"># GitHub OAuth
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+GITHUB_REDIRECT_URL=http://localhost:3000/auth/github/callback
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URL=http://localhost:3000/auth/google/callback
+
+# Discord OAuth
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+DISCORD_REDIRECT_URL=http://localhost:3000/auth/discord/callback
+
+# Apple Sign-In
+APPLE_CLIENT_ID=your_apple_service_id
+APPLE_CLIENT_SECRET=your_apple_secret_key
+APPLE_REDIRECT_URL=http://localhost:3000/auth/apple/callback</code></pre>
+
+  <!-- ── Registering the Plugin ── -->
+  <h2 id="registering" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Registering the Plugin
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Register Socialite in your <code>bin/server.go</code> with a callback that handles the authenticated user:</p>
+  <pre data-file="bin/server.go"><code class="language-go">import "github.com/CodeSyncr/nimbus/auth/socialite"
+
+app.Use(socialite.NewPlugin(socialite.Config{
+    Providers: config.SocialiteProviders(),
+}, func(c *nhttp.Context, user *socialite.SocialUser) error {
+    // user.Provider  → "github", "google", etc.
+    // user.ID        → Provider user ID
+    // user.Name      → Display name
+    // user.Email     → Email address
+    // user.Avatar    → Avatar URL
+    // user.AccessToken → OAuth access token
+
+    // Find or create the user in your database
+    // Set session, redirect...
+    return c.Redirect("/dashboard")
+}))</code></pre>
+
+  <!-- ── Routes ── -->
+  <h2 id="routes" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Auto-Registered Routes
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Socialite automatically registers two routes per provider:</p>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Method</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Route</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2"><code>GET</code></td>
+          <td class="px-4 py-2"><code>/auth/{provider}</code></td>
+          <td class="px-4 py-2 text-slate-600 dark:text-slate-400">Redirects to OAuth provider</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2"><code>GET</code></td>
+          <td class="px-4 py-2"><code>/auth/{provider}/callback</code></td>
+          <td class="px-4 py-2 text-slate-600 dark:text-slate-400">Handles OAuth callback</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">For example, with GitHub configured, your login button links to:</p>
+  <pre><code class="language-html">&lt;a href="/auth/github"&gt;Sign in with GitHub&lt;/a&gt;</code></pre>
+
+  <!-- ── SocialUser ── -->
+  <h2 id="social-user" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> The SocialUser Object
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">When the callback succeeds, your handler receives a <code>*socialite.SocialUser</code>:</p>
+  <pre><code class="language-go">type SocialUser struct {
+    Provider    string         // "github", "google", "discord", "apple"
+    ID          string         // Unique user ID from the provider
+    Name        string         // Display name
+    Email       string         // Email address
+    Avatar      string         // Avatar / profile picture URL
+    AccessToken string         // OAuth access token (for API calls)
+    ExpiresAt   time.Time      // Token expiration (if available)
+    Raw         map[string]any // Full raw response from provider
+}</code></pre>
+
+  <!-- ── Provider Details ── -->
+  <h2 id="providers" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Provider Details
+  </h2>
+
+  <h3 id="github" class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-3">GitHub</h3>
+  <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400 mb-4">
+    <li>Scopes: <code>user:email</code></li>
+    <li>Fetches user profile + private emails from <code>/user/emails</code></li>
+    <li>Creates app: <a href="https://github.com/settings/developers" class="text-amber-600 hover:text-amber-700">GitHub Developer Settings</a></li>
+  </ul>
+
+  <h3 id="google" class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-3">Google</h3>
+  <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400 mb-4">
+    <li>Scopes: <code>openid email profile</code></li>
+    <li>Uses Google's userinfo endpoint with OAuth2 token exchange</li>
+    <li>Configure at <a href="https://console.cloud.google.com" class="text-amber-600 hover:text-amber-700">Google Cloud Console</a></li>
+  </ul>
+
+  <h3 id="discord" class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-3">Discord</h3>
+  <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400 mb-4">
+    <li>Scopes: <code>identify email</code></li>
+    <li>Constructs avatar URL from Discord CDN</li>
+    <li>Create bot at <a href="https://discord.com/developers/applications" class="text-amber-600 hover:text-amber-700">Discord Developer Portal</a></li>
+  </ul>
+
+  <h3 id="apple" class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-3">Apple Sign-In</h3>
+  <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400 mb-4">
+    <li>Scopes: <code>name email</code></li>
+    <li>Uses <code>form_post</code> response mode + JWT ID token decoding</li>
+    <li>Apple only sends user name on the <strong>first</strong> authorization — persist it immediately</li>
+    <li>Configure at <a href="https://developer.apple.com" class="text-amber-600 hover:text-amber-700">Apple Developer</a></li>
+  </ul>
+
+  <!-- ── Complete Example ── -->
+  <h2 id="full-example" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Complete Example
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">A full example using Socialite with a user model:</p>
+  <pre data-file="bin/server.go"><code class="language-go">app.Use(socialite.NewPlugin(socialite.Config{
+    Providers: config.SocialiteProviders(),
+}, func(c *nhttp.Context, user *socialite.SocialUser) error {
+    // Find existing user by provider + ID
+    var dbUser models.User
+    result := db.Where("provider = ? AND provider_id = ?",
+        user.Provider, user.ID).First(&dbUser)
+
+    if result.Error != nil {
+        // Create new user
+        dbUser = models.User{
+            Name:       user.Name,
+            Email:      user.Email,
+            Avatar:     user.Avatar,
+            Provider:   user.Provider,
+            ProviderID: user.ID,
+        }
+        db.Create(&dbUser)
+    }
+
+    // Set session
+    c.Session().Put("user_id", dbUser.ID)
+    c.Session().Put("user_name", dbUser.Name)
+
+    return c.Redirect("/dashboard")
+}))</code></pre>
+
+  <!-- ── Security ── -->
+  <h2 id="security" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Security Notes
+  </h2>
+  <ul class="list-disc list-inside space-y-2 text-slate-600 dark:text-slate-400 mb-6">
+    <li><strong>CSRF State:</strong> Socialite automatically generates and validates a random <code>state</code> parameter to prevent cross-site request forgery attacks</li>
+    <li><strong>Session storage:</strong> The state is stored in the user's session and verified on callback</li>
+    <li><strong>HTTPS required:</strong> Always use HTTPS redirect URLs in production</li>
+    <li><strong>Secret rotation:</strong> Never commit OAuth secrets — use environment variables</li>
+  </ul>
+
+  <div class="p-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 mb-8">
+    <p class="text-amber-800 dark:text-amber-400 text-sm"><strong>Tip:</strong> You can extend Socialite with custom providers by implementing the <code>Provider</code> interface with <code>Name()</code>, <code>AuthURL(state string)</code>, and <code>Exchange(code string)</code> methods.</p>
+  </div>
+</div>

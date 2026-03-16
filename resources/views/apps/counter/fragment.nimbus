@@ -1,20 +1,124 @@
+{{/*
+  demos/counter/fragment.nimbus
+  ─────────────────────────────
+  Unpoly partial — rendered both:
+    • on full-page load (via @include inside counter.nimbus)
+    • on every POST action (Unpoly swaps #counter-fragment in place)
+
+  Template variables:
+    .count      int   — current counter value
+    .csrfField  html  — CSRF hidden input
+*/}}
+
+
 <div id="counter-fragment">
-  <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-10 mb-8">
-    <div class="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-400 mb-8" id="counter-display">{{ .count }}</div>
-    <div class="flex gap-4 justify-center mb-8">
-      <form method="POST" action="/demos/counter/decrement" class="inline">
-        {{ .csrfField }}
-        <button type="submit" class="w-14 h-14 rounded-full border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-amber-500 hover:text-amber-500 dark:hover:text-amber-400 text-2xl font-bold transition-all hover:scale-105">−</button>
-      </form>
-      <form method="POST" action="/demos/counter/increment" class="inline">
-        {{ .csrfField }}
-        <button type="submit" class="w-14 h-14 rounded-full border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-amber-500 hover:text-amber-500 dark:hover:text-amber-400 text-2xl font-bold transition-all hover:scale-105">+</button>
-      </form>
-    </div>
-    <form method="POST" action="/demos/counter/set" class="flex gap-2 justify-center">
+
+  <!-- Count display -->
+  <div class="count-display-wrap">
+    <div class="count-display" id="count-value">{{ .count }}</div>
+    <div class="count-label">current count</div>
+  </div>
+
+  <!-- +/− buttons -->
+  <div class="counter-btns">
+
+    {{/* Decrement */}}
+    <form
+      method="POST"
+      action="/demos/counter/decrement"
+      class="counter-btn-form"
+      up-submit
+      up-target="#counter-fragment"
+      up-transition="cross-fade"
+    >
       {{ .csrfField }}
-      <input type="number" name="count" value="{{ .count }}" class="w-24 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-center focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition">
-      <button type="submit" class="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/30 hover:shadow-amber-500/40 transition">Set</button>
+      <button
+        type="submit"
+        class="counter-btn decrement"
+        aria-label="Decrement"
+        title="Decrement"
+      >−</button>
+    </form>
+
+    {{/* Reset */}}
+    <form
+      method="POST"
+      action="/demos/counter/reset"
+      class="counter-btn-form"
+      up-submit
+      up-target="#counter-fragment"
+      up-transition="cross-fade"
+    >
+      {{ .csrfField }}
+      <button
+        type="submit"
+        class="counter-btn reset"
+        aria-label="Reset to zero"
+        title="Reset"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+      </button>
+    </form>
+
+    {{/* Increment */}}
+    <form
+      method="POST"
+      action="/demos/counter/increment"
+      class="counter-btn-form"
+      up-submit
+      up-target="#counter-fragment"
+      up-transition="cross-fade"
+    >
+      {{ .csrfField }}
+      <button
+        type="submit"
+        class="counter-btn increment"
+        aria-label="Increment"
+        title="Increment"
+      >+</button>
+    </form>
+
+  </div>
+
+  <!-- Set value form -->
+  <div class="set-form">
+    <form
+      method="POST"
+      action="/demos/counter/set"
+      style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center"
+      up-submit
+      up-target="#counter-fragment"
+      up-transition="cross-fade"
+    >
+      {{ .csrfField }}
+      <label class="set-form-label" for="counter-set-input">Jump to</label>
+      <input
+        id="counter-set-input"
+        type="number"
+        name="count"
+        value="{{ .count }}"
+        class="set-input"
+        aria-label="Set counter value"
+        min="-9999"
+        max="9999"
+      >
+      <button type="submit" class="set-btn">Set</button>
     </form>
   </div>
-</div>
+
+</div>{{/* /#counter-fragment */}}
+
+{{/* Kick the pop animation on the number after Unpoly swaps the fragment */}}
+<script>
+(function () {
+  var el = document.getElementById('count-value');
+  if (!el) return;
+  el.classList.remove('pop');
+  // Force reflow so removing + re-adding the class triggers the animation
+  void el.offsetWidth;
+  el.classList.add('pop');
+})();
+</script>

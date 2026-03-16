@@ -110,3 +110,29 @@ func loadMail() {
         From:     env("MAIL_FROM", "noreply@example.com"),
     }
 }</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Environment validation</h2>
+<p class="text-slate-600 mb-2">Validate that required environment variables are set at boot time. The app panics with a clear message if any required variable is missing.</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/config"
+
+func init() {
+    config.ValidateEnv(
+        config.Required("APP_KEY"),
+        config.Required("DB_DSN"),
+        config.Required("REDIS_URL"),
+    )
+}
+
+// If DB_DSN is not set:
+// panic: "environment validation failed: DB_DSN is required"</code></pre>
+<p class="text-slate-600 mb-2">Use <code class="bg-slate-100 px-1 rounded">EnvRule</code> for custom validation beyond presence checks:</p>
+<pre><code>config.ValidateEnv(
+    config.Required("PORT"),
+    config.EnvRule{
+        Key:     "APP_ENV",
+        Message: "APP_ENV must be development, staging, or production",
+        Validate: func(val string) bool {
+            return val == "development" || val == "staging" || val == "production"
+        },
+    },
+)</code></pre>

@@ -1,26 +1,61 @@
-@layout('layout-demos')
-<main class="min-h-[calc(100vh-8rem)]">
-  <section class="relative overflow-hidden">
-    <div class="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent dark:from-emerald-400/10"></div>
-    <div class="relative max-w-xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16">
-      <a href="/demos/todo" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-8 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Back to todo
-      </a>
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-8">
-        <div class="flex items-center justify-between mb-6">
-          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ .item.Title }}</h1>
-          <span class="px-3 py-1.5 rounded-full text-sm font-medium {{ if .item.Done }}bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400{{ else }}bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400{{ end }}">{{ if .item.Done }}Done{{ else }}Pending{{ end }}</span>
-        </div>
-        <div class="flex gap-3">
-          <a href="/demos/todo/{{ .item.ID }}/edit" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/30 hover:shadow-amber-500/40 transition">Edit</a>
-          <form method="POST" action="/demos/todo/{{ .item.ID }}/delete" class="inline" onsubmit="return confirm('Delete this todo?')">
-            {{ .csrfField }}
-            <button type="submit" class="rounded-xl border-2 border-red-200 dark:border-red-500/50 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition">Delete</button>
-          </form>
-        </div>
+<div class="m-show" up-main>
+  <div class="ms-head">
+    <div>
+      <div class="ms-status {{ if .item.Done }}done{{ else }}pending{{ end }}">
+        <span class="ms-dot"></span>
+        {{ if .item.Done }}Completed{{ else }}Pending{{ end }}
       </div>
     </div>
-  </section>
-</main>
+    {{/* Dismiss button — closes modal, no reload (just ↑ key also works) */}}
+    <button class="ms-close" up-dismiss aria-label="Close">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <h2 class="ms-title {{ if .item.Done }}done-text{{ end }}">{{ .item.Title }}</h2>
+
+  <div class="ms-meta">
+    <div class="ms-meta-item">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Created <strong>{{ .item.CreatedAt }}</strong>
+    </div>
+    <div class="ms-meta-item">ID <strong>#{{ .item.ID }}</strong></div>
+  </div>
+
+  <div class="ms-actions">
+    {{/* Edit — opens edit form as a NEW modal layer stacked on top */}}
+    <a href="/demos/todo/{{ .item.ID }}/edit" class="ms-btn-edit"
+      up-layer="new modal"
+      up-target=".m-form"
+      up-size="medium"
+      up-dismissable="button key"
+      up-on-accepted="up.layer.accept()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Edit
+    </a>
+
+    {{/* Toggle done ↔ pending — reloads this layer with updated data */}}
+    <form method="POST" action="/demos/todo/{{ .item.ID }}/toggle" up-submit up-target=".m-show" up-layer="current">
+      {{ .csrfField }}
+      <button type="submit" class="ms-btn-toggle">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        {{ if .item.Done }}Mark incomplete{{ else }}Mark done{{ end }}
+      </button>
+    </form>
+
+    {{/* Delete — submits, then accepts (closes) the layer so index reloads */}}
+    <form method="POST" action="/demos/todo/{{ .item.ID }}/delete"
+      up-submit up-confirm="Are you sure you want to delete this todo?"
+      up-on-success="up.layer.accept()">
+      {{ .csrfField }}
+      <button type="submit" class="ms-btn-delete">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        Delete
+      </button>
+    </form>
+
+    <div class="ms-btn-dismiss">
+      <button class="ms-dismiss-link" up-dismiss>← Back to list</button>
+    </div>
+  </div>
+</div>

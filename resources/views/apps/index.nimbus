@@ -1,99 +1,167 @@
 @layout('layout-demos')
-<section class="py-8">
-  <!-- Hero -->
-  <section class="relative overflow-hidden">
-    <div class="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent dark:from-amber-400/10"></div>
-    <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
-      <a href="/" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-10 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Back to home
+
+<!-- HERO -->
+<div class="hero ruled fi">
+  <div class="corners" aria-hidden="true"><b class="tl"></b><b class="tr"></b><b class="bl"></b><b class="br"></b></div>
+  <div class="wrap">
+    <a href="/" class="back-link fi d1">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg>
+      Back to home
+    </a>
+    <div class="eyebrow fi d2"><hr>Interactive examples<hr></div>
+    <h1 class="hero-h1 fi d3">Explore what<br><span class="grad">Nimbus can do.</span></h1>
+    <p class="hero-sub fi d4">Hands-on sample apps showing Nimbus features in action. Try them live — all source code included in the repo.</p>
+  </div>
+</div>
+
+<!-- DEMOS -->
+<section class="demos-section ruled">
+  <div class="corners" aria-hidden="true"><b class="bl"></b><b class="br"></b></div>
+  <div class="wrap">
+
+    <p class="section-label">5 demos &nbsp;·&nbsp; all source included</p>
+
+    <!-- TOP ROW: AI SDK (tall featured) + MCP + Queue -->
+    <div class="grid-top">
+
+      <!-- AI SDK — featured tall card with code preview -->
+      <a href="/demos/ai" class="demo-card c-ai card-wide fi d1">
+        <div>
+          <div class="card-head">
+            <div class="card-icon i-amber">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            </div>
+            <span class="badge b-new">New</span>
+          </div>
+          <div class="card-title">AI SDK</div>
+          <div class="card-desc">Text generation with OpenAI, Ollama, and more. Enter a prompt and stream AI responses directly from your Go handler — no JavaScript glue code needed.</div>
+          <div class="tags">
+            <span class="tag">ai.Generate()</span>
+            <span class="tag">streaming</span>
+            <span class="tag">openai</span>
+            <span class="tag">ollama</span>
+          </div>
+          <span class="card-cta">
+            Try the demo
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </span>
+        </div>
+        <div class="wide-code">
+          <div class="code-bar">
+            <div class="cd cdr"></div><div class="cd cdy"></div><div class="cd cdg"></div>
+            <span>handlers/ai.go</span>
+          </div>
+<pre><span class="kw">func</span> (<span class="type">AIHandler</span>) <span class="fn">Generate</span>(
+  ctx <span class="op">*</span><span class="type">http.Context</span>,
+  req <span class="op">*</span><span class="type">AIRequest</span>,
+) <span class="type">error</span> {
+  <span class="cmt">// Stream tokens back as SSE</span>
+  stream, err <span class="op">:=</span> ai.<span class="fn">Stream</span>(ctx, ai.<span class="type">Options</span>{
+    Model:  <span class="str">"gpt-4o-mini"</span>,
+    Prompt: req.Prompt,
+  })
+  <span class="kw">if</span> err <span class="op">!=</span> <span class="num">nil</span> {
+    <span class="kw">return</span> ctx.<span class="fn">InternalServerError</span>(err)
+  }
+  <span class="kw">return</span> ctx.<span class="fn">SSE</span>(stream)
+}</pre>
+        </div>
       </a>
-      <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-white mb-4">
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 dark:from-amber-400 dark:via-orange-400 dark:to-amber-500">Demos</span>
-      </h1>
-      <p class="text-xl text-slate-600 dark:text-slate-400 max-w-2xl">Explore sample apps to see how Nimbus features work in practice.</p>
-    </div>
-  </section>
 
-  <!-- Demo cards -->
-  <section class="relative border-t border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900/50 dark:to-slate-950">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <div class="grid sm:grid-cols-2 gap-6">
-        <a href="/demos/todo" class="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 block">
-          <div class="flex items-center gap-4 mb-4">
-            <span class="w-12 h-12 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-            </span>
-            <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Todo</h2>
+      <!-- Right column: MCP + Queue stacked -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <!-- MCP -->
+        <a href="/demos/mcp" class="demo-card c-mcp fi d2" style="flex:1">
+          <div class="card-head">
+            <div class="card-icon i-violet">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <span class="badge b-beta">Beta</span>
           </div>
-          <p class="text-sm text-slate-600 dark:text-slate-400">CRUD, resource routes, forms, validation, views. Add, edit, and delete tasks.</p>
-          <span class="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-amber-600 dark:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">
-            Try demo
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-          </span>
+          <div class="card-title">MCP Server</div>
+          <div class="card-desc">Model Context Protocol. Build a weather tools server for Cursor, Claude, and other AI agents with a few lines of Go.</div>
+          <div class="tags">
+            <span class="tag">mcp.Tool()</span>
+            <span class="tag">cursor</span>
+            <span class="tag">claude</span>
+          </div>
+          <span class="card-cta">Try the demo <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
         </a>
 
-        <a href="/demos/counter" class="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 block">
-          <div class="flex items-center gap-4 mb-4">
-            <span class="w-12 h-12 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-            </span>
-            <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Counter</h2>
-          </div>
-          <p class="text-sm text-slate-600 dark:text-slate-400">State, Unpoly events, JSON responses. Increment and decrement with live updates.</p>
-          <span class="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-amber-600 dark:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">
-            Try demo
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-          </span>
-        </a>
-
-        <a href="/demos/ai" class="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 block">
-          <div class="flex items-center gap-4 mb-4">
-            <span class="w-12 h-12 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-            </span>
-            <h2 class="text-xl font-semibold text-slate-900 dark:text-white">AI SDK</h2>
-          </div>
-          <p class="text-sm text-slate-600 dark:text-slate-400">Text generation with OpenAI, Ollama, etc. Enter a prompt and get AI responses.</p>
-          <span class="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-amber-600 dark:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">
-            Try demo
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-          </span>
-        </a>
-
-        <a href="/demos/mcp" class="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 block">
-          <div class="flex items-center gap-4 mb-4">
-            <span class="w-12 h-12 rounded-xl bg-violet-500/10 dark:bg-violet-500/20 flex items-center justify-center text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            </span>
-            <h2 class="text-xl font-semibold text-slate-900 dark:text-white">MCP</h2>
-          </div>
-          <p class="text-sm text-slate-600 dark:text-slate-400">Model Context Protocol. Weather server with tools and resources for Cursor/Claude.</p>
-          <span class="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-amber-600 dark:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">
-            Try demo
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-          </span>
-        </a>
-
-        <form action="/demos/queue/demo" method="post" class="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 block">
+        <!-- Queue / form -->
+        <form action="/demos/queue/demo" method="post" class="demo-card card-form c-queue fi d3" style="flex:1">
           {{ .csrfField }}
-          <div class="flex items-center gap-4 mb-4">
-            <span class="w-12 h-12 rounded-xl bg-rose-500/10 dark:bg-rose-500/20 flex items-center justify-center text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .843-3 1.885V11h6v-1.115C15 8.843 13.657 8 12 8zM6 11v5a2 2 0 002 2h8a2 2 0 002-2v-5H6z"/></svg>
-            </span>
-            <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Queue & Horizon</h2>
+          <div class="card-head">
+            <div class="card-icon i-rose">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c-1.657 0-3 .843-3 1.885V11h6v-1.115C15 8.843 13.657 8 12 8zM6 11v5a2 2 0 002 2h8a2 2 0 002-2v-5H6z"/></svg>
+            </div>
+            <span class="badge b-live">Live</span>
           </div>
-          <p class="text-sm text-slate-600 dark:text-slate-400">
-            Dispatch a background job that will appear in the Horizon dashboard. Uses the <code>/demos/queue/demo</code> endpoint.
-          </p>
-          <button type="submit"
-                  class="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 dark:bg-amber-500 dark:hover:bg-amber-400 shadow-sm">
-            Trigger job
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8M3 5h4a2 2 0 012 2v12"/></svg>
+          <div class="card-title">Queue & Horizon</div>
+          <div class="card-desc">Dispatch a background job and watch it appear in the Horizon dashboard. Redis-backed, zero config needed.</div>
+          <div class="tags">
+            <span class="tag">queue.Dispatch()</span>
+            <span class="tag">horizon</span>
+            <span class="tag">redis</span>
+          </div>
+          <button type="submit" class="trigger-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Trigger a job
           </button>
         </form>
-      </div>
+
+      </div><!-- /right col -->
+    </div><!-- /grid-top -->
+
+    <!-- BOTTOM ROW: Todo + Counter + Templates -->
+    <div class="grid-bottom">
+
+      <a href="/demos/todo" class="demo-card c-todo fi d4">
+        <div class="card-icon i-green">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        </div>
+        <div class="card-title">Todo App</div>
+        <div class="card-desc">Full CRUD with resource routes, form validation, and server-rendered views. The classic starter, done properly.</div>
+        <div class="tags">
+          <span class="tag">CRUD</span><span class="tag">resources</span><span class="tag">validation</span><span class="tag">views</span>
+        </div>
+        <span class="card-cta">Try the demo <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </a>
+
+      <a href="/demos/counter" class="demo-card c-counter fi d5">
+        <div class="card-icon i-blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+        </div>
+        <div class="card-title">Live Counter</div>
+        <div class="card-desc">State management, Unpoly events, and JSON responses. Increment and decrement with live updates — no page reload.</div>
+        <div class="tags">
+          <span class="tag">state</span><span class="tag">unpoly</span><span class="tag">json</span>
+        </div>
+        <span class="card-cta">Try the demo <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </a>
+
+      <a href="/demos/templates" class="demo-card c-tmpl fi d6">
+        <div class="card-icon i-sky">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="card-title">Templates</div>
+        <div class="card-desc">Nimbus template syntax with layouts, partials, slot injection, and live hot-reload. Edit a file and see it instantly.</div>
+        <div class="tags">
+          <span class="tag">layouts</span><span class="tag">partials</span><span class="tag">hot-reload</span>
+        </div>
+        <span class="card-cta">Try the demo <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </a>
+
+    </div><!-- /grid-bottom -->
+
+    <!-- STATS -->
+    <div class="stats-row fi d7">
+      <div class="stat"><div class="stat-n"><span>5</span></div><div class="stat-t">Live demos</div></div>
+      <div class="stat"><div class="stat-n"><span>100%</span></div><div class="stat-t">Source included</div></div>
+      <div class="stat"><div class="stat-n"><span>0</span></div><div class="stat-t">JS frameworks required</div></div>
+      <div class="stat"><div class="stat-n"><span>Go</span></div><div class="stat-t">All the way down</div></div>
     </div>
-  </section>
+
+  </div><!-- /wrap -->
 </section>

@@ -1,59 +1,298 @@
 @layout('layout-docs')
-<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Transmit</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Server-Sent Events (SSE) for real-time server-to-client push. Inspired by [AdonisJS Transmit](https://docs.adonisjs.com/guides/digging-deeper/server-sent-events). Transmit is a default plugin when creating a new app with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus new</code>.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Installation</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Add manually with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus add transmit</code> or in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code>:</p>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/plugins/transmit"
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Plugin</span>
+    <span class="px-2.5 py-1 rounded-full bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400 text-xs font-semibold">Real-time</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Transmit — Server-Sent Events</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">Transmit provides Server-Sent Events (SSE) for real-time server-to-client push. Subscribe to channels with authorization, get lifecycle hooks, and scale to multiple instances with Redis transport. Included by default when creating a new app with <code>nimbus new</code>.</p>
+
+  <!-- ── Overview ── -->
+  <h2 id="overview" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Overview
+  </h2>
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
+      <div class="text-xl mb-1">📡</div>
+      <div class="text-xs font-semibold text-slate-900 dark:text-white">SSE Streaming</div>
+      <div class="text-xs text-slate-500 dark:text-slate-400">HTTP-native push</div>
+    </div>
+    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
+      <div class="text-xl mb-1">🔐</div>
+      <div class="text-xs font-semibold text-slate-900 dark:text-white">Channel Auth</div>
+      <div class="text-xs text-slate-500 dark:text-slate-400">Pattern-based guards</div>
+    </div>
+    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
+      <div class="text-xl mb-1">🪝</div>
+      <div class="text-xs font-semibold text-slate-900 dark:text-white">Lifecycle Hooks</div>
+      <div class="text-xs text-slate-500 dark:text-slate-400">5 event callbacks</div>
+    </div>
+    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
+      <div class="text-xl mb-1">🔄</div>
+      <div class="text-xs font-semibold text-slate-900 dark:text-white">Redis Transport</div>
+      <div class="text-xs text-slate-500 dark:text-slate-400">Multi-instance sync</div>
+    </div>
+    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
+      <div class="text-xl mb-1">💓</div>
+      <div class="text-xs font-semibold text-slate-900 dark:text-white">Keep-alive</div>
+      <div class="text-xs text-slate-500 dark:text-slate-400">Configurable ping</div>
+    </div>
+    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
+      <div class="text-xl mb-1">🎯</div>
+      <div class="text-xs font-semibold text-slate-900 dark:text-white">Targeted Send</div>
+      <div class="text-xs text-slate-500 dark:text-slate-400">Broadcast / Exclude</div>
+    </div>
+  </div>
+
+  <!-- ── Installation ── -->
+  <h2 id="installation" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Installation
+  </h2>
+  <pre><code class="language-bash">$ nimbus plugin:install transmit</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">Or add manually:</p>
+  <pre data-file="bin/server.go"><code class="language-go">import "github.com/CodeSyncr/nimbus/plugins/transmit"
 
 app.Use(transmit.New(nil))</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
-<div class="overflow-x-auto mb-4">
-  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
-    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Variable</th><th class="px-4 py-2 text-left font-semibold">Description</th><th class="px-4 py-2 text-left font-semibold">Default</th></tr></thead>
-    <tbody>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">TRANSMIT_PATH</code></td><td class="px-4 py-2">Route prefix</td><td class="px-4 py-2">__transmit</td></tr>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">TRANSMIT_PING_INTERVAL</code></td><td class="px-4 py-2">Keep-alive (30s, 1m)</td><td class="px-4 py-2">disabled</td></tr>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">TRANSMIT_TRANSPORT</code></td><td class="px-4 py-2">Multi-instance: redis</td><td class="px-4 py-2">none</td></tr>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">REDIS_URL</code></td><td class="px-4 py-2">Redis (for transport)</td><td class="px-4 py-2">redis://localhost:6379</td></tr>
-    </tbody>
-  </table>
-</div>
+  <!-- ── Configuration ── -->
+  <h2 id="configuration" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Configuration
+  </h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Environment Variable</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Description</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Default</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>TRANSMIT_PATH</code></td><td class="px-4 py-2">Route prefix for SSE endpoints</td><td class="px-4 py-2"><code>__transmit</code></td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>TRANSMIT_PING_INTERVAL</code></td><td class="px-4 py-2">Keep-alive ping frequency (e.g. <code>30s</code>, <code>1m</code>)</td><td class="px-4 py-2">disabled</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>TRANSMIT_TRANSPORT</code></td><td class="px-4 py-2">Multi-instance transport (<code>redis</code>)</td><td class="px-4 py-2">none (in-memory)</td></tr>
+        <tr><td class="px-4 py-2"><code>REDIS_URL</code></td><td class="px-4 py-2">Redis connection URL for transport</td><td class="px-4 py-2"><code>redis://localhost:6379</code></td></tr>
+      </tbody>
+    </table>
+  </div>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Routes</h2>
-<div class="overflow-x-auto mb-4">
-  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
-    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Route</th><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Purpose</th></tr></thead>
-    <tbody>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">__transmit/events</td><td class="px-4 py-2">GET</td><td class="px-4 py-2">SSE connection</td></tr>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">__transmit/subscribe</td><td class="px-4 py-2">POST</td><td class="px-4 py-2">Subscribe to channel</td></tr>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">__transmit/unsubscribe</td><td class="px-4 py-2">POST</td><td class="px-4 py-2">Unsubscribe</td></tr>
-    </tbody>
-  </table>
-</div>
+  <!-- ── Routes ── -->
+  <h2 id="routes" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Auto-Registered Routes
+  </h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Method</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Route</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Purpose</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>GET</code></td><td class="px-4 py-2"><code>/__transmit/events</code></td><td class="px-4 py-2">Establish SSE connection, receive UID</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>POST</code></td><td class="px-4 py-2"><code>/__transmit/subscribe</code></td><td class="px-4 py-2">Subscribe to a channel</td></tr>
+        <tr><td class="px-4 py-2"><code>POST</code></td><td class="px-4 py-2"><code>/__transmit/unsubscribe</code></td><td class="px-4 py-2">Unsubscribe from a channel</td></tr>
+      </tbody>
+    </table>
+  </div>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Broadcasting</h2>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>transmit.Broadcast("posts", map[string]any{"id": 1, "title": "Hello"})
-transmit.BroadcastExcept("chats/1/messages", data, senderUID)</code></pre>
+  <!-- ── Broadcasting ── -->
+  <h2 id="broadcasting" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Broadcasting
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Push data to all subscribers of a channel from anywhere in your application:</p>
+  <pre data-file="app/controllers/chat.go"><code class="language-go">import "github.com/CodeSyncr/nimbus/plugins/transmit"
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Channel authorization</h2>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>transmit.Authorize("users/:id", func(ctx *http.Context, params map[string]string) bool {
-    userID, ok := ctx.Get("user_id")
-    return ok && fmt.Sprint(userID) == params["id"]
+func (ctrl *ChatController) Send(c *http.Context) error {
+    message := c.Body("message")
+    userID := auth.User(c).ID
+
+    data := map[string]any{
+        "message": message,
+        "user_id": userID,
+        "sent_at": time.Now(),
+    }
+
+    // Broadcast to all subscribers
+    transmit.Broadcast("chats/1/messages", data)
+
+    // Broadcast to all EXCEPT the sender (exclude by UID)
+    transmit.BroadcastExcept("chats/1/messages", data, c.Get("transmit_uid"))
+
+    return c.JSON(data)
+}</code></pre>
+
+  <p class="text-slate-600 dark:text-slate-400 mb-4">You can also query subscribers:</p>
+  <pre><code class="language-go">// Get all subscriber UIDs for a channel
+subscribers := transmit.GetSubscribers("chats/1/messages")
+fmt.Printf("Active listeners: %d\n", len(subscribers))</code></pre>
+
+  <!-- ── Channel Authorization ── -->
+  <h2 id="authorization" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Channel Authorization
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Guard channels with pattern-based authorization. The pattern uses <code>:param</code> syntax to extract dynamic segments:</p>
+  <pre data-file="start/kernel.go"><code class="language-go">import "github.com/CodeSyncr/nimbus/plugins/transmit"
+
+// Private user channel — only the owner can subscribe
+transmit.Authorize("users/:id/notifications", 
+    func(ctx *http.Context, params map[string]string) bool {
+        user := auth.User(ctx)
+        return user != nil && fmt.Sprint(user.ID) == params["id"]
+    },
+)
+
+// Team channel — check membership
+transmit.Authorize("teams/:teamId/updates",
+    func(ctx *http.Context, params map[string]string) bool {
+        user := auth.User(ctx)
+        if user == nil {
+            return false
+        }
+        return models.IsTeamMember(user.ID, params["teamId"])
+    },
+)
+
+// Public channel — no authorization needed (default behavior)
+// Channels without an Authorize rule are open to all subscribers</code></pre>
+
+  <div class="p-4 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 mb-6">
+    <p class="text-blue-800 dark:text-blue-400 text-sm"><strong>How it works:</strong> When a client POSTs to <code>/__transmit/subscribe</code>, the channel name is matched against registered authorization patterns. If a matching pattern is found, the callback decides whether to allow the subscription. Channels without any authorization rule are public.</p>
+  </div>
+
+  <!-- ── Lifecycle Hooks ── -->
+  <h2 id="hooks" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Lifecycle Hooks
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">React to connection events for analytics, presence tracking, or cleanup:</p>
+  <pre data-file="start/kernel.go"><code class="language-go">import "github.com/CodeSyncr/nimbus/plugins/transmit"
+
+// Client connects — receives a unique UID
+transmit.OnConnect(func(uid string) {
+    log.Printf("Client connected: %s", uid)
+    // Track online users, increment stats, etc.
+})
+
+// Client disconnects (connection closed / network drop)  
+transmit.OnDisconnect(func(uid string) {
+    log.Printf("Client disconnected: %s", uid)
+    // Mark user offline, cleanup presence
+})
+
+// Client subscribes to a channel (after auth passes)
+transmit.OnSubscribe(func(uid, channel string) {
+    log.Printf("UID %s subscribed to %s", uid, channel)
+})
+
+// Client unsubscribes from a channel
+transmit.OnUnsubscribe(func(uid, channel string) {
+    log.Printf("UID %s unsubscribed from %s", uid, channel)
+})
+
+// Data broadcasted to a channel
+transmit.OnBroadcast(func(channel string, payload any) {
+    log.Printf("Broadcast on %s: %v", channel, payload)
+    // Audit log, trigger side effects, etc.
 })</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Lifecycle hooks</h2>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>transmit.OnConnect(func(uid string) { ... })
-transmit.OnDisconnect(func(uid string) { ... })
-transmit.OnSubscribe(func(uid, channel string) { ... })
-transmit.OnBroadcast(func(channel string, payload any) { ... })</code></pre>
+  <!-- ── Redis Transport ── -->
+  <h2 id="redis-transport" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Redis Transport (Multi-Instance)
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">By default, Transmit stores connections in-memory — so broadcasts only reach clients connected to the same server instance. For multi-instance deployments, enable the Redis transport:</p>
+  <pre data-file=".env"><code>TRANSMIT_TRANSPORT=redis
+REDIS_URL=redis://localhost:6379</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">With Redis transport enabled:</p>
+  <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400 mb-4">
+    <li>Broadcasts are published to a Redis Pub/Sub channel</li>
+    <li>All connected instances receive and relay messages to local subscribers</li>
+    <li>Subscribe/unsubscribe operations are synchronized across instances</li>
+    <li>Each instance uses a unique <code>instanceID</code> to avoid echo</li>
+  </ul>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Client setup</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Clients connect to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">GET /__transmit/events</code>, receive UID, then POST to subscribe. Or use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@adonisjs/transmit-client</code> with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">baseUrl</code> pointing to your Nimbus server.</p>
+  <!-- ── Client Setup ── -->
+  <h2 id="client" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Client Setup — @nimbus/echo
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Install the official Nimbus real-time client SDK:</p>
+  <pre><code class="language-bash">npm install @nimbus/echo</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">Connect and subscribe to channels:</p>
+  <pre><code class="language-typescript">import { Echo } from '@nimbus/echo'
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Multi-instance</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">TRANSMIT_TRANSPORT=redis</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">REDIS_URL</code> to sync broadcasts across instances.</p>
+const echo = new Echo({
+  baseURL: 'http://localhost:3333',
+})
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Production</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Disable compression for <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">text/event-stream</code> in your reverse proxy (Nginx, Traefik).</p>
+// Public channel
+echo.channel('notifications')
+  .listen('NewMessage', (data) => {
+    console.log('New message:', data)
+  })
+
+// Private channel (requires auth)
+echo.private('projects.1')
+  .listen('RenderComplete', (data) => {
+    console.log('Render done:', data)
+  })
+
+// Presence channel
+echo.join('room.1')
+  .here((users) => console.log('Online:', users))
+  .joining((user) => console.log('Joined:', user))
+  .leaving((user) => console.log('Left:', user))
+  .listen('ChatMessage', (data) => console.log(data))
+
+// Connection events
+echo.onConnect(() => console.log('Connected!'))
+echo.onDisconnect(() => console.log('Disconnected'))
+
+// Leave / disconnect
+echo.leave('notifications')
+echo.disconnect()</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-8 mb-3">Echo Configuration</h3>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Option</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Type</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Default</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>baseURL</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">—</td><td class="px-4 py-2">Nimbus server URL</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>path</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2"><code>__transmit</code></td><td class="px-4 py-2">Transmit route prefix</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>bearerToken</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">—</td><td class="px-4 py-2">Bearer token for private channels</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>csrfToken</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">—</td><td class="px-4 py-2">CSRF token for POST requests</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>autoReconnect</code></td><td class="px-4 py-2">boolean</td><td class="px-4 py-2"><code>true</code></td><td class="px-4 py-2">Auto-reconnect on disconnect</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>reconnectDelay</code></td><td class="px-4 py-2">number</td><td class="px-4 py-2"><code>1000</code></td><td class="px-4 py-2">Reconnect delay (ms)</td></tr>
+        <tr><td class="px-4 py-2"><code>maxReconnectAttempts</code></td><td class="px-4 py-2">number</td><td class="px-4 py-2"><code>Infinity</code></td><td class="px-4 py-2">Max reconnect attempts</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="text-slate-600 dark:text-slate-400 mb-4"><strong>Manual protocol (without Echo):</strong></p>
+  <ol class="list-decimal list-inside space-y-1 text-slate-600 dark:text-slate-400 mb-6">
+    <li>Connect to <code>GET /__transmit/events</code> — receive your UID in the first SSE message</li>
+    <li>Subscribe: <code>POST /__transmit/subscribe</code> with <code>{"uid": "...", "channel": "chats/1"}</code></li>
+    <li>Receive events on the SSE stream as JSON payloads</li>
+    <li>Unsubscribe: <code>POST /__transmit/unsubscribe</code> with the same body</li>
+  </ol>
+
+  <!-- ── Production ── -->
+  <h2 id="production" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Production Notes
+  </h2>
+  <div class="p-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 mb-8">
+    <ul class="list-disc list-inside space-y-1 text-amber-800 dark:text-amber-400 text-sm">
+      <li>Disable response compression for <code>text/event-stream</code> in your reverse proxy (Nginx: <code>proxy_buffering off</code>; Traefik: disable compress middleware for SSE routes)</li>
+      <li>Enable <code>TRANSMIT_PING_INTERVAL=30s</code> to keep connections alive through load balancers with idle timeouts</li>
+      <li>Use Redis transport when running more than one server instance</li>
+      <li>Monitor active connections via <code>transmit.GetSubscribers()</code> for capacity planning</li>
+    </ul>
+  </div>
+</div>

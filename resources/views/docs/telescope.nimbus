@@ -1,0 +1,274 @@
+@layout('layout-docs')
+
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Plugin</span>
+    <span class="px-2.5 py-1 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400 text-xs font-semibold">Debugging</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Telescope — Debug Assistant</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">Telescope provides deep insight into your Nimbus application: requests, exceptions, database queries, jobs, cache operations, mail, events, and more — all from a beautiful dashboard. Inspired by Laravel Telescope.</p>
+
+  <!-- ── Overview ── -->
+  <h2 id="overview" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Overview
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Telescope records everything happening in your application and exposes it through a web dashboard at <code>/telescope</code>. It supports <strong>18 watchers</strong> covering every subsystem:</p>
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-amber-500">●</span> Requests
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-red-500">●</span> Exceptions
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-cyan-500">●</span> Queries
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-emerald-500">●</span> Jobs
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-blue-500">●</span> Cache
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-pink-500">●</span> Mail
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-violet-500">●</span> Events
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-orange-500">●</span> Logs
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-teal-500">●</span> Commands
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-indigo-500">●</span> Schedule
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-lime-500">●</span> Gates
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-fuchsia-500">●</span> HTTP Client
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-rose-500">●</span> Redis
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-sky-500">●</span> Models
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-yellow-500">●</span> Views
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-slate-500">●</span> Notifications
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-purple-500">●</span> Batches
+    </div>
+    <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-700 dark:text-slate-300">
+      <span class="text-amber-500">●</span> Dumps
+    </div>
+  </div>
+
+  <!-- ── Installation ── -->
+  <h2 id="installation" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Installation
+  </h2>
+  <pre><code class="language-bash">$ nimbus plugin:install telescope</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">Or add it manually:</p>
+  <pre data-file="bin/server.go"><code class="language-go">import "github.com/CodeSyncr/nimbus/plugins/telescope"
+
+app.Use(telescope.New())</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">Once registered, visit <code>http://localhost:3000/telescope</code> to access the dashboard.</p>
+
+  <!-- ── Configuration ── -->
+  <h2 id="configuration" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Configuration
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Telescope is configured through its default config or environment variables:</p>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Setting</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Default</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2"><code>enabled</code></td>
+          <td class="px-4 py-2"><code>true</code> in dev</td>
+          <td class="px-4 py-2 text-slate-600 dark:text-slate-400">Enable Telescope (auto-enabled when APP_ENV=development)</td>
+        </tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2"><code>path</code></td>
+          <td class="px-4 py-2"><code>/telescope</code></td>
+          <td class="px-4 py-2 text-slate-600 dark:text-slate-400">Dashboard URL path (override with TELESCOPE_PATH env)</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2"><code>max_entries</code></td>
+          <td class="px-4 py-2"><code>100</code></td>
+          <td class="px-4 py-2 text-slate-600 dark:text-slate-400">Maximum entries in the ring buffer</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="p-4 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 mb-6">
+    <p class="text-red-800 dark:text-red-400 text-sm"><strong>Warning:</strong> Telescope is disabled in production by default. Set <code>TELESCOPE_ENABLED=true</code> to override (not recommended — use <a href="/docs/pulse" class="text-amber-600 hover:text-amber-700">Pulse</a> for production monitoring instead).</p>
+  </div>
+
+  <!-- ── Request Watcher ── -->
+  <h2 id="request-watcher" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Request Watcher
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">The request watcher captures every HTTP request with full details:</p>
+  <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400 mb-4">
+    <li>Method, path, query parameters</li>
+    <li>Request headers (sensitive headers like Authorization/Cookie are filtered)</li>
+    <li>Request body (up to 64KB)</li>
+    <li>Response status, size, and body</li>
+    <li>Duration in milliseconds</li>
+    <li>Automatic tagging (e.g., <code>status:5xx</code> for server errors)</li>
+  </ul>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Telescope's own routes (<code>/telescope/*</code>) are automatically excluded to avoid noise.</p>
+
+  <!-- ── Query Watcher ── -->
+  <h2 id="query-watcher" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Query Watcher
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Telescope hooks into GORM's logger to capture every database query:</p>
+  <pre><code class="language-go">// Automatically captured for every query:
+// - SQL statement
+// - Duration in milliseconds
+// - Number of rows affected
+// - Connection name</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">It also registers GORM model callbacks to track Create, Update, and Delete operations with the model name, action, and primary key.</p>
+
+  <!-- ── Dump Watcher ── -->
+  <h2 id="dump" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Dump
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Use <code>telescope.Dump()</code> anywhere in your application to inspect variables through the dashboard:</p>
+  <pre data-file="app/controllers/users.go"><code class="language-go">import "github.com/CodeSyncr/nimbus/plugins/telescope"
+
+func (ctrl *UsersController) Show(c *http.Context) error {
+    user, _ := models.FindUser(c.Param("id"))
+
+    // Dump variable to Telescope dashboard
+    telescope.Dump("user", user)
+    telescope.Dump("request_headers", c.Request.Header)
+
+    return c.View("users/show", map[string]any{"user": user})
+}</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Dumps are JSON-serialized and available in the <strong>Dumps</strong> tab of the Telescope dashboard.</p>
+
+  <!-- ── Other Watchers ── -->
+  <h2 id="watchers" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Watchers Reference
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Each watcher records specific data. Framework subsystems call these automatically, but you can also record entries manually:</p>
+  <pre data-file="Manual Recording"><code class="language-go">// Record a job execution
+plugin.RecordJob("SendWelcomeEmail", "default", "completed",
+    150*time.Millisecond, map[string]any{"user_id": 42}, nil)
+
+// Record a cache operation
+plugin.RecordCache("get", "users:42", true, 2*time.Millisecond)
+
+// Record an outgoing HTTP request
+plugin.RecordHTTPClient("POST", "https://api.stripe.com/charges",
+    200, 340*time.Millisecond, nil, nil)
+
+// Record a mail send
+plugin.RecordMail("user@example.com", "Welcome!", "smtp", true, "")
+
+// Record an event dispatch
+plugin.RecordEvent("UserRegistered",
+    []string{"SendWelcomeEmail", "CreateProfile"}, nil)
+
+// Record a scheduled task
+plugin.RecordSchedule("cleanup:logs", "0 2 * * *", "completed",
+    5*time.Second, "Deleted 142 old entries")
+
+// Record an authorization gate check
+plugin.RecordGate("edit-post", true, "user-42", nil)
+
+// Record a Redis command
+plugin.RecordRedis("GET users:42", 1*time.Millisecond, "default")
+
+// Record a log entry
+plugin.RecordLog("error", "Payment failed",
+    map[string]any{"order_id": "ORD-123"})
+
+// Record a view render
+plugin.RecordView("users/show", 12*time.Millisecond, nil)
+
+// Record a command execution
+plugin.RecordCommand("migrate:run", []string{"--force"}, 0,
+    2*time.Second)</code></pre>
+
+  <!-- ── Dashboard Routes ── -->
+  <h2 id="dashboard" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Dashboard Routes
+  </h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Route</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Watcher</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope</code></td><td class="px-4 py-2">Dashboard overview</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/requests</code></td><td class="px-4 py-2">HTTP Requests</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/queries</code></td><td class="px-4 py-2">Database Queries</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/exceptions</code></td><td class="px-4 py-2">Exceptions / Panics</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/jobs</code></td><td class="px-4 py-2">Queue Jobs</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/logs</code></td><td class="px-4 py-2">Log Entries</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/mail</code></td><td class="px-4 py-2">Sent Emails</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/cache</code></td><td class="px-4 py-2">Cache Operations</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/events</code></td><td class="px-4 py-2">Event Dispatches</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/schedule</code></td><td class="px-4 py-2">Scheduled Tasks</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/commands</code></td><td class="px-4 py-2">CLI Commands</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/gates</code></td><td class="px-4 py-2">Authorization Gates</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/http-client</code></td><td class="px-4 py-2">Outgoing HTTP</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/redis</code></td><td class="px-4 py-2">Redis Commands</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/models</code></td><td class="px-4 py-2">Model Changes</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/views</code></td><td class="px-4 py-2">Template Renders</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/notifications</code></td><td class="px-4 py-2">Notifications</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/batches</code></td><td class="px-4 py-2">Job Batches</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/telescope/dumps</code></td><td class="px-4 py-2">Variable Dumps</td></tr>
+        <tr><td class="px-4 py-2"><code>POST /telescope/clear</code></td><td class="px-4 py-2">Clear all entries</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Storage ── -->
+  <h2 id="storage" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> In-Memory Storage
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Telescope uses a thread-safe <strong>ring buffer</strong> to store entries in memory. This means:</p>
+  <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400 mb-4">
+    <li>Zero external dependencies (no Redis or database needed)</li>
+    <li>Entries are lost on application restart</li>
+    <li>Memory usage is bounded by <code>max_entries</code> (default: 100)</li>
+    <li>Oldest entries are overwritten when the buffer is full</li>
+  </ul>
+
+  <!-- ── Plugin Interface ── -->
+  <h2 id="plugin-interface" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Plugin Capabilities
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Telescope implements the full set of plugin interfaces:</p>
+  <pre><code class="language-go">// Telescope implements:
+nimbus.Plugin        // Register + Boot
+nimbus.HasMiddleware // Request watcher middleware
+nimbus.HasRoutes     // Dashboard routes
+nimbus.HasConfig     // Default configuration
+nimbus.HasViews      // Embedded dashboard templates</code></pre>
+
+  <div class="p-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 mb-8">
+    <p class="text-amber-800 dark:text-amber-400 text-sm"><strong>Tip:</strong> For production monitoring, use <a href="/docs/pulse" class="text-amber-600 hover:text-amber-700">Pulse</a> instead — it's designed for lightweight production observability with percentile stats and aggregated metrics.</p>
+  </div>
+</div>

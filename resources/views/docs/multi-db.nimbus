@@ -1,0 +1,195 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Multiple Database Connections</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus supports connecting to multiple SQL databases at the same time. Register each connection with a name, then resolve it anywhere in your application. The first registered connection (or one named <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">"default"</code>) automatically becomes the global DB.</p>
+
+<!-- ── Configuration ───────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Define your connections in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">config/database.go</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type DatabaseConfig struct {
+    Driver   string
+    DSN      string
+
+    // Named SQL connections
+    Connections map[string]ConnectionCfg
+
+    // NoSQL
+    MongoURI      string
+    MongoDatabase string
+}
+
+type ConnectionCfg struct {
+    Driver       string
+    DSN          string
+    Debug        bool
+    MaxOpenConns int
+    MaxIdleConns int
+}
+
+func Database() DatabaseConfig {
+    return DatabaseConfig{
+        Driver: env.Get("DB_DRIVER", "sqlite"),
+        DSN:    env.Get("DB_DSN", "database.sqlite"),
+        Connections: map[string]ConnectionCfg{
+            "default": {
+                Driver: env.Get("DB_DRIVER", "sqlite"),
+                DSN:    env.Get("DB_DSN", "database.sqlite"),
+            },
+            "analytics": {
+                Driver: env.Get("ANALYTICS_DB_DRIVER", "postgres"),
+                DSN:    env.Get("ANALYTICS_DB_DSN", ""),
+            },
+            "logs": {
+                Driver: env.Get("LOGS_DB_DRIVER", "postgres"),
+                DSN:    env.Get("LOGS_DB_DSN", ""),
+            },
+        },
+        MongoURI:      env.Get("MONGO_URI", ""),
+        MongoDatabase: env.Get("MONGO_DATABASE", ""),
+    }
+}</code></pre>
+
+<!-- ── Boot / Register ─────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Registering Connections</h2>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Option A — ConnectAll (recommended)</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Pass a slice of <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ConnectionConfig</code> and Nimbus opens &amp; registers everything in one call:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/database"
+
+configs := []database.ConnectionConfig{
+    {Name: "default",   Driver: cfg.Driver, DSN: cfg.DSN, Debug: isDev},
+    {Name: "analytics", Driver: "postgres", DSN: analyticsDSN},
+    {Name: "logs",      Driver: "postgres", DSN: logsDSN, MaxOpenConns: 25},
+}
+
+if err := database.ConnectAll(configs); err != nil {
+    log.Fatalf("database: %v", err)
+}
+defer database.CloseAll()</code></pre>
+
+<h3 class="text-lg font-medium text-slate-800 dark:text-slate-200 mt-6 mb-2">Option B — Manual AddConnection</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db, _ := database.Connect("postgres", dsn)
+database.AddConnection("default", db)
+
+analyticsDB, _ := database.Connect("postgres", analyticsDSN)
+database.AddConnection("analytics", analyticsDB)</code></pre>
+
+<!-- ── Using Connections ───────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Using Connections</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Resolve by name → *gorm.DB
+db := database.Connection("analytics")
+db.Find(&events)
+
+// MustConnection panics if not registered (for boot-time checks)
+db = database.MustConnection("analytics")
+
+// Convenience from the nimbus package
+db = nimbus.Connection("analytics")</code></pre>
+
+<!-- ── Query Builder Shortcut ──────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Query Builder on a Connection</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.On</code> returns a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Query</code> builder scoped to the named connection:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Query builder on a specific connection
+var events []AnalyticsEvent
+database.On("analytics").
+    Where("event_type = ?", "click").
+    Where("created_at > ?", since).
+    Get(&events)
+
+// Model-scoped query builder
+var logs []AuditLog
+database.OnModel("logs", &AuditLog{}).
+    Where("user_id = ?", uid).
+    OrderBy("created_at", "desc").
+    Limit(50).
+    Get(&logs)</code></pre>
+
+<!-- ── API Reference ───────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">API Reference</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Function</th><th class="px-4 py-2 text-left font-semibold">Returns</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">AddConnection(name, db)</code></td><td class="px-4 py-2">—</td><td class="px-4 py-2">Register a named <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*gorm.DB</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Connection(name)</code></td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*gorm.DB</code></td><td class="px-4 py-2">Get a connection (nil if missing)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MustConnection(name)</code></td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*gorm.DB</code></td><td class="px-4 py-2">Get a connection or panic</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SetDefault(name)</code></td><td class="px-4 py-2">error</td><td class="px-4 py-2">Switch the global default connection</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ConnectionNames()</code></td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">[]string</code></td><td class="px-4 py-2">List all registered connection names</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ConnectAll(configs)</code></td><td class="px-4 py-2">error</td><td class="px-4 py-2">Open &amp; register multiple connections</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">CloseAll()</code></td><td class="px-4 py-2">error</td><td class="px-4 py-2">Close every registered connection</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">On(name)</code></td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*Query</code></td><td class="px-4 py-2">Query builder on a named connection</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">OnModel(name, model)</code></td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">*Query</code></td><td class="px-4 py-2">Model-scoped query on a named connection</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── ConnectionConfig ─────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">ConnectionConfig</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Field</th><th class="px-4 py-2 text-left font-semibold">Type</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Name</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">Connection identifier (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">"default"</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">"analytics"</code>, etc.)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Driver</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">postgres</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mysql</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">sqlite</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">DSN</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">Full connection string</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Debug</code></td><td class="px-4 py-2">bool</td><td class="px-4 py-2">Enable SQL logging</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MaxOpenConns</code></td><td class="px-4 py-2">int</td><td class="px-4 py-2">Max open connections (0 = unlimited)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MaxIdleConns</code></td><td class="px-4 py-2">int</td><td class="px-4 py-2">Max idle connections</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── Setting Default ─────────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Switching the Default</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The first connection registered is the default. You can switch it at runtime:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Make "analytics" the global default
+database.SetDefault("analytics")
+
+// Now database.Get() / nimbus.DB() returns the analytics connection</code></pre>
+
+<!-- ── Combining SQL + NoSQL ────────────────────────────── -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-10 mb-2">Combining SQL + NoSQL</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Both the SQL connection manager and the NoSQL connection manager work side by side. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus plugin:install nosql</code> to scaffold the NoSQL boot wiring automatically, or configure it manually:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import (
+    "github.com/CodeSyncr/nimbus/database"
+    "github.com/CodeSyncr/nimbus/database/nosql"
+)
+
+// SQL connections
+database.ConnectAll(sqlConfigs)
+
+// NoSQL connections (auto-wired by bootNoSQL if using plugin:install)
+mongo, _ := nosql.ConnectMongo(ctx, nosql.MongoConfig{...})
+nosql.Register("mongo", mongo)
+nimbus.SetNoSQL(mongo)
+
+// Use both in a handler
+func CreateOrder(c *nimbus.Context) error {
+    // Write to SQL via *nimbus.DB
+    c.DB.Create(&order)
+
+    // Write to MongoDB via *nimbus.NoSQL
+    store := nimbus.GetNoSQL()
+    store.Collection("order_events").InsertOne(c.Request.Context(), OrderEvent{
+        OrderID: order.ID,
+        Action:  "created",
+    })
+    return c.JSON(order)
+}
+
+// Or inject both via container
+type OrderController struct {
+    DB    *nimbus.DB
+    Mongo *nimbus.NoSQL
+}
+
+func NewOrderController(app *nimbus.App) *OrderController {
+    return &OrderController{
+        DB:    app.Container.MustMake("db").(*nimbus.DB),
+        Mongo: app.Container.MustMake("nosql").(*nimbus.NoSQL),
+    }
+}</code></pre>
+
+<p class="text-slate-500 dark:text-slate-500 text-sm mt-8">
+  <a href="/docs/nosql-query-builder" class="text-amber-600 dark:text-amber-400 hover:underline">← NoSQL Query Builder</a> &nbsp;|&nbsp;
+  <a href="/docs/database" class="text-amber-600 dark:text-amber-400 hover:underline">Database &amp; ORM →</a>
+</p>

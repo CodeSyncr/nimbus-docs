@@ -1,8 +1,9 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">AI SDK</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-4">The AI SDK plugin provides a unified API for interacting with AI providers (OpenAI, Anthropic, Ollama, etc.), inspired by <a href="https://laravel.com/docs/12.x/ai-sdk" class="text-amber-600 dark:text-amber-400 hover:underline">Laravel's AI SDK</a>. Build agents, generate text, and stream responses with a consistent interface.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4">A comprehensive AI backend framework for Go — providing unified abstractions for text generation, streaming, structured output, agents, RAG, embeddings, workflows, image generation, observability, and more. Inspired by <a href="https://laravel.com/docs/12.x/ai-sdk" class="text-amber-600 dark:text-amber-400 hover:underline">Laravel's AI SDK</a> and <a href="https://sdk.vercel.ai/" class="text-amber-600 dark:text-amber-400 hover:underline">Vercel AI SDK</a>.</p>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Try the <a href="/demos/ai" class="text-amber-600 dark:text-amber-400 hover:underline">AI demo</a> to see it in action.</p>
 
+<!-- ═══════════════════════════════════════════════════════════════ -->
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Installation</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Add the plugin in your <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code>:</p>
 <pre data-file="bin/server.go"><code>import (
@@ -16,6 +17,7 @@ func main() {
     // ...
 }</code></pre>
 
+<!-- ═══════════════════════════════════════════════════════════════ -->
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Set environment variables in your <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code>:</p>
 <pre data-file=".env"><code>AI_PROVIDER=openai
@@ -30,12 +32,16 @@ OPENAI_API_KEY=sk-...</code></pre>
     <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>AI_PROVIDER</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">openai, xai, ollama, anthropic, gemini, mistral, cohere</td></tr>
     <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>AI_MODEL</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Model name (e.g. gpt-4o, llama3.2)</td></tr>
     <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>OPENAI_API_KEY</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Required for OpenAI</td></tr>
-    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>OLLAMA_HOST</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Ollama server URL (default: http://localhost:11434)</td></tr>
     <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ANTHROPIC_API_KEY</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Required for Anthropic</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>GEMINI_API_KEY</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Required for Gemini</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>MISTRAL_API_KEY</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Required for Mistral</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>COHERE_API_KEY</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Required for Cohere</td></tr>
     <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>XAI_API_KEY</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Required for xAI (Grok)</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>OLLAMA_HOST</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Ollama server URL (default: http://localhost:11434)</td></tr>
   </tbody>
 </table>
 
+<!-- ═══════════════════════════════════════════════════════════════ -->
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Text Generation</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ai.Generate</code> for simple completions:</p>
 <pre data-file="app/controllers/ai.go"><code>response, err := ai.Generate(c.Request().Context(), "Explain quantum computing")
@@ -44,40 +50,669 @@ if err != nil {
 }
 return c.JSON(200, map[string]string{"answer": response.Text})</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Streaming</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ai.Stream</code> for streaming responses:</p>
-<pre data-file="app/controllers/ai.go"><code>stream, errCh := ai.Stream(ctx, "Write a haiku about Go")
-for chunk := range stream {
-    fmt.Fprint(w, chunk)
-}
-if err := &#60;-errCh; err != nil {
-    return err
-}</code></pre>
-
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Agents</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Agents encapsulate instructions (system prompt) and optional conversation context:</p>
-<pre data-file="app/controllers/ai.go"><code>agent := ai.NewAgent("You are a helpful coding assistant specializing in Go.")
-response, err := agent.Prompt(ctx, "How do I use channels for concurrency?")</code></pre>
-
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Options</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Customize generation with options:</p>
-<pre data-file="app/controllers/ai.go"><code>response, err := ai.Generate(ctx, "Summarize this",
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Options</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Customize generation with functional options:</p>
+<pre data-file="app/controllers/ai.go"><code>response, err := ai.Generate(ctx, "Summarize this article",
     ai.WithModel("gpt-4o-mini"),
     ai.WithMaxTokens(500),
     ai.WithTemperature(0.7),
-    ai.WithSystem("You are a concise summarizer."),
+    ai.WithSystem("You are a concise summarizer. Use bullet points."),
 )</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Providers</h2>
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Streaming</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ai.Stream</code> for SSE streaming responses:</p>
+<pre data-file="app/controllers/ai.go"><code>func (ctrl *AI) StreamChat(c *http.Context) error {
+    c.Response().Header().Set("Content-Type", "text/event-stream")
+    c.Response().Header().Set("Cache-Control", "no-cache")
+
+    stream, errCh := ai.Stream(c.Request().Context(), c.Request.FormValue("prompt"))
+    flusher := c.Response().(http.Flusher)
+
+    for chunk := range stream {
+        fmt.Fprintf(c.Response(), "data: %s\n\n", chunk)
+        flusher.Flush()
+    }
+    if err := &lt;-errCh; err != nil {
+        return err
+    }
+    return nil
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Structured Output (Extract)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Extract typed Go structs from unstructured text. The AI generates JSON matching your struct's shape, with automatic retries.</p>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Receipt Parser</h3>
+<pre data-file="app/controllers/receipts.go"><code>type Receipt struct {
+    Merchant string
+    Amount   float64
+    Date     string
+    Items    []Item
+}
+
+type Item struct {
+    Name  string
+    Price float64
+    Qty   int
+}
+
+func (ctrl *Receipts) Parse(c *http.Context) error {
+    text := c.Request.FormValue("receipt_text")
+
+    receipt, err := ai.Extract[Receipt](c.Request().Context(), text)
+    if err != nil {
+        return err
+    }
+
+    return c.JSON(200, receipt)
+    // { "merchant": "Starbucks", "amount": 12.50, "date": "2025-03-13", "items": [...] }
+}</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Sentiment Classifier</h3>
+<pre data-file="app/controllers/reviews.go"><code>func (ctrl *Reviews) Classify(c *http.Context) error {
+    text := c.Request.FormValue("review")
+
+    label, err := ai.Classify(c.Request().Context(), text,
+        []string{"positive", "negative", "neutral"},
+    )
+    if err != nil {
+        return err
+    }
+
+    return c.JSON(200, map[string]string{"sentiment": label})
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Agents</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Agents combine instructions, tools, memory, and a reasoning loop. They can autonomously call tools and iterate until they have an answer.</p>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Customer Support Agent</h3>
+<pre data-file="app/controllers/support.go"><code>func init() {
+    // Register tools the agent can use.
+    ai.RegisterTool(ai.Tool{
+        Name:        "lookup_order",
+        Description: "Look up a customer order by ID",
+        Run: func(ctx context.Context, in struct {
+            OrderID string `description:"The order ID"`
+        }) (map[string]any, error) {
+            order := db.FindOrder(in.OrderID)
+            return map[string]any{
+                "status":  order.Status,
+                "total":   order.Total,
+                "shipped": order.ShippedAt,
+            }, nil
+        },
+    })
+
+    ai.RegisterTool(ai.Tool{
+        Name:        "create_refund",
+        Description: "Create a refund for an order",
+        Run: func(ctx context.Context, in struct {
+            OrderID string
+            Amount  float64
+            Reason  string
+        }) (map[string]string, error) {
+            refundID := billing.CreateRefund(in.OrderID, in.Amount, in.Reason)
+            return map[string]string{"refund_id": refundID, "status": "processed"}, nil
+        },
+    })
+}
+
+func (ctrl *Support) Chat(c *http.Context) error {
+    userID := c.Session().GetString("user_id")
+
+    agent := ai.NewAgent("You are a helpful customer support agent for an e-commerce store. "+
+        "Always look up the order before taking action. Be polite and concise.").
+        WithTools("lookup_order", "create_refund").
+        WithMemory(ai.RedisMemory(rdb), "support:"+userID).
+        MaxSteps(5)
+
+    response, err := agent.Prompt(c.Request().Context(), c.Request.FormValue("message"))
+    if err != nil {
+        return err
+    }
+
+    return c.JSON(200, map[string]string{"reply": response.Text})
+}</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Code Review Agent</h3>
+<pre data-file="app/controllers/code_review.go"><code>func (ctrl *CodeReview) Review(c *http.Context) error {
+    code := c.Request.FormValue("code")
+
+    agent := ai.NewAgent("You are an expert Go code reviewer. "+
+        "Analyze code for bugs, performance issues, and style improvements. "+
+        "Rate severity as: critical, warning, or info.").
+        WithModel("gpt-4o")
+
+    response, err := agent.Prompt(c.Request().Context(),
+        "Review this Go code:\n\n```go\n"+code+"\n```",
+    )
+    if err != nil {
+        return err
+    }
+
+    return c.JSON(200, map[string]string{"review": response.Text})
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Tools (Function Calling)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Register Go functions as tools that agents can call. Input types generate JSON schemas automatically via reflection.</p>
+<pre data-file="app/tools/weather.go"><code>package tools
+
+import (
+    "context"
+    "github.com/CodeSyncr/nimbus/plugins/ai"
+)
+
+type WeatherInput struct {
+    City    string `description:"City name"`
+    Country string `description:"ISO country code"`
+}
+
+type WeatherOutput struct {
+    Temp       int
+    Humidity   int
+    Conditions string
+}
+
+func init() {
+    ai.NewTool("get_weather").
+        Desc("Get current weather for a city").
+        Handler(func(ctx context.Context, in WeatherInput) (WeatherOutput, error) {
+            // Call your weather API here.
+            w := weatherAPI.Get(in.City, in.Country)
+            return WeatherOutput{
+                Temp:       w.TempF,
+                Humidity:   w.Humidity,
+                Conditions: w.Description,
+            }, nil
+        }).
+        Register()
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Embeddings &amp; Vector Store</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Generate embeddings and perform similarity search with pluggable backends.</p>
+<pre data-file="app/controllers/search.go"><code>func (ctrl *Search) Semantic(c *http.Context) error {
+    query := c.Request.FormValue("q")
+
+    // Search the knowledge base.
+    store := ai.VectorStoreInstance("knowledge")
+    results, err := store.Search(c.Request().Context(), query, 5)
+    if err != nil {
+        return err
+    }
+
+    items := make([]map[string]any, len(results))
+    for i, doc := range results {
+        items[i] = map[string]any{
+            "id":    doc.ID,
+            "text":  doc.Text,
+            "score": doc.Score,
+        }
+    }
+
+    return c.JSON(200, map[string]any{"results": items})
+}</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Vector Store Backends</h3>
 <table class="w-full border-collapse border border-slate-200 dark:border-slate-700 mb-4">
-  <thead><tr class="bg-slate-50 dark:bg-slate-800"><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Provider</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Status</th></tr></thead>
+  <thead><tr class="bg-slate-50 dark:bg-slate-800"><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Backend</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Constructor</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Use Case</th></tr></thead>
   <tbody class="text-slate-600 dark:text-slate-400 text-sm">
-    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">OpenAI</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Supported</td></tr>
-    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">xAI (Grok)</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Supported</td></tr>
-    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Ollama</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Supported (local)</td></tr>
-    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Anthropic, Gemini, Mistral, Cohere</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Config ready</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">In-memory</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.NewMemoryVectorStore()</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Development / testing</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">pgvector</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.NewPgvectorStore(db)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">PostgreSQL production</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Qdrant</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.NewQdrantStore(url, collection)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Dedicated vector DB</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Pinecone</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.NewPineconeStore(host, key)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Managed cloud</td></tr>
   </tbody>
 </table>
 
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: pgvector Setup</h3>
+<pre data-file="start/kernel.go"><code>import (
+    "github.com/CodeSyncr/nimbus/plugins/ai"
+    "gorm.io/driver/postgres"
+    "gorm.io/gorm"
+)
+
+func Boot(app *nimbus.App) {
+    db := app.Container.MustMake("db").(*nimbus.DB)
+
+    // Use pgvector for production vector storage.
+    backend := ai.NewPgvectorStore(db.DB,
+        ai.WithPgvectorTable("document_embeddings"),
+        ai.WithPgvectorDimension(1536),
+    )
+    store := ai.VectorStoreInstance("knowledge", backend)
+    app.Container.Singleton("vectorstore", func() any { return store })
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">RAG (Retrieval-Augmented Generation)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Build knowledge-grounded Q&amp;A systems. The RAG engine embeds the query, searches the vector store, and augments the prompt with relevant context.</p>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Documentation Q&amp;A</h3>
+<pre data-file="app/controllers/docs_qa.go"><code>func (ctrl *DocsQA) Ask(c *http.Context) error {
+    store := app.Container.MustMake("vectorstore").(*ai.Store)
+
+    rag := ai.NewRAG(store).
+        TopK(5).
+        MinScore(0.7).
+        WithCitations(true).
+        WithSystem("You are a Nimbus documentation assistant. " +
+            "Answer ONLY based on the provided context.")
+
+    answer, err := rag.Ask(c.Request().Context(), c.Request.FormValue("question"))
+    if err != nil {
+        return err
+    }
+
+    sources := make([]map[string]any, len(answer.Sources))
+    for i, src := range answer.Sources {
+        sources[i] = map[string]any{"id": src.ID, "text": src.Text, "score": src.Score}
+    }
+
+    return c.JSON(200, map[string]any{
+        "answer":  answer.Answer,
+        "sources": sources,
+    })
+}</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Ingest Documents</h3>
+<pre data-file="cmd/ingest/main.go"><code>func ingestDocs(ctx context.Context, store *ai.Store) error {
+    docs := map[string]string{
+        "routing":    routingDocText,
+        "database":   databaseDocText,
+        "middleware": middlewareDocText,
+    }
+    return ai.IngestDocuments(ctx, store, docs)
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Prompt Templates</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Reusable, composable prompt templates with Go's <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">text/template</code> syntax.</p>
+<pre data-file="app/controllers/content.go"><code>// Simple template
+prompt := ai.Template("Translate the following to {{.language}}:\n\n{{.text}}")
+resp, err := prompt.Generate(ctx, map[string]any{
+    "language": "Spanish",
+    "text":     "Hello, how are you?",
+})
+
+// Few-shot classifier
+classifier := ai.FewShot("Classify the support ticket priority.").
+    Add("My account is hacked!", "critical").
+    Add("Can't change my profile picture", "low").
+    Add("Payment failed for my order", "high")
+
+resp, err := classifier.Generate(ctx, "I want to update my shipping address")
+
+// Composable chain
+resp, err := ai.Chain(
+    ai.SystemTemplate("You are a {{.role}} expert."),
+    ai.Template("Explain {{.topic}} for a {{.audience}} audience."),
+).Generate(ctx, map[string]any{
+    "role":     "Go",
+    "topic":    "goroutines and channels",
+    "audience": "beginner",
+})</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Workflows (Multi-Step Pipelines)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Orchestrate complex AI pipelines with sequential, parallel, and branching steps.</p>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Blog Post Generator</h3>
+<pre data-file="app/controllers/blog.go"><code>func generateBlogPost(c *http.Context) error {
+    wf := ai.NewWorkflow("blog-post").
+        Step("research", func(ctx context.Context, wc *ai.WorkflowContext) error {
+            resp, _ := ai.Generate(ctx, "Research key points about: "+wc.GetString("topic"),
+                ai.WithModel("gpt-4o"))
+            wc.Set("research", resp.Text)
+            return nil
+        }).
+        Step("outline", func(ctx context.Context, wc *ai.WorkflowContext) error {
+            resp, _ := ai.Generate(ctx,
+                "Create a blog outline from this research:\n"+wc.GetString("research"),
+            )
+            wc.Set("outline", resp.Text)
+            return nil
+        }).
+        Parallel("media",
+            ai.StepFunc("hero_image", func(ctx context.Context, wc *ai.WorkflowContext) error {
+                img, _ := ai.Image().
+                    Prompt("Blog hero image: "+wc.GetString("topic")).
+                    Size("1792x1024").
+                    Generate(ctx)
+                wc.Set("hero_url", img.Images[0].URL)
+                return nil
+            }),
+            ai.StepFunc("social_copy", func(ctx context.Context, wc *ai.WorkflowContext) error {
+                resp, _ := ai.Generate(ctx,
+                    "Write a Twitter thread for: "+wc.GetString("outline"))
+                wc.Set("social", resp.Text)
+                return nil
+            }),
+        ).
+        Step("draft", func(ctx context.Context, wc *ai.WorkflowContext) error {
+            resp, _ := ai.Generate(ctx,
+                "Write a 1500-word blog post from this outline:\n"+wc.GetString("outline"),
+                ai.WithModel("gpt-4o"),
+            )
+            wc.Set("post", resp.Text)
+            return nil
+        })
+
+    result, err := wf.Run(c.Request().Context(), ai.WorkflowInput{"topic": c.Request.FormValue("topic")})
+    if err != nil {
+        return err
+    }
+
+    return c.JSON(200, result.Data)
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Document Processing</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Chunk, summarize, and query documents with auto map-reduce for long texts.</p>
+<pre data-file="app/controllers/documents.go"><code>// Summarize (auto map-reduce for texts exceeding token limits)
+summary, err := ai.Summarize(ctx, longContractText,
+    ai.SummarizeStyle("bullet-points"),
+    ai.SummarizeMaxLength(500),
+)
+
+// Chunk text for embedding ingestion
+chunks := ai.ChunkText(text, ai.ChunkSize(500), ai.ChunkOverlap(50))
+
+// Q&amp;A over a single document
+qa := ai.DocumentQA(contractText)
+answer, err := qa.Ask(ctx, "What are the payment terms?")</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Image Generation</h2>
+<pre data-file="app/controllers/images.go"><code>func (ctrl *Images) Generate(c *http.Context) error {
+    img, err := ai.Image().
+        Model("dall-e-3").
+        Prompt(c.Request.FormValue("prompt")).
+        Size("1024x1024").
+        Style("natural").
+        Generate(c.Request().Context())
+    if err != nil {
+        return err
+    }
+
+    return c.JSON(200, map[string]string{"url": img.Images[0].URL})
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Guardrails</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Validate AI outputs for length, blocked patterns, PII, and custom rules.</p>
+<pre data-file="app/controllers/safe_chat.go"><code>func (ctrl *Chat) SafeGenerate(c *http.Context) error {
+    g := ai.NewGuardrails().
+        MaxLength(5000).
+        BlockPatterns(`(?i)password`, `\b\d{16}\b`). // block passwords &amp; credit cards
+        SetContentFilter(ai.FilterPII).
+        CustomCheck(func(output string) error {
+            if strings.Contains(output, "TODO") {
+                return fmt.Errorf("response contains unfinished content")
+            }
+            return nil
+        })
+
+    resp, err := ai.Generate(c.Request().Context(), c.Request.FormValue("prompt"))
+    if err != nil {
+        return err
+    }
+
+    if err := g.Validate(resp.Text); err != nil {
+        return c.JSON(400, map[string]string{"error": "Response filtered: " + err.Error()})
+    }
+
+    return c.JSON(200, map[string]string{"text": resp.Text})
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Memory</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Persist agent conversations across requests with pluggable backends.</p>
+<table class="w-full border-collapse border border-slate-200 dark:border-slate-700 mb-4">
+  <thead><tr class="bg-slate-50 dark:bg-slate-800"><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Backend</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Constructor</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Use Case</th></tr></thead>
+  <tbody class="text-slate-600 dark:text-slate-400 text-sm">
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">In-memory</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.MemoryStore()</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Development / testing</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Redis</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.RedisMemory(rdb)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Production, multi-instance</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Database</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.DatabaseMemory(db)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Persistent, auditable</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Sliding window</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.SlidingWindowMemory(inner, n)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Keep last N messages</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Summary</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.SummaryMemory(inner, n)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Auto-compress history</td></tr>
+  </tbody>
+</table>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Redis Memory with Sliding Window</h3>
+<pre data-file="app/controllers/chat.go"><code>import "github.com/redis/go-redis/v9"
+
+func (ctrl *Chat) Message(c *http.Context) error {
+    rdb := redis.NewClient(&amp;redis.Options{Addr: "localhost:6379"})
+
+    // Redis memory with TTL, wrapped in sliding window (keep last 100 messages)
+    mem := ai.SlidingWindowMemory(
+        ai.RedisMemory(rdb, ai.WithRedisTTL(24*time.Hour)),
+        100,
+    )
+
+    userID := c.Session().GetString("user_id")
+    agent := ai.NewAgent("You are a helpful assistant.").
+        WithMemory(mem, "chat:"+userID)
+
+    resp, err := agent.Prompt(c.Request().Context(), c.Request.FormValue("message"))
+    if err != nil {
+        return err
+    }
+
+    return c.JSON(200, map[string]string{"reply": resp.Text})
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Observability &amp; Tracing</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Monitor every AI operation with hooks, metrics, and OpenTelemetry-compatible tracing.</p>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Observability Hooks</h3>
+<pre data-file="start/kernel.go"><code>// Log every AI request
+ai.OnRequest(func(e ai.RequestEvent) {
+    log.Printf("[AI] model=%s tokens=%d latency=%s",
+        e.Model, e.Usage.TotalTokens, e.Latency)
+})
+
+// Track errors (send to Sentry, DataDog, etc.)
+ai.OnError(func(e ai.RequestEvent) {
+    sentry.CaptureException(e.Error)
+})
+
+// Aggregate metrics
+fmt.Println(ai.UsageReport())
+// → "AI Usage: requests=142 tokens=58320 errors=2 avg_latency=1.2s"</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">OpenTelemetry Tracing</h3>
+<pre data-file="start/kernel.go"><code>// Enable tracing for all AI operations
+ai.EnableTracing(ai.TracingConfig{
+    ServiceName:   "my-app",
+    RecordPrompts: false, // disable in prod for privacy
+})
+
+// Log spans to console (dev)
+ai.AddSpanExporter(&amp;ai.LogExporter{})
+
+// Send to OTLP collector (prod)
+ai.AddSpanExporter(&amp;ai.OTLPExporter{
+    Endpoint: "http://localhost:4318/v1/traces",
+})
+
+// Inspect recent spans
+spans := ai.GetTraceSpans(10)
+for _, span := range spans {
+    fmt.Printf("%s %s %s\n", span.Name, span.Attributes["ai.model"], span.Duration)
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Cost Tracking</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Track per-model, per-provider costs with built-in pricing for 20+ models and budget alerts.</p>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Budget Monitoring</h3>
+<pre data-file="start/kernel.go"><code>ai.EnableCostTracking(ai.CostConfig{
+    MonthlyBudget:   500.00, // $500/month
+    AlertThresholds: []float64{50, 75, 90, 100},
+    OnBudgetAlert: func(usage ai.CostSummary) {
+        log.Printf("⚠️  AI budget at %.0f%% ($%.2f / $%.2f)",
+            usage.BudgetPercent, usage.TotalCost, usage.MonthlyBudget)
+        // Send Slack/email notification here.
+    },
+})</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Cost Dashboard API</h3>
+<pre data-file="app/controllers/admin.go"><code>func (ctrl *Admin) CostDashboard(c *http.Context) error {
+    dashboard := ai.GetCostDashboard()
+
+    return c.JSON(200, map[string]any{
+        "total_cost":       dashboard.TotalCost,
+        "total_requests":   dashboard.TotalRequests,
+        "budget_percent":   dashboard.BudgetPercent,
+        "budget_remaining": dashboard.BudgetRemaining,
+        "by_model":         dashboard.CostByModel,
+        "by_provider":      dashboard.CostByProvider,
+        "hourly":           dashboard.HourlyCosts,
+    })
+}
+
+// CLI: print cost report
+// fmt.Println(ai.CostReport())
+// → AI Cost Report
+//   Total Cost:     $12.3456
+//   Total Requests: 423
+//   Budget:         $500.00 (2.5% used, $487.65 remaining)
+//   Per Model:
+//     gpt-4o                          312 reqs  $11.2345  (avg $0.036013/req)
+//     gpt-4o-mini                     111 reqs  $1.1111   (avg $0.010010/req)</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Model Evaluation &amp; Benchmarking</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Test AI quality with automated benchmarks, compare models, and use LLM-as-judge for subjective scoring.</p>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Quality Test Suite</h3>
+<pre data-file="app/tests/ai_eval_test.go"><code>func TestAIQuality(t *testing.T) {
+    suite := ai.NewEvalSuite("qa-quality").
+        AddCase("greeting", "Say hello in a friendly way",
+            ai.ExpectContains("hello"),
+            ai.ExpectMinLength(10),
+        ).
+        AddCase("math", "What is 15 * 23?",
+            ai.ExpectContains("345"),
+        ).
+        AddCase("json_output", "Return a JSON object with name and age fields",
+            ai.ExpectJSON(),
+            ai.ExpectContains("name"),
+        ).
+        AddCaseWithSystem("pirate",
+            "You are a pirate", "Introduce yourself",
+            ai.ExpectContains("arr"),
+            ai.LLMJudge("creativity and pirate speech"),
+        ).
+        Parallel(3) // run 3 cases concurrently
+
+    report := suite.Run(context.Background())
+
+    if report.AvgScore &lt; 0.8 {
+        t.Errorf("AI quality score %.2f is below threshold 0.80", report.AvgScore)
+    }
+    t.Log(report.Summary())
+}</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Model Comparison</h3>
+<pre data-file="app/controllers/admin.go"><code>func (ctrl *Admin) CompareModels(c *http.Context) error {
+    suite := ai.NewEvalSuite("model-compare").
+        AddCase("summarize", "Summarize Go's concurrency model in 3 sentences",
+            ai.ExpectMinLength(50),
+            ai.ExpectMaxLength(500),
+            ai.LLMJudge("accuracy and conciseness"),
+        ).
+        AddCase("code", "Write a Go function to reverse a string",
+            ai.ExpectContains("func"),
+            ai.ExpectContains("string"),
+        )
+
+    comparison := ai.CompareModels(c.Request().Context(), suite,
+        "gpt-4o", "gpt-4o-mini", "claude-3-5-sonnet-20241022",
+    )
+
+    return c.JSON(200, map[string]any{
+        "suite":   comparison.Suite,
+        "reports": comparison.Reports,
+        "summary": comparison.Summary(),
+    })
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">HTTP Middleware</h2>
+<pre data-file="start/routes.go"><code>// Rate-limit AI endpoints (10 requests per second per IP)
+aiGroup := app.Router.Group("/api/ai")
+aiGroup.Use(ai.RateLimit(10, time.Second))
+aiGroup.Use(ai.CostGuard(1.00)) // max $1 per request
+aiGroup.Use(ai.Logger())
+aiGroup.Post("/chat", chatHandler)
+aiGroup.Post("/generate", generateHandler)</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Providers</h2>
+<table class="w-full border-collapse border border-slate-200 dark:border-slate-700 mb-4">
+  <thead><tr class="bg-slate-50 dark:bg-slate-800"><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Provider</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Generate</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Stream</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Embeddings</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Image</th></tr></thead>
+  <tbody class="text-slate-600 dark:text-slate-400 text-sm">
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">OpenAI</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Anthropic</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">—</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">—</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Gemini</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">—</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">—</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Mistral</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">—</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">—</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Cohere</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">—</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">—</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">xAI (Grok)</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">—</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">—</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Ollama</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">&#10003;</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">—</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">—</td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Full Example: AI-Powered SaaS Feature</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">This example combines multiple AI features to build a complete contract analysis endpoint — extract data, classify risk, summarize, and track costs.</p>
+<pre data-file="app/controllers/contracts.go"><code>type ContractAnalysis struct {
+    Parties       []string
+    EffectiveDate string
+    TermMonths    int
+    TotalValue    float64
+    KeyClauses    []string
+}
+
+func (ctrl *Contracts) Analyze(c *http.Context) error {
+    ctx := c.Request().Context()
+    text := c.Request.FormValue("contract_text")
+
+    // 1. Extract structured data from the contract.
+    analysis, err := ai.Extract[ContractAnalysis](ctx, text)
+    if err != nil {
+        return err
+    }
+
+    // 2. Classify risk level.
+    risk, err := ai.Classify(ctx, text, []string{"low", "medium", "high"})
+    if err != nil {
+        return err
+    }
+
+    // 3. Generate executive summary.
+    summary, err := ai.Summarize(ctx, text,
+        ai.SummarizeStyle("executive-summary"),
+        ai.SummarizeMaxLength(200),
+    )
+    if err != nil {
+        return err
+    }
+
+    return c.JSON(200, map[string]any{
+        "analysis": analysis,
+        "risk":     risk,
+        "summary":  summary,
+    })
+}</code></pre>
+
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Related</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">For AI client integrations (tools, resources, prompts), see <a href="/docs/mcp" class="text-amber-600 dark:text-amber-400 hover:underline">MCP</a>.</p>
+<ul class="text-slate-600 dark:text-slate-400 mb-4 list-disc pl-6">
+  <li><a href="/docs/ai-video" class="text-amber-600 dark:text-amber-400 hover:underline">AI Video Pipeline</a> — Cinematic video production: scene planning, keyframes, video synthesis, stitching, social packaging</li>
+  <li><a href="/docs/mcp" class="text-amber-600 dark:text-amber-400 hover:underline">MCP</a> — AI client integrations (tools, resources, prompts)</li>
+</ul>

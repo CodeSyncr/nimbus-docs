@@ -1,0 +1,99 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Workflow Engine</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Durable, step-based workflows with persistence and error recovery. Each step is checkpointed — if a workflow crashes, it resumes from the last completed step.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Setup</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/workflow"
+
+app.Use(workflow.NewPlugin())
+// Dashboard at /workflows</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Defining a Workflow</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">A workflow is a sequence of named steps. Each step is persisted — if the process crashes, it resumes from the last completed step on restart.</p>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>wf := workflow.Define("onboarding", func(ctx *workflow.Context) error {
+    // Step 1: Create account
+    err := ctx.Step("create_account", func() error {
+        return createAccount(ctx.Input)
+    })
+    if err != nil {
+        return err
+    }
+
+    // Step 2: Send welcome email
+    err = ctx.Step("send_email", func() error {
+        return sendWelcomeEmail(ctx.Input)
+    })
+    if err != nil {
+        return err
+    }
+
+    // Step 3: Setup defaults
+    err = ctx.Step("setup_defaults", func() error {
+        return setupUserDefaults(ctx.Input)
+    })
+
+    return err
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Starting a Workflow</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>instance, err := workflow.Start("onboarding", map[string]any{
+    "email": "user@example.com",
+    "plan":  "pro",
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Features</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Feature</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium">Step Persistence</td><td class="px-4 py-2">Each step is checkpointed; restart resumes from last completed step</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium">Error Handling</td><td class="px-4 py-2">Steps can fail and be retried independently</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium">Dashboard</td><td class="px-4 py-2">View workflow status at <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/workflows</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium">Parallel Steps</td><td class="px-4 py-2">Run independent steps concurrently</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium">Timeouts</td><td class="px-4 py-2">Set step-level and workflow-level timeouts</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Order Processing</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>wf := workflow.Define("process_order", func(ctx *workflow.Context) error {
+    orderID := ctx.Input["order_id"].(uint)
+
+    // Step 1: Verify payment (if this fails, order stops here)
+    err := ctx.Step("verify_payment", func() error {
+        return paymentService.Verify(orderID)
+    })
+    if err != nil {
+        return err
+    }
+
+    // Step 2: Reserve inventory
+    err = ctx.Step("reserve_inventory", func() error {
+        return inventoryService.Reserve(orderID)
+    })
+    if err != nil {
+        return err
+    }
+
+    // Step 3: Generate shipping label
+    err = ctx.Step("shipping_label", func() error {
+        return shippingService.CreateLabel(orderID)
+    })
+    if err != nil {
+        return err
+    }
+
+    // Step 4: Send confirmation
+    return ctx.Step("send_confirmation", func() error {
+        return notificationService.OrderConfirmed(orderID)
+    })
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Name steps descriptively — they appear in the dashboard and logs</li>
+  <li>Keep each step idempotent — it may be retried on crash recovery</li>
+  <li>Use workflows for multi-step business processes, not simple tasks</li>
+  <li>Pass IDs in input, not full objects — workflow state is serialized</li>
+  <li>Set timeouts on long-running steps to avoid stuck workflows</li>
+</ul>

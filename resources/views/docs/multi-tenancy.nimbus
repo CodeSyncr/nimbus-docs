@@ -1,0 +1,83 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Multi-Tenancy</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Serve multiple tenants from a single application instance. Automatically resolve the current tenant from subdomain, header, or URL path and scope all data access.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Setup</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/tenancy"
+
+app.Use(tenancy.New(tenancy.Config{
+    Strategy: "subdomain",     // subdomain | header | path
+    Header:   "X-Tenant-ID",   // only used with "header" strategy
+}))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Tenant Resolution Strategies</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Strategy</th><th class="px-4 py-2 text-left font-semibold">Resolution</th><th class="px-4 py-2 text-left font-semibold">Example</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">subdomain</code></td><td class="px-4 py-2">Extract from Host header</td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">acme.myapp.com</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">header</code></td><td class="px-4 py-2">Custom request header</td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">X-Tenant-ID: acme</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">path</code></td><td class="px-4 py-2">URL path prefix</td><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/tenant/acme/...</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using the Current Tenant</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func (ctrl *DashboardController) Index(c *http.Context) error {
+    tenant := tenancy.FromContext(c.Request.Context())
+
+    // Query scoped to tenant
+    var users []User
+    db.Where("tenant_id = ?", tenant.ID).Find(&users)
+
+    return c.JSON(200, users)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: SaaS Dashboard</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>// Tenant-scoped product listing
+func (ctrl *ProductController) Index(c *http.Context) error {
+    tenant := tenancy.FromContext(c.Request.Context())
+
+    var products []Product
+    db.Where("tenant_id = ?", tenant.ID).
+        Order("created_at DESC").
+        Find(&products)
+
+    return c.JSON(200, products)
+}
+
+// Tenant-scoped analytics
+func (ctrl *AnalyticsController) Revenue(c *http.Context) error {
+    tenant := tenancy.FromContext(c.Request.Context())
+
+    var total float64
+    db.Model(&Order{}).
+        Where("tenant_id = ? AND created_at >= ?", tenant.ID, startOfMonth()).
+        Select("COALESCE(SUM(total), 0)").
+        Scan(&total)
+
+    return c.JSON(200, map[string]float64{"revenue": total})
+}
+
+// Tenant-scoped cache keys
+func (ctrl *SettingsController) Get(c *http.Context) error {
+    tenant := tenancy.FromContext(c.Request.Context())
+    key := fmt.Sprintf("settings:%d", tenant.ID)
+
+    settings, _ := cache.RememberT[Settings](key, time.Hour, func() (Settings, error) {
+        var s Settings
+        db.Where("tenant_id = ?", tenant.ID).First(&s)
+        return s, nil
+    })
+
+    return c.JSON(200, settings)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Always scope database queries with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">tenant_id</code></li>
+  <li>Include tenant ID in cache keys to prevent data leakage</li>
+  <li>Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">subdomain</code> for customer-facing SaaS apps</li>
+  <li>Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">header</code> for API-first architectures</li>
+  <li>Create GORM scopes to automatically apply tenant filtering</li>
+</ul>

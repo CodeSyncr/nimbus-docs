@@ -117,8 +117,8 @@
   nimbus.<span class="type">Model</span>
   Name    <span class="type">string</span>
   Email   <span class="type">string</span>
-  Posts   []<span class="type">Post</span>   <span class="at">`nimbus:"hasMany"`</span>
-  Profile <span class="type">Profile</span> <span class="at">`nimbus:"hasOne"`</span>
+  Posts   []<span class="type">Post</span>
+  Profile <span class="type">Profile</span>
 }
 
 <span class="cmt">// Fetch active users with their posts</span>

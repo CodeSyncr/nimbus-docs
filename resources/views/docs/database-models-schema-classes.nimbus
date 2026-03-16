@@ -23,13 +23,11 @@
       <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">default:value</code></td><td class="px-4 py-2">Default value</td></tr>
       <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">size:255</code></td><td class="px-4 py-2">Column size</td></tr>
       <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">column:db_name</code></td><td class="px-4 py-2">Override column name</td></tr>
-      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">foreignKey:UserID</code></td><td class="px-4 py-2">Relation foreign key</td></tr>
       <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">-</code></td><td class="px-4 py-2">Ignore field</td></tr>
     </tbody>
   </table>
 </div>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">JSON serialization</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">json</code> tags to control API output:</p>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>Password string `json:"-"`  // omit from JSON
-Email    string `json:"email"`</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">json:"-"</code> to hide sensitive fields from JSON output:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>Password string `json:"-"`  // omit from JSON</code></pre>

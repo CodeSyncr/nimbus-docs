@@ -1,50 +1,140 @@
 @layout('layout-demos')
-<main class="min-h-[calc(100vh-8rem)]">
-  <section class="relative overflow-hidden">
-    <div class="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent dark:from-emerald-400/10"></div>
-    <div class="relative max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16">
-      <a href="/demos" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-8 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Back to demos
-      </a>
-      <div class="flex items-center justify-between mb-8">
-        <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Todo</h1>
-        <a href="/demos/todo/create" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/30 hover:shadow-amber-500/40 hover:scale-[1.02] transition-all">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-          Add
-        </a>
+
+<!-- HERO -->
+<div class="hero ruled fi">
+  <div class="corners" aria-hidden="true"><b class="tl"></b><b class="tr"></b><b class="bl"></b><b class="br"></b></div>
+  <div class="wrap">
+    <a href="/demos" class="back-link fi d1">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg>
+      All demos
+    </a>
+    <div class="eyebrow fi d2"><hr>CRUD · Layers · Validation<hr></div>
+    <h1 class="hero-h1 fi d3">Todo <span class="grad">App.</span></h1>
+    <p class="hero-sub fi d4">Full CRUD in one URL. Create, view, and edit todos in Unpoly modal layers — the address bar never changes.</p>
+  </div>
+</div>
+<section class="todo-section ruled">
+  <div class="corners" aria-hidden="true"><b class="bl"></b><b class="br"></b></div>
+  <div class="wrap">
+    <div class="todo-layout">
+
+      <div id="todo-list-col" class="fi d1">
+        <div class="list-hd">
+          <div class="list-hl">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            My Todos
+            @if(!.empty)<span class="list-pill">{{ len .items }}</span>@endif
+          </div>
+          <a href="/demos/todo/create" class="add-btn"
+            up-layer="new modal" up-target=".m-form" up-size="medium"
+            up-dismissable="button key"
+            up-on-accepted="up.reload('#todo-list-col')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New todo
+          </a>
+        </div>
+
+        @if(.empty)
+        <div class="empty-box">
+          <div class="empty-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
+          <div class="empty-ttl">Nothing here yet</div>
+          <div class="empty-sub">Add your first todo to get started.</div>
+          <a href="/demos/todo/create" class="add-btn"
+            up-layer="new modal" up-target=".m-form" up-size="medium"
+            up-dismissable="button key"
+            up-on-accepted="up.reload('#todo-list-col')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add a todo
+          </a>
+        </div>
+        @else
+        <ul class="todo-list">
+          @each(items)
+          <li class="todo-item {{ if .Done }}done{{ end }}" id="todo-{{ .ID }}">
+            <div class="i-strip"></div>
+            <div class="i-body">
+              <div class="i-left">
+                <form method="POST" action="/demos/todo/{{ .ID }}/toggle" up-submit up-target="#todo-list-col">
+                  {{ $.csrfField }}
+                  <button type="submit" class="chk {{ if .Done }}on{{ end }}">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </button>
+                </form>
+                <a href="/demos/todo/{{ .ID }}" class="i-title"
+                  up-layer="new modal" up-target=".m-show" up-size="medium"
+                  up-dismissable="button key"
+                  up-on-accepted="up.reload('#todo-list-col')">{{ .Title }}</a>
+              </div>
+              <div class="i-acts">
+                <a href="/demos/todo/{{ .ID }}/edit" class="ibtn"
+                  up-layer="new modal" up-size="medium"
+                  up-dismissable="button key"
+                  up-on-accepted="up.reload('#todo-list-col')" title="Edit">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </a>
+                <form method="POST" action="/demos/todo/{{ .ID }}/delete" up-submit up-target="#todo-list-col" up-confirm="CONFIRM: Are you sure you want to delete this todo?">
+                  {{ $.csrfField }}
+                  <button type="submit" class="ibtn del" title="Delete">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </li>
+          @endeach
+        </ul>
+        @endif
       </div>
 
-      @if(.empty)
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-12 text-center">
-        <p class="text-slate-600 dark:text-slate-400 mb-4">No todos yet.</p>
-        <a href="/demos/todo/create" class="inline-flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium hover:underline">Add one</a>
-      </div>
-      @else
-      <ul class="space-y-3">
-        @each(items)
-        <li class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-4 hover:border-amber-500/40 dark:hover:border-amber-500/40 transition-all">
-          <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3 min-w-0">
-              @if(.Done)
-              <span class="text-slate-500 dark:text-slate-400 line-through">{{ .Title }}</span>
-              @else
-              <a href="/demos/todo/{{ .ID }}" class="text-slate-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 truncate font-medium">{{ .Title }}</a>
-              @endif
+      <aside class="todo-sb fi d2">
+        <div class="sb-card">
+          <div class="sb-head"><div class="sb-ico sbi-g"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><span class="sb-ttl">Progress</span></div>
+          <div class="sb-body">
+            <div class="ps-grid">
+              <div class="ps-cell"><div class="ps-n g">{{ .doneCount }}</div><div class="ps-l">done</div></div>
+              <div class="ps-cell"><div class="ps-n r">{{ .pendingCount }}</div><div class="ps-l">pending</div></div>
             </div>
-            <div class="flex items-center gap-3 shrink-0">
-              <a href="/demos/todo/{{ .ID }}/edit" class="text-sm font-medium text-slate-600 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 transition">Edit</a>
-              <form method="POST" action="/demos/todo/{{ .ID }}/delete" class="inline" onsubmit="return confirm('Delete this todo?')">
-                {{ $.csrfField }}
-                <button type="submit" class="text-sm font-medium text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition">Delete</button>
-              </form>
+            <div class="ps-bar-row"><span>Completion</span><strong>{{ .donePercent }}%</strong></div>
+            <div class="ps-track"><div class="ps-fill" style="width:{{ .donePercent }}%"></div></div>
+          </div>
+        </div>
+
+        <div class="sb-card">
+          <div class="sb-head"><div class="sb-ico sbi-b"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><span class="sb-ttl">Routes</span></div>
+          <div class="sb-body">
+            <div class="rt-list">
+              <div class="rt-row"><span class="rt-m rt-g">GET</span><span class="rt-path">/demos/todo</span></div>
+              <div class="rt-row"><span class="rt-m rt-g">GET</span><span class="rt-path">/demos/todo/create</span></div>
+              <div class="rt-row"><span class="rt-m rt-p">POST</span><span class="rt-path">/demos/todo</span></div>
+              <div class="rt-row"><span class="rt-m rt-g">GET</span><span class="rt-path">/demos/todo/:id</span></div>
+              <div class="rt-row"><span class="rt-m rt-g">GET</span><span class="rt-path">/demos/todo/:id/edit</span></div>
+              <div class="rt-row"><span class="rt-m rt-p">POST</span><span class="rt-path">/demos/todo/:id/update</span></div>
+              <div class="rt-row"><span class="rt-m rt-d">POST</span><span class="rt-path">/demos/todo/:id/delete</span></div>
+              <div class="rt-row"><span class="rt-m rt-p">POST</span><span class="rt-path">/demos/todo/:id/toggle</span></div>
             </div>
           </div>
-        </li>
-        @endeach
-      </ul>
-      @endif
+        </div>
+
+        <div class="sb-code">
+          <div class="sb-code-bar"><div class="cd cdr"></div><div class="cd cdy"></div><div class="cd cdg"></div><span>routes/web.go</span></div>
+          <pre><span class="cmt">// One call = all routes</span>
+r.<span class="fn">Resource</span>(
+  <span class="str">"/demos/todo"</span>,
+  controllers.<span class="type">TodoController</span>,
+)</pre>
+        </div>
+
+        <div class="sb-card">
+          <div class="sb-body">
+            <div style="font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px">Built with</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px">
+              <span class="tag">up-layer</span><span class="tag">up-submit</span><span class="tag">up-target</span><span class="tag">r.Resource()</span><span class="tag">CSRF</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
     </div>
-  </section>
-</main>
+  </div>
+</section>
+

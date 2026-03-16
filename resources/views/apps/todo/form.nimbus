@@ -1,41 +1,107 @@
-@layout('layout-demos')
-<main class="min-h-[calc(100vh-8rem)]">
-  <section class="relative overflow-hidden">
-    <div class="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent dark:from-emerald-400/10"></div>
-    <div class="relative max-w-xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16">
-      <a href="/demos/todo" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-8 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Back to todo
-      </a>
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-8">
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">{{ .title }}</h1>
-
-        @if(.error)
-        <div class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-sm">{{ .error }}</div>
+<div class="m-form" up-main>
+  <div class="mf-head">
+    <div class="mf-head-left">
+      <div class="mf-icon">
+        @if(.item)
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        @else
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         @endif
-
-        <form method="POST" action="{{ if .item }}/demos/todo/{{ .item.ID }}/update{{ else }}/demos/todo{{ end }}" class="space-y-6">
-          {{ .csrfField }}
-
-          <div>
-            <label for="title" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Title</label>
-            <input type="text" id="title" name="title" value="{{ if .item }}{{ .item.Title }}{{ end }}" required maxlength="255" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition">
-          </div>
-
-          @if(.item)
-          <div class="flex items-center gap-3">
-            <input type="checkbox" id="done" name="done" {{ if .item.Done }}checked{{ end }} class="rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-amber-500 focus:ring-amber-500">
-            <label for="done" class="text-sm font-medium text-slate-700 dark:text-slate-300">Done</label>
-          </div>
-          @endif
-
-          <div class="flex gap-3 pt-2">
-            <button type="submit" class="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/30 hover:shadow-amber-500/40 transition">Save</button>
-            <a href="/demos/todo" class="rounded-xl border-2 border-slate-200 dark:border-slate-700 px-6 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">Cancel</a>
-          </div>
-        </form>
       </div>
+      <span class="mf-title">{{ .title }}</span>
+      @if(.item)
+      <span class="mf-badge edit">Editing #{{ .item.ID }}</span>
+      @else
+      <span class="mf-badge new">New</span>
+      @endif
     </div>
-  </section>
-</main>
+    <button class="mf-close" up-dismiss aria-label="Close">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="mf-body">
+    @if(.error)
+    <div class="mf-error">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      {{ .error }}
+    </div>
+    @endif
+
+    <form id="todo-form" method="POST"
+      action="{{ if .item }}/demos/todo/{{ .item.ID }}/update{{ else }}/demos/todo{{ end }}"
+      up-submit
+      up-target=".m-form"
+      up-layer="current"
+      up-accept-location="/demos/todo">
+      {{ .csrfField }}
+
+      <div class="mf-field">
+        <div class="mf-label">
+          <label for="mf-title">Title</label>
+          <span class="mf-req">required</span>
+        </div>
+        <div class="mf-input-wrap">
+          <input
+            type="text" id="mf-title" name="title"
+            value="{{ if .item }}{{ .item.Title }}{{ end }}"
+            placeholder="What needs to be done?"
+            required maxlength="255" autocomplete="off"
+            class="mf-input"
+            oninput="mfCount(this)"
+          >
+          <span class="mf-chars" id="mf-chars">0/255</span>
+        </div>
+        <div class="mf-hint">Keep it short and actionable — max 255 characters.</div>
+      </div>
+
+      @if(.item)
+      <label class="mf-check-row">
+        <input type="checkbox" name="done" {{ if .item.Done }}checked{{ end }}>
+        <div class="mf-check-info">
+          <strong>Mark as done</strong>
+          <span>Tick to complete this todo.</span>
+        </div>
+      </label>
+      @endif
+
+    </form>
+  </div>
+
+  <div class="mf-foot">
+    <button type="submit" form="todo-form" class="mf-submit">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      {{ if .item }}Save changes{{ else }}Create todo{{ end }}
+    </button>
+    <button type="button" class="mf-cancel" up-dismiss>Cancel</button>
+    <div class="mf-shortcut">
+      <span class="kbd">⌘</span><span class="kbd">↵</span>
+      <span>to save</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function mfCount(inp) {
+  var n = inp.value.length, max = 255;
+  var el = document.getElementById('mf-chars');
+  if (!el) return;
+  el.textContent = n + '/' + max;
+  el.className = 'mf-chars' + (n > max * .88 ? (n >= max ? ' over' : ' warn') : '');
+}
+up.compiler('.m-form', function(element) {
+  var inp = element.querySelector('#mf-title');
+  if (inp) {
+    mfCount(inp);
+    inp.focus();
+    inp.select();
+  }
+
+  element.addEventListener('keydown', function(e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      element.querySelector('#todo-form').requestSubmit();
+    }
+  });
+});
+
+</script>

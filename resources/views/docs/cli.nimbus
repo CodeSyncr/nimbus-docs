@@ -1,22 +1,116 @@
 @layout('layout-docs')
-<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Introduction</h1>
-<p class="text-slate-600 mb-6">Run <code class="bg-slate-100 px-1 rounded">nimbus new</code> from the Nimbus repo to scaffold a full app (with <code class="bg-slate-100 px-1 rounded">bin/server.go</code>, <code class="bg-slate-100 px-1 rounded">start/kernel.go</code>, <code class="bg-slate-100 px-1 rounded">start/routes.go</code>, and <code class="bg-slate-100 px-1 rounded">config/*.go</code>); run <code class="bg-slate-100 px-1 rounded">nimbus serve</code> and <code class="bg-slate-100 px-1 rounded">make:*</code> from your app root.</p>
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">CLI</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Full-featured command-line interface for project scaffolding, code generation, database commands, deployment, and AI assistance. Built on Cobra with interactive prompts and styled terminal output.</p>
 
-<div class="overflow-x-auto mb-8">
-  <table class="w-full text-sm border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-    <thead><tr class="bg-slate-100"><th class="text-left p-3 font-semibold text-slate-700">Command</th><th class="text-left p-3 font-semibold text-slate-700">Description</th></tr></thead>
-    <tbody class="bg-white">
-      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus new name</td><td class="p-3 text-slate-600">Create a new app</td></tr>
-      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus serve</td><td class="p-3 text-slate-600">Run app with hot reload (Air)</td></tr>
-      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:model Name</td><td class="p-3 text-slate-600">Scaffold a model in app/models</td></tr>
-      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:migration name</td><td class="p-3 text-slate-600">Scaffold a migration in database/migrations</td></tr>
-      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:command name</td><td class="p-3 text-slate-600">Create a custom command in commands/</td></tr>
-      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:controller Name</td><td class="p-3 text-slate-600">Scaffold a controller in app/controllers</td></tr>
-      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:middleware Name</td><td class="p-3 text-slate-600">Scaffold middleware in app/middleware</td></tr>
-      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:job Name</td><td class="p-3 text-slate-600">Scaffold a job in app/jobs</td></tr>
-      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus make:seeder Name</td><td class="p-3 text-slate-600">Scaffold a seeder in database/seeders</td></tr>
-      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus migrate</td><td class="p-3 text-slate-600">Run migrations (if wired in app)</td></tr>
-      <tr class="border-t border-slate-200"><td class="p-3 font-mono text-slate-800">nimbus migrate:rollback</td><td class="p-3 text-slate-600">Rollback last migration</td></tr>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Installation</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>go install github.com/CodeSyncr/nimbus/cmd/nimbus@latest
+nimbus --version</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Project Commands</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Command</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus new [name]</code></td><td class="px-4 py-2">Create a new project with interactive wizard</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus serve</code></td><td class="px-4 py-2">Start dev server with hot reload (Air)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus build</code></td><td class="px-4 py-2">Build frontend assets (CSS/JS) to public/</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus repl</code></td><td class="px-4 py-2">Start interactive REPL session</td></tr>
     </tbody>
   </table>
 </div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Code Generators</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">All generators follow <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:&lt;type&gt; &lt;Name&gt;</code>:</p>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Command</th><th class="px-4 py-2 text-left font-semibold">Creates</th><th class="px-4 py-2 text-left font-semibold">Location</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">make:model User</code></td><td class="px-4 py-2">GORM model</td><td class="px-4 py-2">app/models/user.go</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">make:controller User</code></td><td class="px-4 py-2">HTTP controller</td><td class="px-4 py-2">app/controllers/user.go</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">make:migration create_users</code></td><td class="px-4 py-2">Timestamped migration</td><td class="px-4 py-2">database/migrations/</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">make:middleware Auth</code></td><td class="px-4 py-2">Middleware function</td><td class="px-4 py-2">app/middleware/auth.go</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">make:job SendEmail</code></td><td class="px-4 py-2">Queue job with Handle/Failed</td><td class="px-4 py-2">app/jobs/send_email.go</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">make:seeder UserSeeder</code></td><td class="px-4 py-2">Database seeder</td><td class="px-4 py-2">database/seeders/user_seeder.go</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">make:validator User</code></td><td class="px-4 py-2">Validation schema</td><td class="px-4 py-2">app/validators/user.go</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">make:command Greet</code></td><td class="px-4 py-2">Custom CLI command</td><td class="px-4 py-2">app/commands/greet.go</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">make:plugin Analytics</code></td><td class="px-4 py-2">Full plugin skeleton (9 files)</td><td class="px-4 py-2">app/plugins/analytics/</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">make:auth</code></td><td class="px-4 py-2">Complete auth scaffolding</td><td class="px-4 py-2">model, controller, views, routes</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Database Commands</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Command</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">db:create</code></td><td class="px-4 py-2">Create the database</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">db:migrate</code></td><td class="px-4 py-2">Run pending migrations</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">db:rollback</code></td><td class="px-4 py-2">Rollback the last migration batch</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">db:seed</code></td><td class="px-4 py-2">Run database seeders</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Queue & Scheduler</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Command</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">queue:work</code></td><td class="px-4 py-2">Start processing queue jobs</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">schedule:run</code></td><td class="px-4 py-2">Start the scheduler (blocks)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">schedule:list</code></td><td class="px-4 py-2">List all scheduled tasks</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Deploy Commands</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Command</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">deploy</code></td><td class="px-4 py-2">Deploy to production (Fly.io, Railway, Render, AWS, GCP)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">deploy:init</code></td><td class="px-4 py-2">Initialize deployment configuration</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">deploy:status</code></td><td class="px-4 py-2">Check deployment status</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">deploy:logs</code></td><td class="px-4 py-2">View deployment logs</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">deploy:rollback</code></td><td class="px-4 py-2">Rollback to previous deployment</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">AI Commands</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Command</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus ai "description"</code></td><td class="px-4 py-2">AI Copilot — generate code from natural language</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus test:generate</code></td><td class="px-4 py-2">AI Test Generator — create tests from controller code</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Project Scaffolding</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus new</code> wizard prompts for project name, database driver (PostgreSQL/MySQL/SQLite), features (Auth, API, Queue, Scheduler, AI, MCP), and frontend (Tailwind/plain/none). It generates a complete project structure:</p>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>myapp/
+├── main.go          # Entry point
+├── go.mod           # Module definition
+├── .env             # Environment variables
+├── app/
+│   ├── controllers/ # HTTP controllers
+│   ├── models/      # GORM models
+│   ├── middleware/   # Custom middleware
+│   ├── validators/  # Validation schemas
+│   └── jobs/        # Queue jobs
+├── config/          # Configuration structs
+├── database/
+│   ├── migrations/  # Schema migrations
+│   └── seeders/     # Data seeders
+├── resources/views/ # Nimbus templates
+├── public/          # Static assets
+├── start/
+│   ├── routes.go    # Route definitions
+│   ├── kernel.go    # Bootstrap
+│   ├── jobs.go      # Job registration
+│   └── schedule.go  # Scheduled tasks
+└── bin/
+    └── server.go    # Server bootstrap</code></pre>

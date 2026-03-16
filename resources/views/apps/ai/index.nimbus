@@ -1,28 +1,131 @@
 @layout('layout-demos')
-<section class="py-8">
-  <section class="relative overflow-hidden">
-    <div class="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent dark:from-amber-400/10"></div>
-    <div class="relative max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16">
-      <a href="/demos" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-10 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Back to demos
-      </a>
-      <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">AI SDK</h1>
-      <p class="text-slate-600 dark:text-slate-400 mb-10">Enter a prompt and get an AI-generated response. Uses the configured provider (OpenAI, Ollama, etc.).</p>
+<!-- HERO -->
+<div class="hero ruled fi">
+  <div class="corners" aria-hidden="true"><b class="tl"></b><b class="tr"></b><b class="bl"></b><b class="br"></b></div>
+  <div class="wrap">
+    <a href="/demos" class="back-link fi d1">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg>
+      All demos
+    </a>
+    <div class="eyebrow fi d2"><hr>Demo &middot; AI SDK<hr></div>
+    <div class="hero-row">
+      <div>
+        <h1 class="hero-h1 fi d3"><span class="grad">AI SDK</span> Demo</h1>
+        <p class="hero-sub fi d4">Enter a prompt and get an AI-generated response. Works with OpenAI, Ollama, Anthropic, and any compatible provider.</p>
+      </div>
+      <div class="hero-badge fi d5">
+        <span class="badge-dot"></span>
+        Provider active
+      </div>
+    </div>
+  </div>
+</div>
 
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-8 mb-8">
-        <form method="POST" action="/demos/ai/generate">
-          {{ .csrfField }}
-          <div class="mb-4">
-            <label for="prompt" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Prompt</label>
-            <textarea id="prompt" name="prompt" rows="4" placeholder="e.g. Explain quantum computing in one sentence" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition resize-none"></textarea>
+<!-- MAIN -->
+<section class="main-section ruled">
+  <div class="corners" aria-hidden="true"><b class="bl"></b><b class="br"></b></div>
+  <div class="wrap">
+    <div class="content-grid">
+
+      <!-- LEFT: Form + result -->
+      <div class="fi d1">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-row">
+              <div class="card-icon-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              </div>
+              <span class="card-label">Generate a response</span>
+            </div>
+            <span class="card-hint">POST /demos/ai/generate</span>
           </div>
-          <button type="submit" class="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/30 hover:shadow-amber-500/40 transition">Generate</button>
-        </form>
+          <div class="card-body">
+            <form method="POST" action="/demos/ai/generate" id="ai-form" up-submit up-target="#ai-result" up-keep-url>
+              {{ .csrfField }}
+              <div>
+                <label for="prompt" class="field-label">Prompt</label>
+                <textarea
+                  id="prompt"
+                  name="prompt"
+                  rows="5"
+                  placeholder="e.g. Explain quantum computing in one sentence"
+                  oninput="updateCount(this)"
+                ></textarea>
+                <p class="field-hint">Be specific for better results. Supports any natural language prompt.</p>
+              </div>
+              <div class="form-footer">
+                <span class="char-count" id="char-count">0 characters</span>
+                <button type="submit" class="submit-btn" id="submit-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                  Generate
+                </button>
+              </div>
+            </form>
+
+            <div class="result-wrap">
+              <div class="result-label-row">
+                <span class="result-label">Response</span>
+                <span class="result-status" id="result-status">Waiting for input</span>
+              </div>
+              @include('apps/ai/result')
+            </div>
+          </div>
+        </div>
       </div>
 
-      @include('apps/ai/result')
-    </div>
-  </section>
+      <!-- RIGHT: Sidebar -->
+      <div class="sidebar fi d2">
+
+        <!-- How it works -->
+        <div class="info-card">
+          <h3>How it works</h3>
+          <div class="info-row"><span class="info-dot"></span><span class="info-text"><strong>ai.Generate()</strong> — single blocking call that returns the full text response</span></div>
+          <div class="info-row"><span class="info-dot"></span><span class="info-text"><strong>ai.Stream()</strong> — returns a channel you pipe into ctx.SSE() for token streaming</span></div>
+          <div class="info-row"><span class="info-dot"></span><span class="info-text"><strong>Provider config</strong> — set in config/ai.go, switch providers with one line</span></div>
+          <div class="info-row"><span class="info-dot"></span><span class="info-text"><strong>Zero JS required</strong> — streaming handled natively by Nimbus SSE helpers</span></div>
+        </div>
+
+        <!-- Providers -->
+        <div class="info-card">
+          <h3>Supported providers</h3>
+          <div class="provider-row">
+            <span class="ptag">openai</span>
+            <span class="ptag">ollama</span>
+            <span class="ptag">anthropic</span>
+            <span class="ptag">groq</span>
+            <span class="ptag">mistral</span>
+            <span class="ptag">gemini</span>
+          </div>
+        </div>
+
+        <!-- Code card -->
+        <div class="code-card">
+          <div class="code-card-bar">
+            <div class="cd cdr"></div><div class="cd cdy"></div><div class="cd cdg"></div>
+            <span>handlers/ai.go</span>
+          </div>
+          <pre><span class="kw">func</span> (<span class="type">H</span>) <span class="fn">Generate</span>(
+  ctx <span class="op">*</span><span class="type">http.Context</span>,
+  req <span class="op">*</span><span class="type">AIRequest</span>,
+) <span class="type">error</span> {
+
+  text, err <span class="op">:=</span> ai.<span class="fn">Generate</span>(
+    ctx, req.Prompt,
+  )
+  <span class="kw">if</span> err <span class="op">!=</span> <span class="num">nil</span> {
+    <span class="kw">return</span> ctx.<span class="fn">InternalError</span>(err)
+  }
+
+  <span class="kw">return</span> ctx.<span class="fn">View</span>(
+    <span class="str">"apps/ai/result"</span>,
+    nimbus.<span class="type">Map</span>{
+      <span class="str">"text"</span>: text,
+    },
+  )
+}</pre>
+        </div>
+
+      </div><!-- /sidebar -->
+    </div><!-- /content-grid -->
+  </div>
 </section>

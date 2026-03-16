@@ -1,51 +1,276 @@
 @layout('layout-demos')
-<main class="min-h-[calc(100vh-8rem)]">
-  <section class="relative overflow-hidden">
-    <div class="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-violet-500/5 via-transparent to-transparent dark:from-violet-400/10"></div>
-    <div class="relative max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16">
-      <a href="/demos" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-10 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Back to demos
-      </a>
-      <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">MCP Demo</h1>
-      <p class="text-slate-600 dark:text-slate-400 mb-10">A weather MCP server with tools and resources. Connect from Cursor or Claude Desktop to try it.</p>
+<!-- ════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════ -->
+<div class="hero ruled fi">
+  <div class="corners" aria-hidden="true">
+    <b class="tl"></b><b class="tr"></b><b class="bl"></b><b class="br"></b>
+  </div>
+  <div class="wrap">
+    <a href="/demos" class="back-link fi d1">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg>
+      All demos
+    </a>
+    <div class="eyebrow fi d2"><hr>Model Context Protocol<hr></div>
+    <h1 class="hero-h1 fi d3">MCP <span class="grad">Server.</span></h1>
+    <p class="hero-sub fi d4">
+      A fully working MCP weather server built with Nimbus.
+      Connect from Cursor, Claude Desktop, or any MCP-compatible client
+      and call tools with a single line of Go.
+    </p>
+  </div>
+</div>
 
-      <div class="space-y-6">
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-amber-500/40 dark:hover:border-amber-500/40 transition-all">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Server</h2>
-          <p class="text-slate-600 dark:text-slate-400 text-sm mb-2">Weather Demo v1.0.0</p>
-          <p class="text-slate-500 dark:text-slate-500 text-xs font-mono">/mcp/weather</p>
+<!-- ════════════════════════════════════════════
+     MAIN SECTION
+════════════════════════════════════════════ -->
+<section class="mcp-section ruled">
+  <div class="corners" aria-hidden="true"><b class="bl"></b><b class="br"></b></div>
+  <div class="wrap">
+    <div class="mcp-layout">
+
+      <!-- ── LEFT COLUMN: panels ── -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+
+        <!-- SERVER -->
+        <div class="panel fi d1">
+          <div class="panel-header">
+            <div class="panel-title-row">
+              <div class="panel-icon violet">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              </div>
+              <span class="panel-name">Server</span>
+            </div>
+            <span class="badge b-live">Online</span>
+          </div>
+          <div class="panel-body">
+            <div class="server-meta">
+              <div class="server-row">
+                <div class="server-dot"></div>
+                <span class="server-name">Weather Demo</span>
+                <span class="server-version">v1.0.0</span>
+              </div>
+              <div class="server-endpoint">
+                <span class="method">SSE</span>
+                /mcp/weather
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-amber-500/40 dark:hover:border-amber-500/40 transition-all">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-3">Tools</h2>
-          <ul class="text-slate-600 dark:text-slate-400 text-sm space-y-2">
-            <li><code class="px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-medium">get_weather</code> — Get current weather for a location</li>
-            <li><code class="px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-medium">hello</code> — Say hello to someone</li>
-          </ul>
+        <!-- TOOLS -->
+        <div class="panel fi d2">
+          <div class="panel-header">
+            <div class="panel-title-row">
+              <div class="panel-icon amber">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              </div>
+              <span class="panel-name">Tools</span>
+            </div>
+            <span class="tag">2 registered</span>
+          </div>
+          <div class="panel-body">
+            <div class="tool-list">
+              <div class="tool-item">
+                <span class="tool-chip">get_weather</span>
+                <span class="tool-desc">Get current weather conditions for any location. Returns temperature, humidity, wind speed, and condition.</span>
+              </div>
+              <div class="tool-item">
+                <span class="tool-chip">hello</span>
+                <span class="tool-desc">Say hello to someone by name. A simple smoke-test tool to verify your MCP connection is working.</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-amber-500/40 dark:hover:border-amber-500/40 transition-all">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-3">Resources</h2>
-          <ul class="text-slate-600 dark:text-slate-400 text-sm space-y-2">
-            <li><code class="px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-medium text-xs">weather://forecast/{location}</code> — Weather forecast JSON</li>
-          </ul>
+        <!-- RESOURCES -->
+        <div class="panel fi d3">
+          <div class="panel-header">
+            <div class="panel-title-row">
+              <div class="panel-icon blue">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
+              <span class="panel-name">Resources</span>
+            </div>
+            <span class="tag">1 registered</span>
+          </div>
+          <div class="panel-body">
+            <div class="tool-list">
+              <div class="resource-item">
+                <span class="resource-chip">weather://forecast/{location}</span>
+                <span class="resource-desc">Weather forecast JSON for a given location. Readable by AI agents as structured context.</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-amber-500/40 dark:hover:border-amber-500/40 transition-all">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-3">Connect from Cursor</h2>
-          <p class="text-slate-600 dark:text-slate-400 text-sm mb-3">Add to <code class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-xs">~/.cursor/mcp.json</code>:</p>
-          <pre class="text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl p-4 overflow-x-auto border border-slate-200 dark:border-slate-700"><code>{
-  "mcpServers": {
-    "nimbus-weather": {
-      "url": "http://localhost:3333/mcp/weather"
-    }
-  }
-}</code></pre>
-          <p class="text-slate-500 dark:text-slate-500 text-xs mt-3">Adjust the port if your app runs on a different one.</p>
+        <!-- CONNECT -->
+        <div class="panel fi d4">
+          <div class="panel-header">
+            <div class="panel-title-row">
+              <div class="panel-icon green">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              </div>
+              <span class="panel-name">Connect from Cursor</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="connect-steps">
+
+              <div>
+                <div class="connect-step-label">
+                  <div class="step-num">1</div>
+                  Open or create
+                  <span class="file-pill">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    ~/.cursor/mcp.json
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <div class="connect-step-label" style="margin-bottom:10px">
+                  <div class="step-num">2</div>
+                  Add the server config and save
+                </div>
+                <div class="json-block" id="json-config">
+                  <div class="json-topbar">
+                    <div class="json-dots">
+                      <div class="jd jdr"></div><div class="jd jdy"></div><div class="jd jdg"></div>
+                    </div>
+                    <span class="json-filename">~/.cursor/mcp.json</span>
+                    <button class="copy-btn" id="copy-btn" onclick="copyConfig()" type="button">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Copy
+                    </button>
+                  </div>
+<pre class="json-pre" id="json-text">{
+  <span class="jk">"mcpServers"</span><span class="jp">: {</span>
+    <span class="jk">"nimbus-weather"</span><span class="jp">: {</span>
+      <span class="jk">"url"</span><span class="jp">:</span> <span class="jv">"http://localhost:3333/mcp/weather"</span>
+    <span class="jp">}</span>
+  <span class="jp">}</span>
+<span class="jp">}</span></pre>
+                </div>
+                <div class="connect-note" style="margin-top:10px">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                  Adjust the port if your Nimbus app runs on something other than <code style="font-family:'DM Mono',monospace;font-size:.72rem">3333</code>.
+                </div>
+              </div>
+
+              <div>
+                <div class="connect-step-label">
+                  <div class="step-num">3</div>
+                  Reload Cursor and ask the AI about the weather
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
-      </div>
+
+      </div><!-- /left col -->
+
+      <!-- ── SIDEBAR ── -->
+      <aside class="sidebar fi d2">
+
+        <!-- Go source -->
+        <div class="qs-card">
+          <div class="qs-bar">
+            <div class="cd cdr"></div><div class="cd cdy"></div><div class="cd cdg"></div>
+            <span>mcp/weather.go</span>
+          </div>
+<pre class="qs-pre"><span class="cmt">// Register MCP server</span>
+mcp.<span class="fn">Register</span>(<span class="str">"weather"</span>, <span class="kw">func</span>(s <span class="op">*</span><span class="type">mcp.Server</span>) {
+  s.<span class="fn">SetInfo</span>(<span class="str">"Weather Demo"</span>, <span class="str">"1.0.0"</span>)
+
+  <span class="cmt">// Tool: get_weather</span>
+  s.<span class="fn">Tool</span>(<span class="str">"get_weather"</span>,
+    <span class="str">"Get current weather"</span>,
+    <span class="kw">func</span>(args <span class="type">WeatherArgs</span>) <span class="type">string</span> {
+      <span class="kw">return</span> <span class="fn">fetchWeather</span>(args.Location)
+    },
+  )
+
+  <span class="cmt">// Resource: forecast URI</span>
+  s.<span class="fn">Resource</span>(
+    <span class="str">"weather://forecast/{location}"</span>,
+    <span class="fn">forecastHandler</span>,
+  )
+})</pre>
+        </div>
+
+        <!-- Capabilities -->
+        <div class="cap-card">
+          <h3>Capabilities</h3>
+          <div class="cap-list">
+            <div class="cap-row">
+              <div class="cap-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <div class="cap-text"><strong>Tools</strong> — callable functions for AI agents</div>
+            </div>
+            <div class="cap-row">
+              <div class="cap-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <div class="cap-text"><strong>Resources</strong> — URI-addressable structured data</div>
+            </div>
+            <div class="cap-row">
+              <div class="cap-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <div class="cap-text"><strong>SSE transport</strong> — streaming over HTTP</div>
+            </div>
+            <div class="cap-row">
+              <div class="cap-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <div class="cap-text"><strong>Type-safe args</strong> — Go structs, zero boilerplate</div>
+            </div>
+            <div class="cap-row">
+              <div class="cap-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <div class="cap-text"><strong>Auto-discovery</strong> — schema generated from types</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compatible clients -->
+        <div class="clients-card">
+          <h3>Compatible clients</h3>
+          <div class="client-row">
+            <span class="client-badge cb-cursor">Cursor</span>
+            <span class="client-desc">IDE-native AI with tool calling</span>
+          </div>
+          <div class="client-row">
+            <span class="client-badge cb-claude">Claude</span>
+            <span class="client-desc">Claude Desktop &amp; claude.ai</span>
+          </div>
+          <div class="client-row">
+            <span class="client-badge cb-api">Any MCP</span>
+            <span class="client-desc">Any MCP 1.0-compliant client</span>
+          </div>
+        </div>
+
+        <!-- Stack tags -->
+        <div class="cap-card" style="padding:18px 22px">
+          <h3 style="margin-bottom:12px">Built with</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span class="tag">mcp.Register()</span>
+            <span class="tag">mcp.Server</span>
+            <span class="tag">s.Tool()</span>
+            <span class="tag">s.Resource()</span>
+            <span class="tag">SSE</span>
+          </div>
+        </div>
+
+      </aside>
     </div>
-  </section>
-</main>
+  </div>
+</section>
+<script>
+function copyConfig() {
+  var raw = '{\n  "mcpServers": {\n    "nimbus-weather": {\n      "url": "http://localhost:3333/mcp/weather"\n    }\n  }\n}';
+  navigator.clipboard.writeText(raw).then(function() {
+    var btn = document.getElementById('copy-btn');
+    btn.classList.add('copied');
+    btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+    setTimeout(function() {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
+    }, 2200);
+  });
+}
+</script>

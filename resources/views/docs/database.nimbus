@@ -36,6 +36,14 @@
       <li><a href="/docs/database-models-factories" class="text-amber-600 dark:text-amber-400 hover:underline">Model factories</a></li>
     </ul>
   </div>
+  <div>
+    <span class="text-xs font-semibold uppercase text-slate-400">NoSQL &amp; Multi-DB</span>
+    <ul class="mt-1 space-y-1">
+      <li><a href="/docs/nosql" class="text-amber-600 dark:text-amber-400 hover:underline">NoSQL / MongoDB</a></li>
+      <li><a href="/docs/nosql-query-builder" class="text-amber-600 dark:text-amber-400 hover:underline">NoSQL query builder</a></li>
+      <li><a href="/docs/multi-db" class="text-amber-600 dark:text-amber-400 hover:underline">Multiple DB connections</a></li>
+    </ul>
+  </div>
 </div>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
@@ -122,13 +130,38 @@ paginator.BaseUrl("/posts")
 // paginator.FirstPageURL, paginator.NextPageURL, paginator.PrevPageURL</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Transactions</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Wrap operations in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Transaction</code>. Rolls back on error.</p>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>err := database.Transaction(database.Get(), func(tx *gorm.DB) error {
-    if err := tx.Create(&post).Error; err != nil {
-        return err
-    }
-    return tx.Model(&user).Update("post_count", gorm.Expr("post_count + 1")).Error
-})</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Nimbus provides first-class support for database transactions via the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus.Transaction</code> helper. This ensures data integrity by automatically committing if the function succeeds, or rolling back if an error occurs.</p>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Managed Transactions</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The following example demonstrates a bank transfer where money is debited from one account and credited to another. Both operations must succeed together.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func TransferFunds(fromID, toID uint, amount float64) error {
+    return nimbus.Transaction(func(tx *nimbus.DB) error {
+        // 1. Debit from source account
+        if err := tx.Model(&Account{}).Where("id = ?", fromID).
+            Update("balance", gorm.Expr("balance - ?", amount)).Error; err != nil {
+            return err // Automatically rolls back
+        }
+
+        // 2. Credit to destination account
+        if err := tx.Model(&Account{}).Where("id = ?", toID).
+            Update("balance", gorm.Expr("balance + ?", amount)).Error; err != nil {
+            return err // Automatically rolls back
+        }
+
+        return nil // Automatically commits
+    })
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Manual Transactions</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">If you need more control, you can use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus.Begin()</code> to start a transaction manually.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>tx := nimbus.Begin()
+
+if err := tx.Create(&Account{Name: "Savings", Balance: 1000}).Error; err != nil {
+    tx.Rollback()
+    return err
+}
+
+tx.Commit()</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Relationships &amp; eager loading</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-2">

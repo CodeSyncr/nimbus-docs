@@ -56,3 +56,64 @@ usersCache.Clear()  // clears all "users:*"</code></pre>
     </tbody>
   </table>
 </div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: API Response Caching</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func (ctrl *ProductController) Index(c *http.Context) error {
+    page := c.QueryInt("page", 1)
+    key := fmt.Sprintf("products:page:%d", page)
+
+    products, err := cache.RememberT[[]Product](key, 5*time.Minute, func() ([]Product, error) {
+        var products []Product
+        err := db.Scopes(database.Paginate(page, 20)).
+            Preload("Category").
+            Find(&products).Error
+        return products, err
+    })
+    if err != nil {
+        return err
+    }
+
+    return c.JSON(200, products)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Cache Invalidation on Update</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func (ctrl *ProductController) Update(c *http.Context) error {
+    id := c.Param("id")
+
+    // ... validate and update product ...
+
+    // Invalidate specific cache entry
+    cache.Delete(fmt.Sprintf("product:%s", id))
+
+    // Invalidate related listing caches
+    productsCache := cache.Namespace("products")
+    productsCache.Clear()  // Clear all product listing pages
+
+    return c.JSON(200, product)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Rate Limiting with Cache</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func checkRateLimit(ip string, limit int) bool {
+    key := fmt.Sprintf("ratelimit:%s", ip)
+    val, ok := cache.Get(key)
+    if !ok {
+        cache.Set(key, 1, time.Minute)
+        return true  // First request
+    }
+    count := val.(int)
+    if count >= limit {
+        return false  // Exceeded
+    }
+    cache.Set(key, count+1, time.Minute)
+    return true
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Remember</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">RememberT</code> to eliminate cache stampede</li>
+  <li>Choose TTL carefully — too short wastes compute; too long serves stale data</li>
+  <li>Invalidate on writes — always clear cache when underlying data changes</li>
+  <li>Use namespaces — group related keys for easy bulk invalidation</li>
+  <li>Use Memory for dev, Redis for prod — switch via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">CACHE_DRIVER</code> env var</li>
+  <li>Include user/tenant IDs in cache keys to prevent data leakage</li>
+</ul>

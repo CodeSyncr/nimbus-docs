@@ -1,9 +1,70 @@
 @layout('layout-docs')
-<h1 class="text-3xl font-bold text-slate-900 mb-4">Hot Reload</h1>
-<p class="text-slate-600 mb-6"><code class="bg-slate-100 px-1 rounded">nimbus serve</code> runs <a href="https://github.com/air-verse/air" class="text-indigo-600 hover:underline">Air</a>. Edits to .go and .nimbus files restart the app. Config in <code class="bg-slate-100 px-1 rounded">.air.toml</code>.</p>
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Hot Reload</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus uses <a href="https://github.com/air-verse/air" class="text-indigo-600 dark:text-indigo-400 hover:underline">Air</a> for automatic rebuilds during development. When you edit <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.go</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.nimbus</code> files, the app recompiles and restarts instantly.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Configuration</h2>
-<pre><code>silent = true
-include_ext = ["go", "nimbus"]</code></pre>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Quick Start</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code># Start development server with hot reload
+nimbus serve
 
-<p class="text-slate-600 text-sm">Set <code class="bg-slate-100 px-1 rounded">silent = true</code> to hide Air's banner and watching output. include_ext controls which file types trigger a rebuild.</p>
+# Equivalent to running Air directly
+air</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus serve</code> wraps Air and watches for file changes. On every save, it recompiles and restarts the server.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration (.air.toml)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Customize Air behavior in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.air.toml</code> at the project root:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>[build]
+  # Build command
+  cmd = "go build -o ./tmp/main ./cmd/nimbus-starter"
+
+  # Binary to run
+  bin = "./tmp/main"
+
+  # File extensions to watch
+  include_ext = ["go", "nimbus", "yaml", "json", "env"]
+
+  # Directories to watch
+  include_dir = ["app", "config", "start", "resources"]
+
+  # Directories to exclude
+  exclude_dir = ["tmp", "node_modules", "vendor", "public"]
+
+  # Delay before rebuilding (ms)
+  delay = 1000
+
+[log]
+  # Hide Air banner and verbose output
+  silent = true
+
+[misc]
+  # Clean tmp dir on exit
+  clean_on_exit = true</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">What Gets Watched</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Extension</th><th class="px-4 py-2 text-left font-semibold">Triggers</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs">.go</code></td><td class="px-4 py-2">Full recompile + restart</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs">.nimbus</code></td><td class="px-4 py-2">Template re-parse + restart</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs">.env</code></td><td class="px-4 py-2">Config reload + restart</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs">.yaml / .json</code></td><td class="px-4 py-2">Config reload + restart</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Vite HMR (Inertia)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">When using Inertia.js with React/Vue, Vite provides instant browser updates without a full page reload:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code># Terminal 1: Go server with Air
+nimbus serve
+
+# Terminal 2: Vite dev server with HMR
+npm run dev</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Vite handles CSS and JS hot module replacement while Air handles Go recompilation. See the <a href="/docs/inertia-hmr" class="text-indigo-600 dark:text-indigo-400 hover:underline">Inertia HMR & Vite</a> guide for full setup.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Production Build</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Hot reload is development-only. For production, build a static binary:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code># Build optimized binary
+nimbus build
+
+# Or with Go directly
+go build -o bin/server ./cmd/nimbus-starter</code></pre>

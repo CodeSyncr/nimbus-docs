@@ -55,9 +55,9 @@ bus.Emit("user.created", userData)</code></pre>
 })</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Scheduler</h2>
-<p class="text-slate-600 mb-2">The <code class="bg-slate-100 px-1 rounded">scheduler</code> package runs recurring tasks on a cron-like schedule.</p>
-<pre><code>app.Container.Singleton("scheduler", func() *scheduler.Scheduler {
-    return scheduler.New()
+<p class="text-slate-600 mb-2">The <code class="bg-slate-100 px-1 rounded">schedule</code> package runs recurring tasks on a cron-like schedule.</p>
+<pre><code>app.Container.Singleton("scheduler", func() *schedule.Scheduler {
+    return schedule.New()
 })</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Registering custom services</h2>
@@ -78,3 +78,24 @@ app.Container.Singleton("stripe", func() *StripeClient {
 app.Container.Singleton("db", func() (*gorm.DB, error) {
     return database.Connect("sqlite", ":memory:")
 })</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Auto-wiring</h2>
+<p class="text-slate-600 mb-2">The container supports <strong>automatic constructor parameter resolution</strong>. When a binding's constructor function has parameters, the container resolves them by matching their types against registered bindings.</p>
+<pre><code>// Register dependencies
+app.Container.Singleton("db", func() *gorm.DB {
+    db, _ := database.Connect("postgres", dsn)
+    return db
+})
+
+app.Container.Singleton("cache", func() *cache.Store {
+    return cache.NewStore()
+})
+
+// OrderService's constructor requires both — auto-resolved:
+app.Container.Singleton("orderService", func(db *gorm.DB, store *cache.Store) *OrderService {
+    return &OrderService{DB: db, Cache: store}
+})
+
+// Works — db and cache are resolved automatically:
+svc := app.Container.MustMake("orderService").(*OrderService)</code></pre>
+<p class="text-slate-600 mb-4 text-sm">Auto-wiring resolves by exact type match first, then checks interface satisfaction. This eliminates manual <code class="bg-slate-100 px-1 rounded">MustMake</code> calls inside constructors.</p>

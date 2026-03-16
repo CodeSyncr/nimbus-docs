@@ -83,3 +83,49 @@ logger.Set(l)</code></pre>
   <li>Info level (Debug messages hidden by default)</li>
   <li>ISO 8601 timestamps</li>
 </ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Request-scoped logger</h2>
+<p class="text-slate-600 mb-2">Use <code class="bg-slate-100 px-1 rounded">logger.ForRequest(c)</code> to get a logger that automatically includes the <code class="bg-slate-100 px-1 rounded">request_id</code> (set by the <code class="bg-slate-100 px-1 rounded">RequestID</code> middleware). This correlates all log lines for a single request.</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/logger"
+
+func CreateOrder(c *http.Context) error {
+    log := logger.ForRequest(c)
+    log.Info("creating order", "user_id", userID)
+    // ... create order ...
+    log.Info("order created", "order_id", order.ID)
+    // All log lines include {"request_id": "a1b2c3d4..."}
+    return c.JSON(201, order)
+}</code></pre>
+
+<p class="text-slate-600 mb-2">Attach a custom scoped logger to the context with <code class="bg-slate-100 px-1 rounded">logger.WithContext</code>:</p>
+<pre><code>// In middleware — enrich logger with user info
+func UserLogger() router.Middleware {
+    return func(next router.HandlerFunc) router.HandlerFunc {
+        return func(c *http.Context) error {
+            l := logger.ForRequest(c).With("user_id", getUserID(c))
+            logger.WithContext(c, l)
+            return next(c)
+        }
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Log rotation</h2>
+<p class="text-slate-600 mb-2">For file-based logging in production, use <code class="bg-slate-100 px-1 rounded">logger.RotatingWriter</code> to automatically rotate log files when they exceed a size threshold and keep a limited number of backups.</p>
+<pre><code>import "github.com/CodeSyncr/nimbus/logger"
+
+writer := logger.NewRotatingWriter(logger.RotationConfig{
+    Path:       "storage/logs/app.log",
+    MaxSizeMB:  100,  // Rotate at 100 MB (default)
+    MaxBackups: 5,    // Keep 5 old log files (default)
+})
+defer writer.Sync()
+
+// Use as an io.Writer for custom zap configuration:
+core := zapcore.NewCore(
+    zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+    zapcore.AddSync(writer),
+    zap.InfoLevel,
+)
+l := zap.New(core).Sugar()
+logger.Set(l)</code></pre>
+<p class="text-slate-600 mb-4 text-sm">Rotated files are named <code class="bg-slate-100 px-1 rounded">app-2026-03-16T12-00-00.log</code>. Oldest backups are deleted when <code class="bg-slate-100 px-1 rounded">MaxBackups</code> is exceeded.</p>

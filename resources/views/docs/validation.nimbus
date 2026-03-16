@@ -123,3 +123,32 @@ if err := todo.Validate(); err != nil {
 <p class="text-slate-600 mb-2">Scaffold a validator with the CLI:</p>
 <pre><code>nimbus make:validator Blog</code></pre>
 <p class="text-slate-600 mb-4">This generates a struct with <code class="bg-slate-100 px-1 rounded">Rules()</code> and <code class="bg-slate-100 px-1 rounded">Validate()</code> methods using the fluent API.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Conditional validation</h2>
+<p class="text-slate-600 mb-2">Apply rules conditionally based on another field's value or a custom predicate:</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">When (field-based)</h3>
+<pre><code>func (r *CreateUserRequest) Rules() validation.Schema {
+    return validation.Schema{
+        "role":       validation.String().Required().In("personal", "business", "creator"),
+        // Only required when role is "business"
+        "company_id": validation.When("role", "business", validation.String().Required()),
+        // Only required when role is "creator", with a fallback otherwise
+        "bio": validation.When("role", "creator", validation.String().Min(10)).
+            Otherwise(validation.String().Max(500)),
+    }
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">WhenFn (predicate-based)</h3>
+<pre><code>func (r *OrderRequest) Rules() validation.Schema {
+    return validation.Schema{
+        "shipping_address": validation.WhenFn(
+            func(data map[string]any) bool {
+                return data["delivery_type"] == "physical"
+            },
+            validation.String().Required().Min(10),
+        ),
+    }
+}</code></pre>
+
+<p class="text-slate-600 mb-4 text-sm">Conditional rules implement the <code class="bg-slate-100 px-1 rounded">Rule</code> interface and compose naturally with other rules in the schema.</p>

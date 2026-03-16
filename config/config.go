@@ -31,4 +31,11 @@ func Load() {
 	loadSession()
 	loadStatic()
 	loadStorage()
+
+	// ── Plugins & Security ─────────────────────────────
+	loadShield()
+	loadTransmit()
+	loadTelescope()
+	loadSocialite()
+	loadHorizon()
 }

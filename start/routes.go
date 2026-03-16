@@ -45,8 +45,10 @@ func RegisterRoutes(app *nimbus.App) {
 		DB: app.Container.MustMake("db").(*nimbus.DB),
 	}
 	demos.Resource("todo", todoCtrl)
+	demos.Get("/todo/confirm", todoCtrl.Confirm)
 	demos.Post("/todo/:id/update", func(c *http.Context) error { return todoCtrl.Update(c) })
 	demos.Post("/todo/:id/delete", func(c *http.Context) error { return todoCtrl.Destroy(c) })
+	demos.Post("/todo/:id/toggle", func(c *http.Context) error { return todoCtrl.Toggle(c) })
 	demos.Get("/counter", func(c *http.Context) error { return (&controllers.Counter{}).Index(c) })
 	demos.Post("/counter/increment", func(c *http.Context) error { return (&controllers.Counter{}).Increment(c) })
 	demos.Post("/counter/decrement", func(c *http.Context) error { return (&controllers.Counter{}).Decrement(c) })
@@ -139,6 +141,8 @@ var docsTitles = map[string]string{
 	"body-parser":        "Body Parser",
 	"validation":         "Validation",
 	"file-uploads":       "File Uploads",
+	"locale":             "Localization",
+	"api-resources":      "API Resources",
 	"session":            "Session",
 	"exception-handling": "Exception Handling",
 	"static-files":       "Static Files",
@@ -168,6 +172,9 @@ var docsTitles = map[string]string{
 	"database-models-factories":       "Model Factories",
 	"migrations":                      "Migrations",
 	"seeders":                         "Seeders",
+	"nosql":                           "NoSQL / MongoDB",
+	"nosql-query-builder":             "NoSQL Query Builder",
+	"multi-db":                        "Multiple DB Connections",
 	// Auth
 	"auth":              "Auth & Guards",
 	"auth-introduction": "Auth Introduction",
@@ -198,6 +205,7 @@ var docsTitles = map[string]string{
 	"events":             "Events",
 	"logger":             "Logger",
 	"mail":               "Mail",
+	"notification":       "Notifications",
 	"queue":              "Queue",
 	"scheduler":          "Scheduler",
 	"websockets":         "WebSockets",
@@ -211,11 +219,27 @@ var docsTitles = map[string]string{
 	"repl":              "Repl",
 	"hot-reload":        "Hot Reload",
 	// AI
-	"ai":  "AI SDK",
-	"mcp": "MCP",
+	"ai":       "AI SDK",
+	"ai-video": "AI Video Pipeline",
+	"mcp":      "MCP",
 	// Testing
 	"testing-introduction": "Testing Introduction",
 	"http-tests":           "HTTP Tests",
+	// Advanced Features
+	"workflow":       "Workflow Engine",
+	"feature-flags":  "Feature Flags",
+	"multi-tenancy":  "Multi-Tenancy",
+	"presence":       "Realtime Presence",
+	"openapi":        "OpenAPI Generation",
+	"studio":         "Studio Admin Panel",
+	"edge-functions": "Edge Functions",
+	"metrics":        "Runtime Metrics",
+	// Plugins
+	"telescope": "Telescope",
+	"horizon":   "Horizon",
+	"pulse":     "Pulse",
+	"socialite": "Socialite",
+	"unpoly":    "Unpoly",
 }
 
 func docsIndexHandler(c *http.Context) error {
@@ -229,7 +253,7 @@ func docsIndexHandler(c *http.Context) error {
 var docsOrder = []string{
 	"introduction", "installation", "folder-structure", "configuration", "deployment", "faqs",
 	"routing", "controllers", "http-context", "middleware", "request", "response", "body-parser",
-	"validation", "file-uploads", "session", "exception-handling", "static-files",
+	"validation", "file-uploads", "locale", "api-resources", "session", "exception-handling", "static-files",
 	"nimbus-template",
 	"inertia", "inertia-setup", "inertia-hmr",
 	"database", "database-query-select", "database-query-insert", "database-query-raw",
@@ -239,13 +263,16 @@ var docsOrder = []string{
 	"database-models-query-scopes", "database-models-serializing", "database-models-relationships",
 	"database-models-factories",
 	"migrations", "seeders",
+	"nosql", "nosql-query-builder", "multi-db",
 	"auth", "auth-introduction", "hash", "session-guard", "access-tokens", "authorization",
 	"shield", "cors", "csrf", "rate-limiting", "health",
 	"application-lifecycle", "dependency-injection", "service-providers", "plugins", "container-services",
 	"cache", "cache-remember", "cache-backends", "cache-invalidation",
-	"storage", "drive", "transmit", "events", "logger", "mail", "queue", "scheduler", "websockets",
+	"storage", "drive", "transmit", "events", "logger", "mail", "notification", "queue", "scheduler", "websockets",
+	"workflow", "feature-flags", "multi-tenancy", "presence", "openapi", "studio", "edge-functions", "metrics",
+	"telescope", "horizon", "pulse", "socialite", "unpoly",
+	"ai", "ai-video", "mcp",
 	"cli", "creating-commands", "command-arguments", "command-flags", "prompts", "terminal-ui", "repl", "hot-reload",
-	"ai", "mcp",
 	"testing-introduction", "http-tests",
 }
 

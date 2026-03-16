@@ -1,0 +1,459 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">AI Video Pipeline</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-4">End-to-end cinematic video production — from a single text prompt to a fully rendered, social-media-ready video. The pipeline combines LLM scene planning, image keyframe generation, and video synthesis into one orchestrated flow.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Pipeline Overview</h2>
+<pre><code>User Prompt
+    ↓
+Prompt Expander (LLM)         ← enriches brief input with cinematic details
+    ↓
+Scene Planner (LLM)           ← breaks concept into 3–6 scenes with camera moves
+    ↓
+Keyframe Generator (Image)    ← generates hero image per scene (e.g. DALL·E, Nano Banana)
+    ↓
+Video Generator (Video)       ← animates keyframes (e.g. Kling 2.5, Runway, Sora)
+    ↓
+Scene Stitcher (FFmpeg)       ← concatenates clips with transitions + music
+    ↓
+Social Packager (LLM)         ← caption, hashtags, thumbnail, multi-format export
+    ↓
+Final Video</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mt-2 mb-4">Each scene = 2–5 second clip. Draft mode generates shorter 2s previews for cost optimization.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Quick Start</h2>
+<pre data-file="app/controllers/video.go"><code>package controllers
+
+import (
+    "github.com/CodeSyncr/nimbus/http"
+    "github.com/CodeSyncr/nimbus/plugins/ai"
+)
+
+func (ctrl *Video) Generate(c *http.Context) error {
+    pipeline := ai.NewVideoPipeline().
+        ImageModel("dall-e-3").
+        VideoModel("kling-2.5").
+        GlobalStyle("cinematic, warm lighting, film grain, shallow depth of field").
+        OutputFmt(ai.FormatWide)
+
+    project, err := pipeline.Generate(c.Request().Context(),
+        c.Request.FormValue("prompt"),
+    )
+    if err != nil {
+        return err
+    }
+
+    return c.JSON(200, project)
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
+<table class="w-full border-collapse border border-slate-200 dark:border-slate-700 mb-4">
+  <thead><tr class="bg-slate-50 dark:bg-slate-800"><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Method</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Default</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Description</th></tr></thead>
+  <tbody class="text-slate-600 dark:text-slate-400 text-sm">
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ImageModel(m)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">dall-e-3</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Image generator for keyframes</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>VideoModel(m)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">kling-2.5</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Video synthesizer for animation</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>PlannerModel(m)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">(default)</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">LLM for scene planning</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ExpanderModel(m)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">(default)</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">LLM for prompt enrichment</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>GlobalStyle(s)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">cinematic…</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Style appended to every scene prompt</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>MaxScenes(n)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">6</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Maximum scenes in the plan</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>DefaultDuration(sec)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">3</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Per-scene clip duration</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>DraftMode(bool)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">false</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">2s preview clips to save cost</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>OutputFmt(f)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">FormatWide</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Aspect ratio and resolution</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ConcurrentScenes(n)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">3</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Parallel scene rendering</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>SeedVariants(n)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">1</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Keyframe variants per scene</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>OnScene(fn)</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">nil</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Progress callback per stage</td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Scene Planning</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The scene planner uses an LLM to decompose a user's brief prompt into structured cinematic scenes. Each scene gets a detailed visual prompt, camera move, and duration.</p>
+<pre data-file="example"><code>// Input prompt:
+"cinematic pizza advertisement in italian cafe"
+
+// Scene planner output (auto-generated JSON ← LLM):
+{
+  "scenes": [
+    {
+      "prompt": "chef placing neapolitan pizza into wood fired oven, warm cinematic lighting, rustic italian kitchen",
+      "camera": "dolly",
+      "duration": 3
+    },
+    {
+      "prompt": "cheese melting in slow motion, pizza slice being lifted with stretching mozzarella",
+      "camera": "macro",
+      "duration": 3
+    },
+    {
+      "prompt": "pizza served on rustic table with fresh basil, olive oil drizzle, soft natural light",
+      "camera": "crane",
+      "duration": 2
+    }
+  ]
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Camera Controls</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Camera moves are prompt modifiers that control the video synthesis. They translate to professional cinematography terms in the keyframe and video prompts.</p>
+<table class="w-full border-collapse border border-slate-200 dark:border-slate-700 mb-4">
+  <thead><tr class="bg-slate-50 dark:bg-slate-800"><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Camera</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Constant</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Prompt Effect</th></tr></thead>
+  <tbody class="text-slate-600 dark:text-slate-400 text-sm">
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Dolly</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.CameraDolly</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Slow cinematic dolly in</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Orbit</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.CameraOrbit</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Smooth orbit around subject</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Pan</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.CameraPan</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Slow horizontal pan</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Drone</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.CameraDrone</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Aerial drone flyover</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Handheld</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.CameraHandheld</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Handheld with subtle shake</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Macro</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.CameraMacro</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Extreme macro close-up with rack focus</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Zoom In</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.CameraZoomIn</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Slow cinematic zoom in</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Zoom Out</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.CameraZoomOut</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Slow cinematic zoom out</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Static</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.CameraStatic</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Locked off static shot</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Crane</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.CameraCrane</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Crane up reveal</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Tracking</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.CameraTracking</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Tracking shot following subject</td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Style Consistency</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">GlobalStyle</code> string is automatically appended to every scene prompt — both for keyframe generation and video synthesis. This ensures consistent mood, lighting, and color grading across all scenes.</p>
+<pre data-file="app/controllers/video.go"><code>pipeline := ai.NewVideoPipeline().
+    GlobalStyle("cinematic food commercial, warm golden hour lighting, " +
+        "film grain, soft shadows, shallow depth of field, " +
+        "anamorphic lens flare, professional color grading")</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mt-2 mb-4"><strong>Tip:</strong> Treat the global style as a "visual DNA" — it keeps every scene feeling like part of the same production.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Keyframe Generation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">For each scene, the pipeline generates a hero image using the configured image model. The keyframe serves as the visual anchor for video synthesis.</p>
+<pre data-file="app/controllers/video.go"><code>// Under the hood, each scene's prompt becomes:
+// "{scene_prompt}, {global_style}, 35mm lens, professional photography"
+//
+// For macro camera: adds "macro lens, extreme close-up"
+// For drone camera: adds "aerial view, birds eye perspective"
+// For crane camera: adds "high angle, looking down"
+
+// The keyframe URL is stored on the scene:
+for _, scene := range project.Scenes {
+    fmt.Println(scene.KeyframeURL) // URL of generated image
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Video Synthesis</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Each keyframe is fed to the video model (image-to-video) along with the camera move prompt and duration. This is the core of the pipeline — turning static images into animated footage.</p>
+<pre data-file="app/controllers/video.go"><code>// Direct video generation (without the full pipeline):
+video, err := ai.Video().
+    Model("kling-2.5").
+    Prompt("slow cinematic dolly in").
+    FromImage("https://storage.example.com/scene_1.png").
+    Duration(3).
+    Size("1920x1080").
+    Generate(ctx)
+
+fmt.Println(video.URL)</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Scene Stitching (FFmpeg)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">After rendering, stitch scene clips into a final video using the FFmpeg helpers. The pipeline generates the commands — your backend executes them.</p>
+<pre data-file="app/controllers/video.go"><code>// Generate the FFmpeg concat file content.
+concatContent := ai.GenerateConcatFileContent(project.Scenes)
+// Writes:
+//   file 'scene_0.mp4'
+//   file 'scene_1.mp4'
+//   file 'scene_2.mp4'
+os.WriteFile("/tmp/concat.txt", []byte(concatContent), 0644)
+
+// Generate the FFmpeg command.
+cmd := ai.GenerateStitchCommand(project.Scenes, ai.StitchConfig{
+    OutputPath:  "/tmp/final.mp4",
+    ConcatFile:  "/tmp/concat.txt",
+    FadeSeconds: 0.5,
+    MusicPath:   "/assets/background.mp3",
+})
+// cmd = ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", "/tmp/concat.txt",
+//        "-i", "/assets/background.mp3", "-shortest", "-c", "copy",
+//        "-movflags", "+faststart", "/tmp/final.mp4"]
+
+exec.Command(cmd[0], cmd[1:]...).Run()</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Draft Mode (Cost Optimization)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Video generation is expensive. Use draft mode to generate 2-second preview clips before committing to a full render.</p>
+<pre data-file="app/controllers/video.go"><code>// Draft: quick 2s previews for storyboard approval.
+draft := ai.NewVideoPipeline().
+    DraftMode(true).
+    VideoModel("kling-2.5").
+    Generate(ctx, "luxury car commercial in desert")
+
+// Preview the storyboard.
+for _, scene := range draft.Scenes {
+    fmt.Printf("Scene %d: %s → %s\n", scene.Index, scene.Prompt, scene.VideoURL)
+}
+
+// User approves → re-render at full quality.
+final := ai.NewVideoPipeline().
+    DraftMode(false).
+    DefaultDuration(5).
+    VideoModel("kling-2.5").
+    Generate(ctx, "luxury car commercial in desert")</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Social Media Packaging</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Automatically generate social-ready assets: captions, hashtags, thumbnails, and multi-format exports. Uses an LLM to create engaging copy.</p>
+<pre data-file="app/controllers/video.go"><code>project, err := ai.NewVideoPipeline().
+    VideoModel("kling-2.5").
+    OutputFmt(ai.FormatTikTok).
+    GenerateWithSocial(ctx, "cinematic pizza ad in italian cafe")
+
+social := project.Social
+fmt.Println(social.Caption)
+// → "Watch this authentic Italian pizza come to life 🍕 From wood-fired oven to table."
+fmt.Println(social.Hashtags)
+// → ["#pizza", "#italianfood", "#pizzalovers", "#foodporn", "#cinematic"]</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Multi-Format Export</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Re-scale the final video for every platform in one call:</p>
+<pre data-file="app/controllers/video.go"><code>// Auto-generate all social format commands.
+formats := map[string]ai.OutputFormat{
+    "tiktok":    ai.FormatTikTok,    // 1080×1920 (9:16)
+    "instagram": ai.FormatInstagram, // 1080×1920 (9:16)
+    "youtube":   ai.FormatYouTube,   // 1080×1920 (9:16)
+    "square":    ai.FormatSquare,    // 1080×1080 (1:1)
+    "wide":      ai.FormatWide,      // 1920×1080 (16:9)
+    "cinematic": ai.FormatCinematic, // 1920×816  (2.35:1)
+}
+
+for name, format := range formats {
+    cmd := ai.GenerateFFmpegResizeCommand("/tmp/final.mp4", format,
+        fmt.Sprintf("/tmp/final_%s.mp4", name))
+    exec.Command(cmd[0], cmd[1:]...).Run()
+}
+// Outputs: final_tiktok.mp4, final_instagram.mp4, final_square.mp4, etc.</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Progress Tracking</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Monitor real-time progress of each scene through the pipeline with the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">OnScene</code> callback. Fires at: <code>keyframe_start</code>, <code>keyframe_done</code>, <code>video_start</code>, <code>video_done</code>.</p>
+<pre data-file="app/controllers/video.go"><code>pipeline := ai.NewVideoPipeline().
+    OnScene(func(scene ai.Scene, stage string) {
+        // Push to WebSocket / SSE for real-time UI updates.
+        ws.Broadcast("video-progress", map[string]any{
+            "scene": scene.Index,
+            "stage": stage,
+            "prompt": scene.Prompt,
+        })
+        log.Printf("[video] scene=%d stage=%s", scene.Index, stage)
+    })</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Full Example: Video API with Queue</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Production-ready pattern: accept the request, queue the render job, and return immediately. The worker processes scenes in the background.</p>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">1. API Controller</h3>
+<pre data-file="app/controllers/video.go"><code>package controllers
+
+import (
+    "github.com/CodeSyncr/nimbus/http"
+    "github.com/CodeSyncr/nimbus/queue"
+    "nimbus-starter/app/jobs"
+)
+
+type Video struct{}
+
+func (ctrl *Video) Create(c *http.Context) error {
+    prompt := c.Request.FormValue("prompt")
+    format := c.Request.FormValue("format") // "tiktok", "wide", etc.
+    draft  := c.Request.FormValue("draft") == "true"
+
+    job := &jobs.RenderVideo{
+        Prompt: prompt,
+        Format: format,
+        Draft:  draft,
+        UserID: c.Session().GetString("user_id"),
+    }
+
+    if err := queue.Dispatch(job).Dispatch(c.Request().Context()); err != nil {
+        return c.JSON(500, map[string]string{"error": "failed to queue render"})
+    }
+
+    return c.JSON(202, map[string]string{
+        "status":  "queued",
+        "message": "Video rendering started. You'll be notified when complete.",
+    })
+}</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">2. Background Job</h3>
+<pre data-file="app/jobs/render_video.go"><code>package jobs
+
+import (
+    "context"
+    "fmt"
+    "github.com/CodeSyncr/nimbus/plugins/ai"
+)
+
+type RenderVideo struct {
+    Prompt string
+    Format string
+    Draft  bool
+    UserID string
+}
+
+func (j *RenderVideo) Handle(ctx context.Context) error {
+    // Pick output format.
+    format := ai.FormatWide
+    if f, ok := ai.ExportFormats[j.Format]; ok {
+        format = f
+    }
+
+    pipeline := ai.NewVideoPipeline().
+        ImageModel("dall-e-3").
+        VideoModel("kling-2.5").
+        OutputFmt(format).
+        DraftMode(j.Draft).
+        GlobalStyle("cinematic, professional color grading, shallow DOF").
+        ConcurrentScenes(3).
+        OnScene(func(scene ai.Scene, stage string) {
+            // Update job progress in DB or push to WebSocket.
+            fmt.Printf("[render:%s] scene=%d stage=%s\n", j.UserID, scene.Index, stage)
+        })
+
+    project, err := pipeline.GenerateWithSocial(ctx, j.Prompt)
+    if err != nil {
+        return err
+    }
+
+    // Save results to storage.
+    fmt.Printf("Rendered %d scenes in %s\n", len(project.Scenes), project.RenderDuration)
+    fmt.Printf("Caption: %s\n", project.Social.Caption)
+
+    // TODO: Upload to S3/R2 and notify user.
+    return nil
+}
+
+func (j *RenderVideo) Queue() string { return "video" }
+func (j *RenderVideo) Retries() int  { return 2 }</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">3. Route</h3>
+<pre data-file="start/routes.go"><code>videoCtrl := &controllers.Video{}
+app.Router.Post("/api/video/generate", videoCtrl.Create)</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Workflow Integration</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Use the <a href="/docs/ai" class="text-amber-600 dark:text-amber-400 hover:underline">AI Workflow engine</a> for advanced orchestration — sequential chains, parallel branches, and conditional logic.</p>
+<pre data-file="app/controllers/video.go"><code>wf := ai.NewWorkflow("video-production").
+    Step("plan", func(wc *ai.WorkflowContext) error {
+        // Use LLM to create scene plan.
+        resp, _ := ai.Generate(wc, "Plan 4 cinematic scenes for: "+wc.GetString("prompt"),
+            ai.WithSystem("Return JSON with scenes array"))
+        wc.Set("plan", resp.Text)
+        return nil
+    }).
+    Parallel("render",
+        ai.StepFunc("scene_0", renderSceneFunc(0)),
+        ai.StepFunc("scene_1", renderSceneFunc(1)),
+        ai.StepFunc("scene_2", renderSceneFunc(2)),
+        ai.StepFunc("scene_3", renderSceneFunc(3)),
+    ).
+    Step("stitch", func(wc *ai.WorkflowContext) error {
+        // FFmpeg concatenation.
+        return nil
+    }).
+    Step("social", func(wc *ai.WorkflowContext) error {
+        // Generate caption + hashtags.
+        return nil
+    })
+
+result, err := wf.Run(ctx, ai.WorkflowInput{"prompt": "luxury watch commercial"})</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Direct Image &amp; Video Generation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">You can also use the lower-level image and video builders directly, outside the full pipeline.</p>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Image Generation</h3>
+<pre data-file="app/controllers/images.go"><code>img, err := ai.Image().
+    Model("dall-e-3").
+    Prompt("neapolitan pizza in wood-fired oven, cinematic lighting, 35mm lens").
+    Size("1792x1024").
+    Style("natural").
+    Generate(ctx)
+
+fmt.Println(img.Images[0].URL)</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Video Generation (Image-to-Video)</h3>
+<pre data-file="app/controllers/video.go"><code>// Animate an existing image:
+video, err := ai.Video().
+    Model("kling-2.5").
+    Prompt("slow cinematic dolly in, soft camera movement").
+    FromImage(img.Images[0].URL).
+    Duration(5).
+    Size("1920x1080").
+    FPS(24).
+    Generate(ctx)
+
+fmt.Println(video.URL)</code></pre>
+
+<h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Text-to-Video</h3>
+<pre data-file="app/controllers/video.go"><code>// Generate video directly from text (no keyframe step):
+video, err := ai.Video().
+    Model("kling-2.5").
+    Prompt("a sunset over the mediterranean sea, drone shot, golden hour").
+    Duration(5).
+    Generate(ctx)</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Storage Structure</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Recommended structure for projects using S3, Cloudflare R2, or MinIO:</p>
+<pre><code>projects/
+  {project_id}/
+    plan.json              ← scene plan + metadata
+    scene_0_keyframe.png   ← keyframe images
+    scene_0.mp4            ← rendered clips
+    scene_1_keyframe.png
+    scene_1.mp4
+    scene_2_keyframe.png
+    scene_2.mp4
+    final.mp4              ← stitched output
+    final_tiktok.mp4       ← social format exports
+    final_instagram.mp4
+    final_square.mp4
+    social.json            ← caption, hashtags, thumbnail</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Output Formats</h2>
+<table class="w-full border-collapse border border-slate-200 dark:border-slate-700 mb-4">
+  <thead><tr class="bg-slate-50 dark:bg-slate-800"><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Format</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Constant</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Resolution</th><th class="border border-slate-200 dark:border-slate-700 px-3 py-2 text-left text-sm font-medium">Aspect</th></tr></thead>
+  <tbody class="text-slate-600 dark:text-slate-400 text-sm">
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">TikTok</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.FormatTikTok</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">1080×1920</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">9:16</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Instagram Reel</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.FormatInstagram</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">1080×1920</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">9:16</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">YouTube Short</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.FormatYouTube</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">1080×1920</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">9:16</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Square</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.FormatSquare</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">1080×1080</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">1:1</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Wide (16:9)</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.FormatWide</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">1920×1080</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">16:9</td></tr>
+    <tr><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">Cinematic</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2"><code>ai.FormatCinematic</code></td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">1920×816</td><td class="border border-slate-200 dark:border-slate-700 px-3 py-2">2.35:1</td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Architecture</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The video pipeline is designed for a worker-based backend architecture:</p>
+<pre><code>API Server
+ ├── /api/video/generate       ← accepts prompt, queues job
+ ├── /api/video/:id/status     ← poll render progress
+ └── /api/video/:id/result     ← download final video
+
+Workers (Queue)
+ ├── prompt-expand-worker      ← LLM prompt enrichment
+ ├── scene-plan-worker         ← LLM scene decomposition
+ ├── image-worker              ← keyframe generation (DALL·E, Nano Banana)
+ ├── video-worker              ← video synthesis (Kling 2.5, Runway)
+ └── render-worker             ← FFmpeg stitch + multi-format export
+
+Storage (S3 / R2 / MinIO)
+ └── projects/{id}/            ← keyframes, clips, final video, metadata</code></pre>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Related</h2>
+<ul class="text-slate-600 dark:text-slate-400 mb-4 list-disc pl-6">
+  <li><a href="/docs/ai" class="text-amber-600 dark:text-amber-400 hover:underline">AI SDK</a> — Text generation, agents, RAG, embeddings, tracing, cost tracking</li>
+  <li><a href="/docs/queue" class="text-amber-600 dark:text-amber-400 hover:underline">Queue</a> — Background job processing for render workers</li>
+  <li><a href="/docs/storage" class="text-amber-600 dark:text-amber-400 hover:underline">Storage</a> — S3/R2/local file storage for video assets</li>
+  <li><a href="/docs/websockets" class="text-amber-600 dark:text-amber-400 hover:underline">WebSockets</a> — Real-time progress updates to the UI</li>
+</ul>

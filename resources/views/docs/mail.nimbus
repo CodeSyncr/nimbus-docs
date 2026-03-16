@@ -3,6 +3,7 @@
 <p class="text-slate-600 dark:text-slate-400 mb-4">This guide covers sending emails from your Nimbus application. You will learn how to:</p>
 <ul class="list-disc pl-6 mb-6 text-slate-600 dark:text-slate-400 space-y-1">
   <li>Configure SMTP-based mail drivers (SMTP, SES, Mailgun, SendGrid, Postmark).</li>
+  <li>Use native API drivers (SendGrid v3, Mailgun API, SES API, Resend) — no SMTP needed.</li>
   <li>Send emails using the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.Message</code> type.</li>
   <li>Organize mail configuration in one place (e.g. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code>).</li>
   <li>Queue emails for background delivery using the queue system.</li>
@@ -21,13 +22,21 @@
   <li><strong>Default driver</strong> — a global variable <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.Default</code> used by <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.Send</code>.</li>
 </ul>
 
-<p class="text-slate-600 dark:text-slate-400 mb-4">Built-in drivers:</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Built-in SMTP drivers:</p>
 <ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
   <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.SMTPDriver</code> — generic SMTP driver.</li>
   <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.SESDriver</code> — Amazon SES (SMTP-backed).</li>
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.MailgunDriver</code> — Mailgun (SMTP-backed).</li>
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.SendGridDriver</code> — SendGrid (SMTP-backed).</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.MailgunSMTPDriver</code> — Mailgun (SMTP-backed).</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.SendGridSMTPDriver</code> — SendGrid (SMTP-backed).</li>
   <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.PostmarkDriver</code> — Postmark (SMTP-backed).</li>
+</ul>
+
+<p class="text-slate-600 dark:text-slate-400 mb-4">Native API drivers (no SMTP required — recommended for production):</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.SendGridDriver</code> — SendGrid v3 HTTP API.</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.MailgunAPIDriver</code> — Mailgun HTTP API.</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.SESAPIDriver</code> — Amazon SES HTTP API.</li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.ResendDriver</code> — Resend HTTP API.</li>
 </ul>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100 mt-8 mb-2">Configuration</h2>
@@ -109,7 +118,37 @@ func Boot() *nimbus.App {
 }</code></pre>
 <p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">If the SMTP addr has no port, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">:25</code> is used. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">auth</code> can be nil for unauthenticated SMTP.</p>
 
-<h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-2">Provider-specific drivers (SES, Mailgun, SendGrid, Postmark)</h3>
+<h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-2">Native API drivers (recommended for production)</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Native API drivers communicate directly with the provider's HTTP API — no SMTP server needed. They are faster and more reliable for production deployments.</p>
+
+<pre><code>// SendGrid (v3 API)
+mail.Default = mail.NewSendGridDriver(
+    os.Getenv("SENDGRID_API_KEY"),
+    "noreply@yourdomain.com",
+)
+
+// Mailgun (API)
+mail.Default = mail.NewMailgunAPIDriver(
+    "your-domain.com",
+    os.Getenv("MAILGUN_API_KEY"),
+    "noreply@your-domain.com",
+)
+
+// Amazon SES (API)
+mail.Default = mail.NewSESAPIDriver(
+    "us-east-1",
+    os.Getenv("AWS_ACCESS_KEY_ID"),
+    os.Getenv("AWS_SECRET_ACCESS_KEY"),
+    "noreply@yourdomain.com",
+)
+
+// Resend (API)
+mail.Default = mail.NewResendDriver(
+    os.Getenv("RESEND_API_KEY"),
+    "noreply@yourdomain.com",
+)</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-2">Provider-specific SMTP drivers (SES, Mailgun, SendGrid, Postmark)</h3>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Provider drivers are thin wrappers around <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SMTPDriver</code> with the right host/port. You still use the same <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">mail.Message</code> type.</p>
 
 <pre><code>// Amazon SES
@@ -123,15 +162,15 @@ auth := smtp.PlainAuth("", user, pass, host)
 
 mail.Default = mail.NewSESDriver(host+":"+port, auth, "noreply@example.com")
 
-// Mailgun
-mail.Default = mail.NewMailgunDriver(
+// Mailgun (SMTP)
+mail.Default = mail.NewMailgunSMTPDriver(
     "smtp.mailgun.org:587",
     smtp.PlainAuth("", os.Getenv("MAILGUN_USER"), os.Getenv("MAILGUN_PASS"), "smtp.mailgun.org"),
     "noreply@example.com",
 )
 
-// SendGrid
-mail.Default = mail.NewSendGridDriver(
+// SendGrid (SMTP)
+mail.Default = mail.NewSendGridSMTPDriver(
     "smtp.sendgrid.net:587",
     smtp.PlainAuth("", "apikey", os.Getenv("SENDGRID_API_KEY"), "smtp.sendgrid.net"),
     "noreply@example.com",

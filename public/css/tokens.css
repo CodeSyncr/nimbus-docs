@@ -1,0 +1,22 @@
+:root {
+    --red: #e74c3c;
+    --red-dark: #c0392b;
+    --red-light: #fef2f2;
+    --orange: #f97316;
+
+    --border: #e5e7eb;
+
+    --bg: #ffffff;
+    --bg-soft: #fafafa;
+    --bg-warm: #fffbf8;
+
+    --text: #111827;
+    --text-mid: #374151;
+    --text-soft: #6b7280;
+    --text-dim: #9ca3af;
+
+    --code-bg: #18181f;
+
+    --line-offset: max(24px, calc(50% - 640px));
+    --dot-offset: calc(var(--line-offset) - 2.5px);
+}

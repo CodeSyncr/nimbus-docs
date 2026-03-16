@@ -1,0 +1,118 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Metrics</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Monitor your application with Prometheus-compatible metrics. Track HTTP requests, custom counters, gauges, histograms, and Go runtime stats — all without external dependencies.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Prometheus Metrics</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Nimbus includes a full Prometheus-compatible metrics system with Counter, Gauge, and Histogram types. Metrics are exposed in the standard Prometheus text format at <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/metrics</code>.</p>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Counter</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">A monotonically increasing value (e.g. total requests, errors):</p>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/metrics"
+
+// Create and register a counter
+requestCounter := metrics.NewCounter("http_requests_total", "Total HTTP requests")
+metrics.DefaultRegistry.Register(requestCounter)
+
+// Increment (no labels)
+requestCounter.Inc(nil)
+
+// Increment with labels
+requestCounter.Inc(metrics.Labels{"method": "GET", "path": "/api/users"})
+
+// Add arbitrary value
+requestCounter.Add(5, metrics.Labels{"method": "POST"})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Gauge</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">A value that can go up or down (e.g. active connections, queue depth):</p>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>inFlight := metrics.NewGauge("http_requests_in_flight", "Active HTTP requests")
+metrics.DefaultRegistry.Register(inFlight)
+
+inFlight.Inc(nil)   // +1
+inFlight.Dec(nil)   // -1
+inFlight.Set(42, nil) // Set exact value
+inFlight.Add(10, metrics.Labels{"handler": "api"})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Histogram</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Tracks distribution of values (e.g. request duration, response sizes):</p>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>duration := metrics.NewHistogram("http_request_duration_seconds", "Request duration",
+    metrics.DefaultBuckets, // {0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10}
+)
+metrics.DefaultRegistry.Register(duration)
+
+// Observe a value
+duration.Observe(0.042, metrics.Labels{"method": "GET", "path": "/api/users"})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Exposing /metrics endpoint</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Mount the built-in handler to serve Prometheus text format:</p>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/metrics"
+
+// Use the default registry handler
+app.Router.Handle("/metrics", metrics.Handler())</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">HTTP Metrics Middleware</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Automatically track request count, duration, in-flight requests, and response size:</p>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/middleware"
+
+app.Router.Use(middleware.Metrics())
+
+// This automatically registers and tracks:
+// - http_requests_total (counter) — labels: method, path, status
+// - http_request_duration_seconds (histogram) — labels: method, path, status
+// - http_requests_in_flight (gauge)
+// - http_response_size_bytes (counter) — labels: method, path, status</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Runtime Metrics</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Read Go runtime stats for goroutines, heap, and GC:</p>
+
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/metrics"
+
+stats := metrics.ReadRuntimeStats()
+// stats.Goroutines  — Active goroutine count
+// stats.HeapAlloc   — Current heap allocation (bytes)
+// stats.HeapSys     — Total heap obtained from OS (bytes)
+// stats.NumGC       — Completed GC cycles
+// stats.HeapObjects — Allocated heap objects</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Available Runtime Metrics</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Metric</th><th class="px-4 py-2 text-left font-semibold">Type</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Goroutines</code></td><td class="px-4 py-2">int</td><td class="px-4 py-2">Number of active goroutines</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">HeapAlloc</code></td><td class="px-4 py-2">uint64</td><td class="px-4 py-2">Bytes allocated on heap (in use)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">HeapSys</code></td><td class="px-4 py-2">uint64</td><td class="px-4 py-2">Total bytes obtained from OS for heap</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">NumGC</code></td><td class="px-4 py-2">uint32</td><td class="px-4 py-2">Number of completed GC cycles</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">HeapObjects</code></td><td class="px-4 py-2">uint64</td><td class="px-4 py-2">Number of allocated heap objects</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Custom Business Metrics</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>// Track business metrics alongside HTTP metrics
+var (
+    ordersCreated = metrics.NewCounter("orders_created_total", "Total orders created")
+    orderRevenue  = metrics.NewCounter("order_revenue_dollars", "Total revenue in dollars")
+    cartSize      = metrics.NewGauge("cart_items_current", "Current items in all carts")
+)
+
+func init() {
+    metrics.DefaultRegistry.Register(ordersCreated)
+    metrics.DefaultRegistry.Register(orderRevenue)
+    metrics.DefaultRegistry.Register(cartSize)
+}
+
+func CreateOrder(c *http.Context) error {
+    // ... create order ...
+    ordersCreated.Inc(metrics.Labels{"type": order.Type})
+    orderRevenue.Add(order.Total, metrics.Labels{"currency": "USD"})
+    return c.JSON(201, order)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Integration with Monitoring</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Expose the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/metrics</code> endpoint and configure your monitoring tool to scrape it:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><strong>Prometheus</strong> — Add a scrape target pointing to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/metrics</code> (native text format)</li>
+  <li><strong>Grafana</strong> — Create dashboards from Prometheus data sources</li>
+  <li><strong>Datadog/New Relic</strong> — Use the Prometheus endpoint or JSON runtime stats</li>
+  <li><strong>Uptime monitors</strong> — Use alongside <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/health</code> for full observability</li>
+</ul>

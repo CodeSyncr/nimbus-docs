@@ -79,3 +79,78 @@ func (p *AnalyticsPlugin) Schedule(s *schedule.Scheduler) {
     s.Every(5*time.Minute, "analytics-flush", p.flushMetrics)
     s.Daily("02:00", "analytics-aggregate", p.aggregateDaily)
 }</code></pre>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Database Cleanup</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func RegisterSchedule(s *scheduler.Scheduler) {
+    // Clean expired sessions every hour
+    s.EveryHour(func(ctx context.Context) error {
+        result := db.Where("expires_at < ?", time.Now()).Delete(&Session{})
+        logger.Info("cleaned expired sessions", "deleted", result.RowsAffected)
+        return result.Error
+    })
+
+    // Remove soft-deleted records older than 30 days
+    s.Daily(func(ctx context.Context) error {
+        cutoff := time.Now().AddDate(0, 0, -30)
+        db.Unscoped().Where("deleted_at < ?", cutoff).Delete(&Order{})
+        db.Unscoped().Where("deleted_at < ?", cutoff).Delete(&User{})
+        return nil
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Metrics & Reporting</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func RegisterSchedule(s *scheduler.Scheduler) {
+    // Aggregate hourly metrics
+    s.EveryHour(func(ctx context.Context) error {
+        stats := metrics.ReadRuntimeStats()
+        return db.Create(&MetricSnapshot{
+            Goroutines: stats.Goroutines,
+            HeapAlloc:  stats.HeapAlloc,
+            Timestamp:  time.Now(),
+        }).Error
+    })
+
+    // Daily revenue report
+    s.Daily(func(ctx context.Context) error {
+        var total float64
+        db.Model(&Order{}).
+            Where("created_at >= ?", time.Now().AddDate(0, 0, -1)).
+            Select("COALESCE(SUM(total), 0)").Scan(&total)
+
+        return queue.Dispatch(&jobs.SendDailyReport{
+            Date:    time.Now().AddDate(0, 0, -1),
+            Revenue: total,
+        }).Dispatch(ctx)
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Production Deployment</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Run the scheduler as a separate process from your web server:</p>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-4 mb-2">Systemd</h3>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>[Unit]
+Description=Nimbus Scheduler
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/myapp
+ExecStart=/opt/myapp/myapp schedule:run
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-4 mb-2">Docker</h3>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code># Run scheduler in a separate container
+CMD ["./myapp", "schedule:run"]</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><strong>Keep tasks idempotent</strong> — Running twice should be safe</li>
+  <li><strong>Log task execution</strong> — Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">logger.Info</code> for visibility</li>
+  <li><strong>Use queues for heavy work</strong> — Schedule should dispatch jobs, not run them inline</li>
+  <li><strong>Run in a separate process</strong> — Don't block your web server</li>
+  <li><strong>Use appropriate intervals</strong> — Don't schedule heavy work every minute</li>
+</ul>

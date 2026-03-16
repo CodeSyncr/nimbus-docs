@@ -1,12 +1,17 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Model Query Builder</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Every model can use the query builder via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">db.Model(&amp;Model{})</code>. Chain Where, Order, Limit, Preload, and other methods to build complex queries that return model instances.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Every model can use the query builder via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">db.Model(&amp;Model{})</code> or the typed <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.QueryFor</code> helper. Chain Where, Order, Limit, Preload, and other methods to build complex queries.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Starting a query</h2>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Starting a Query</h2>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db := database.Get()
-q := db.Model(&Post{})</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Chaining conditions</h2>
+// GORM-style
+q := db.Model(&Post{})
+
+// Nimbus Query helper
+q := database.QueryFor(db, &Post{})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Chaining Conditions</h2>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>var posts []Post
 db.Model(&Post{}).
     Where("status", "published").
@@ -15,16 +20,105 @@ db.Model(&Post{}).
     Limit(10).
     Find(&posts)</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">With eager loading</h2>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">database.QueryFor</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QueryFor</code> helper provides a chainable query builder with a cleaner API:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>database.QueryFor(db, &Post{}).
+    Where("status", "published").
+    OrWhere("featured", true).
+    WhereNotNull("published_at").
+    Select("id", "title", "created_at").
+    OrderBy("created_at desc").
+    Limit(10).
+    Offset(20).
+    Get(&posts)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Query Methods</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Where(col, val)</code></td><td class="px-4 py-2">AND condition</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">OrWhere(col, val)</code></td><td class="px-4 py-2">OR condition</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereNull(col)</code></td><td class="px-4 py-2">WHERE col IS NULL</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">WhereNotNull(col)</code></td><td class="px-4 py-2">WHERE col IS NOT NULL</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Select(cols...)</code></td><td class="px-4 py-2">Select specific columns</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">OrderBy(expr)</code></td><td class="px-4 py-2">ORDER BY clause</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Limit(n)</code></td><td class="px-4 py-2">Limit results</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Offset(n)</code></td><td class="px-4 py-2">Skip rows</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Get(dest)</code></td><td class="px-4 py-2">Execute query into dest</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Eager Loading</h2>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>db.Model(&Post{}).
     Preload("User").
     Preload("Comments").
+    Preload("Comments.User").
     Where("status", "published").
     Find(&posts)</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using database.QueryFor</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.QueryFor</code> helper wraps the model query:</p>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>database.QueryFor(database.Get(), &Post{}).
-    Where("status", "published").
-    OrderBy("created_at desc").
-    Get(&posts)</code></pre>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Pagination</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Built-in pagination with metadata:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>var posts []Post
+page, _ := strconv.Atoi(c.Query("page", "1"))
+
+// Simple paginate
+paginator := database.Paginate(db, &posts, page, 15)
+
+// With custom query
+paginator := database.PaginateQuery(
+    db.Where("status = ?", "published").Order("created_at desc"),
+    &posts, page, 15,
+)
+
+// With base URL for link generation
+paginator := database.PaginateWithBaseURL(db, &posts, page, 15, "/api/posts")
+
+// Use in response
+return c.JSON(200, map[string]any{
+    "data": posts,
+    "meta": paginator.Meta(),   // { current_page, per_page, total, last_page }
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Generic Helpers</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Type-safe generic query helpers:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// FirstOrCreate — find by attrs or create
+user, err := database.FirstOrCreate[User](db, User{Email: "a@b.com"})
+
+// UpdateOrCreate — upsert
+user, err := database.UpdateOrCreate[User](db,
+    User{Email: "a@b.com"},
+    map[string]any{"name": "Updated"},
+)
+
+// Check existence
+exists := database.Exists(db.Model(&Post{}).Where("slug = ?", slug))
+
+// Pluck column values
+emails, err := database.Pluck[string](db.Model(&User{}), "email")
+
+// Count with group
+counts := database.CountBy(db.Model(&Post{}), "status")
+// map[string]int64{"draft": 3, "published": 10}
+
+// Chunk processing (batches of 100)
+database.Chunk[Post](db, 100, func(posts []Post) error {
+    for _, p := range posts {
+        // process each post
+    }
+    return nil
+})
+
+// Cached find (with in-memory cache)
+post, err := database.CachedFind[Post](db, postID, 5*time.Minute)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Transactions</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Auto-commit/rollback
+err := database.Transaction(func(tx *gorm.DB) error {
+    if err := tx.Create(&order).Error; err != nil {
+        return err // auto-rollback
+    }
+    tx.Create(&payment)
+    return nil // auto-commit
+})</code></pre>

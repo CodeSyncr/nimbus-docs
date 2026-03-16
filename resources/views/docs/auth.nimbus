@@ -1,35 +1,209 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Auth & Guards</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus provides session-based auth with persistent storage. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:auth</code> to scaffold User model, AuthController, and login/register views. Requires <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">session.Middleware</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">auth.NewSessionGuardWithLoader</code>.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus provides a full authentication and authorization system with three guards (Session, Token, BasicAuth), a Gate for fine-grained authorization, personal access tokens, and middleware. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:auth</code> to scaffold everything.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Quick Start</h2>
-<pre data-file="Terminal"><code>nimbus make:auth</code></pre>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Add migration to registry, wire session middleware and auth routes, run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus db:migrate</code>.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="Terminal"><code>nimbus make:auth</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Scaffolds User model, AuthController, login/register views, and migration. Add the migration to your registry, wire session middleware and auth routes, run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus db:migrate</code>.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Session Guard with Loader</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">auth.NewSessionGuardWithLoader(models.UserByID(db))</code> to load user from DB. Requires <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">session.Middleware</code>.</p>
-<pre data-file="start/routes.go"><code>guard := auth.NewSessionGuardWithLoader(models.UserByID(database.DB))
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">User Interface</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">All guards work with any type implementing <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">auth.User</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="app/models/user.go"><code>type User struct {
+    database.Model
+    Name         string
+    Email        string
+    PasswordHash string `json:"-"`
+}
+
+// Implements auth.User
+func (u *User) GetID() string { return fmt.Sprintf("%d", u.ID) }
+
+// UserLoader for guards
+func UserByID(db *gorm.DB) auth.UserLoaderFunc {
+    return func(ctx context.Context, id string) (auth.User, error) {
+        var user User
+        err := db.First(&user, id).Error
+        return &user, err
+    }
+}</code></pre>
+
+<!-- ── Guards ── -->
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white mt-12 mb-4 border-t border-slate-200 dark:border-slate-700 pt-6">Guards</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Session Guard</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Cookie-based authentication using the session store. Requires <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">session.Middleware</code>.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="start/routes.go"><code>// With DB loader (recommended — loads user from DB each request)
+guard := auth.NewSessionGuardWithLoader(models.UserByID(database.DB))
+
+// In-memory (development only — sessions lost on restart)
+guard := auth.NewSessionGuard()
+
+// Wire routes
 authCtrl := &controllers.AuthController{DB: database.DB, Guard: guard}
 app.Router.Get("/login", authCtrl.LoginForm)
 app.Router.Post("/login", authCtrl.Login)
 app.Router.Post("/logout", authCtrl.Logout)
+
+// Protected group
 dashboard := app.Router.Group("/dashboard", auth.RequireAuth(guard, "/login"))</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">User interface</h2>
-<pre data-file="app/models/user.go"><code>type User struct {
-    database.Model
-    Email        string
-    PasswordHash string
-}
-func (u *User) GetID() string { return fmt.Sprintf("%d", u.ID) }</code></pre>
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Guard API</h3>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">User(ctx)</code></td><td class="px-4 py-2">Returns the authenticated user, or nil</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Login(ctx, user)</code></td><td class="px-4 py-2">Logs the user in (regenerates session, stores user_id)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Logout(ctx)</code></td><td class="px-4 py-2">Logs the user out (clears user_id from session)</td></tr>
+    </tbody>
+  </table>
+</div>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Policies</h2>
-<p class="text-slate-600 mb-2">Implement <code class="bg-slate-100 px-1 rounded">auth.Policy</code> with <code class="bg-slate-100 px-1 rounded">Allow(ctx, user, action, resource) bool</code> for fine-grained authorization.</p>
-<pre><code>type PostPolicy struct{}
-func (p *PostPolicy) Allow(ctx context.Context, user auth.User, action string, resource any) bool {
-    post := resource.(*Post)
-    if action == "update" || action == "delete" {
-        return post.UserID == user.GetID()
+<!-- ── Middleware ── -->
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white mt-12 mb-4 border-t border-slate-200 dark:border-slate-700 pt-6">Middleware</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Middleware</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">RequireAuth(guard, redirectTo)</code></td><td class="px-4 py-2">Requires authenticated user. Redirects to <code class="text-xs">redirectTo</code> for web, or returns 401 JSON if empty</td></tr>
+    </tbody>
+  </table>
+</div>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Web — redirect to login
+app.Router.Group("/dashboard", auth.RequireAuth(guard, "/login"))
+
+// API — return 401 JSON
+app.Router.Group("/api", auth.RequireAuth(guard, ""))</code></pre>
+
+<!-- ── Context Helpers ── -->
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white mt-12 mb-4 border-t border-slate-200 dark:border-slate-700 pt-6">Context Helpers</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Get user in a handler (set by RequireAuth middleware)
+user := auth.UserFromContext(c.Request.Context())
+if user != nil {
+    fmt.Println("User ID:", user.GetID())
+}
+
+// Manually set user on context
+ctx := auth.WithUser(c.Request.Context(), user)</code></pre>
+
+<!-- ── Gate (Authorization) ── -->
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white mt-12 mb-4 border-t border-slate-200 dark:border-slate-700 pt-6">Gate (Authorization)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The Gate is the central authorization system. Define abilities, register policies, and check permissions:</p>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Defining Abilities</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="start/kernel.go"><code>gate := auth.DefaultGate()
+
+gate.Define("edit-post", func(ctx context.Context, user auth.User, resource any) bool {
+    post := resource.(*models.Post)
+    return user.GetID() == fmt.Sprintf("%d", post.UserID)
+})
+
+gate.Define("delete-post", func(ctx context.Context, user auth.User, resource any) bool {
+    post := resource.(*models.Post)
+    return user.GetID() == fmt.Sprintf("%d", post.UserID)
+})
+
+// Or use the shortcut
+auth.DefineAbility("admin-only", func(ctx context.Context, user auth.User, resource any) bool {
+    return user.(*models.User).Role == "admin"
+})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Checking Abilities</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// In a controller
+func UpdatePost(c *http.Context) error {
+    post := getPost(c)
+
+    // Using default gate with context user
+    if auth.Cannot(c.Request.Context(), "edit-post", post) {
+        return c.JSON(403, map[string]string{"error": "forbidden"})
     }
-    return true
+
+    // Or using gate directly
+    gate := auth.DefaultGate()
+    if gate.Denies(c.Request.Context(), user, "edit-post", post) {
+        return errors.New("forbidden")
+    }
+
+    // Authorize — returns error if denied
+    if err := auth.AuthorizeAction(c.Request.Context(), "edit-post", post); err != nil {
+        return c.JSON(403, map[string]string{"error": err.Error()})
+    }
+
+    // ...update post
 }</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Gate API</h3>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Define(ability, fn)</code></td><td class="px-4 py-2">Register a named ability check</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">RegisterPolicy(name, policy)</code></td><td class="px-4 py-2">Register a resource policy</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Before(fn)</code></td><td class="px-4 py-2">Global hook before every check (return *bool to override)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">After(fn)</code></td><td class="px-4 py-2">Global hook after every check (for logging/auditing)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Allows(ctx, user, ability, resource)</code></td><td class="px-4 py-2">Returns true if authorized</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Denies(ctx, user, ability, resource)</code></td><td class="px-4 py-2">Returns true if NOT authorized</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Authorize(ctx, user, ability, resource)</code></td><td class="px-4 py-2">Returns error if denied</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Any(ctx, user, abilities, resource)</code></td><td class="px-4 py-2">True if user can do ANY of the abilities</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">None(ctx, user, abilities, resource)</code></td><td class="px-4 py-2">True if user can do NONE of the abilities</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">ForUser(user)</code></td><td class="px-4 py-2">Returns a UserGate scoped to one user</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Before / After Hooks</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>gate := auth.DefaultGate()
+
+// Super-admin bypass — return AllowAll() to short-circuit
+gate.Before(func(ctx context.Context, user auth.User, ability string) *bool {
+    if user.(*models.User).Role == "super-admin" {
+        return auth.AllowAll()
+    }
+    return nil // continue to normal check
+})
+
+// Audit logging
+gate.After(func(ctx context.Context, user auth.User, ability string, result bool) {
+    logger.Info("auth check", "user", user.GetID(), "ability", ability, "allowed", result)
+})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">UserGate (Scoped)</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>ug := gate.ForUser(user)
+if ug.Can(ctx, "edit-post", post) {
+    // authorized
+}
+if ug.Cannot(ctx, "delete-post", post) {
+    // denied
+}
+err := ug.Authorize(ctx, "publish-post", post)</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Convenience Functions</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">These use the default gate and pull the user from context:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Check against default gate (uses auth.UserFromContext)
+auth.Can(ctx, "edit-post", post)
+auth.Cannot(ctx, "edit-post", post)
+auth.AuthorizeAction(ctx, "edit-post", post)
+
+// Register on default gate
+auth.DefineAbility("edit-post", fn)</code></pre>
+
+<!-- ── Policies ── -->
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white mt-12 mb-4 border-t border-slate-200 dark:border-slate-700 pt-6">Policies</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Policies group authorization logic for a resource type. Implement the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Policy</code> interface:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type PostPolicy struct{}
+
+func (p *PostPolicy) Allow(ctx context.Context, user auth.User, action string, resource any) bool {
+    post := resource.(*models.Post)
+    switch action {
+    case "view":
+        return true // anyone can view
+    case "update", "delete":
+        return user.GetID() == fmt.Sprintf("%d", post.UserID)
+    case "publish":
+        return user.(*models.User).Role == "editor" || user.(*models.User).Role == "admin"
+    }
+    return false
+}
+
+// Register
+gate.RegisterPolicy("post", &PostPolicy{})</code></pre>

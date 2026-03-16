@@ -52,4 +52,91 @@ func RegisterQueueJobs() {
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Running the worker</h2>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>nimbus queue:work</code></pre>
-<p class="text-slate-600 dark:text-slate-400 text-sm">Or from code: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">queue.RunWorker(ctx, "default")</code></p>
+<p class="text-slate-600 dark:text-slate-400 text-sm mb-6">Or from code: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">queue.RunWorker(ctx, "default")</code></p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Order Processing Pipeline</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>// app/jobs/process_order.go
+type ProcessOrder struct {
+    OrderID uint
+}
+
+func (j *ProcessOrder) Handle(ctx context.Context) error {
+    var order models.Order
+    if err := db.Preload("Items.Product").First(&order, j.OrderID).Error; err != nil {
+        return fmt.Errorf("order not found: %w", err)
+    }
+
+    // 1. Verify payment
+    if err := verifyPayment(order); err != nil {
+        return fmt.Errorf("payment verification failed: %w", err)
+    }
+
+    // 2. Update stock
+    for _, item := range order.Items {
+        if err := db.Model(&models.Product{}).
+            Where("id = ?", item.ProductID).
+            Update("stock", gorm.Expr("stock - ?", item.Quantity)).Error; err != nil {
+            return fmt.Errorf("stock update failed: %w", err)
+        }
+    }
+
+    // 3. Update order status
+    db.Model(&order).Update("status", "processing")
+
+    // 4. Chain: dispatch follow-up jobs
+    queue.Dispatch(&GenerateShippingLabel{OrderID: order.ID}).Dispatch(ctx)
+    queue.Dispatch(&SendOrderConfirmation{
+        OrderID: order.ID,
+        Email:   order.User.Email,
+    }).Dispatch(ctx)
+
+    return nil
+}
+
+func (j *ProcessOrder) Failed(ctx context.Context, err error) {
+    db.Model(&models.Order{}).Where("id = ?", j.OrderID).Update("status", "failed")
+    notifyAdmin("Order processing failed", j.OrderID, err)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Image Processing</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>type ResizeImage struct {
+    ImageID uint
+    Sizes   []int // [100, 300, 600, 1200]
+}
+
+func (j *ResizeImage) Handle(ctx context.Context) error {
+    var image models.Image
+    db.First(&image, j.ImageID)
+
+    for _, size := range j.Sizes {
+        resized, err := resize(image.Path, size)
+        if err != nil {
+            return fmt.Errorf("resize %dpx failed: %w", size, err)
+        }
+        key := fmt.Sprintf("images/%d/%dpx.jpg", image.ID, size)
+        if err := storage.Put(key, resized); err != nil {
+            return fmt.Errorf("upload failed: %w", err)
+        }
+    }
+    db.Model(&image).Update("processed", true)
+    return nil
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Horizon (Queue Dashboard)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Monitor your queues in real-time:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/plugins/horizon"
+
+app.Use(horizon.New())
+// Dashboard at /horizon</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Horizon shows active jobs, completed jobs, failed jobs, throughput (jobs/minute), and wait times.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><strong>Keep jobs small and focused</strong> — One job, one responsibility</li>
+  <li><strong>Make jobs idempotent</strong> — Running twice should be safe (retries happen)</li>
+  <li><strong>Serialize minimal data</strong> — Store IDs, not full objects</li>
+  <li><strong>Chain jobs for pipelines</strong> — Dispatch follow-up jobs from <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Handle()</code></li>
+  <li><strong>Implement <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Failed()</code></strong> — Always handle permanent failure gracefully</li>
+  <li><strong>Use Redis for production</strong> — In-memory is only for development</li>
+  <li><strong>Monitor with Horizon</strong> — Watch for queue backlogs and failures</li>
+</ul>

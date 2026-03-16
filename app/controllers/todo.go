@@ -25,10 +25,25 @@ func (todo *Todo) Index(ctx *http.Context) error {
 	if unpoly.IsUnpoly(ctx) {
 		unpoly.SetTitle(ctx, "Todo · Nimbus Demos")
 	}
+	doneCount := 0
+	for _, it := range items {
+		if it.Done {
+			doneCount++
+		}
+	}
+	pendingCount := len(items) - doneCount
+	donePercent := 0
+	if len(items) > 0 {
+		donePercent = (doneCount * 100) / len(items)
+	}
+
 	return ctx.View("apps/todo/index", map[string]any{
-		"title": "Todo",
-		"items": items,
-		"empty": len(items) == 0,
+		"title":        "Todo",
+		"items":        items,
+		"empty":        len(items) == 0,
+		"doneCount":    doneCount,
+		"pendingCount": pendingCount,
+		"donePercent":  donePercent,
 	})
 }
 
@@ -54,6 +69,12 @@ func (todo *Todo) Store(ctx *http.Context) error {
 	}
 	item := &models.Todo{Title: v.Title, Done: false}
 	todo.DB.Create(item)
+
+	if unpoly.IsUnpoly(ctx) && unpoly.Mode(ctx) != "root" {
+		unpoly.AcceptLayer(ctx, item)
+		return nil
+	}
+
 	ctx.Redirect(http.StatusFound, "/demos/todo")
 	return nil
 }
@@ -105,6 +126,12 @@ func (todo *Todo) Update(ctx *http.Context) error {
 	}
 	done := ctx.Request.FormValue("done") == "on"
 	database.Get().Model(&item).Updates(map[string]any{"title": v.Title, "done": done})
+
+	if unpoly.IsUnpoly(ctx) && unpoly.Mode(ctx) != "root" {
+		unpoly.AcceptLayer(ctx, item)
+		return nil
+	}
+
 	ctx.Redirect(http.StatusFound, "/demos/todo")
 	return nil
 }
@@ -114,9 +141,30 @@ func (todo *Todo) Destroy(ctx *http.Context) error {
 	if database.Get().Delete(&models.Todo{}, id).RowsAffected == 0 {
 		return ctx.JSON(http.StatusNotFound, map[string]string{"error": "not found"})
 	}
-	if unpoly.IsUnpoly(ctx) {
+	if unpoly.IsUnpoly(ctx) && unpoly.Mode(ctx) != "root" {
 		unpoly.AcceptLayer(ctx, map[string]string{"deleted": id})
+		return nil
 	}
+	ctx.Redirect(http.StatusFound, "/demos/todo")
+	return nil
+}
+
+func (todo *Todo) Confirm(ctx *http.Context) error {
+	title := ctx.Request.URL.Query().Get("title")
+	message := ctx.Request.URL.Query().Get("message")
+	return ctx.View("partials/confirm", map[string]any{
+		"title":   title,
+		"message": message,
+	})
+}
+
+func (todo *Todo) Toggle(ctx *http.Context) error {
+	id, _ := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	var item models.Todo
+	if database.Get().First(&item, id).Error != nil {
+		return ctx.JSON(http.StatusNotFound, map[string]string{"error": "not found"})
+	}
+	database.Get().Model(&item).Update("done", !item.Done)
 	ctx.Redirect(http.StatusFound, "/demos/todo")
 	return nil
 }

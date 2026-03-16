@@ -140,10 +140,90 @@
       background: #fef3c7;
       color: #b45309;
       font-weight: 500;
+      border-left: 2px solid #f59e0b;
+      margin-left: -1px;
     }
     .dark [up-nav] a.up-current {
-      background: rgba(251, 191, 36, 0.2);
+      background: rgba(251, 191, 36, 0.15);
       color: #fbbf24;
+      border-left-color: #fbbf24;
+    }
+
+    /* Nav section category labels */
+    .nav-category {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      padding: 0.75rem 0.75rem 0.25rem;
+      margin-top: 0.5rem;
+    }
+    .dark .nav-category { color: #64748b; }
+
+    /* Section icon badge */
+    .nav-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.25rem;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+    }
+
+    /* Nav link item count badge */
+    .nav-count {
+      font-size: 0.625rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 9999px;
+      background: #f1f5f9;
+      color: #64748b;
+      margin-left: auto;
+      font-weight: 500;
+    }
+    .dark .nav-count { background: #1e293b; color: #475569; }
+
+    /* Mobile sidebar overlay */
+    #mobile-sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    #mobile-sidebar-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #mobile-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 50;
+      width: 18rem;
+      transform: translateX(-100%);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-y: auto;
+      background: white;
+      border-right: 1px solid #e2e8f0;
+    }
+    .dark #mobile-sidebar {
+      background: #0f172a;
+      border-color: #1e293b;
+    }
+    #mobile-sidebar.active {
+      transform: translateX(0);
+    }
+
+    /* Smooth details animation */
+    .nav-section .nav-links {
+      overflow: hidden;
+      transition: max-height 0.2s ease;
     }
 
     /* Doc content dark mode overrides */
@@ -176,10 +256,15 @@
   <!-- Header -->
   <header class="shrink-0 z-20 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur transition-colors">
     <div class="flex items-center justify-between h-14 px-4 gap-4">
-      <a href="/" class="flex items-center gap-2 shrink-0">
-        <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-amber-500/30">N</span>
-        <span class="font-semibold text-slate-800 dark:text-white">Nimbus</span>
-      </a>
+      <div class="flex items-center gap-2">
+        <button id="mobile-menu-btn" type="button" aria-label="Open navigation" class="lg:hidden p-2 -ml-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <a href="/" class="flex items-center gap-2 shrink-0">
+          <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-amber-500/30">N</span>
+          <span class="font-semibold text-slate-800 dark:text-white">Nimbus</span>
+        </a>
+      </div>
       <div class="flex-1 max-w-xl mx-4 hidden sm:block">
         <button id="docs-search-trigger" type="button" class="w-full flex items-center gap-2 h-9 px-3 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-sm text-left hover:border-slate-300 dark:hover:border-slate-600 transition">
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -203,195 +288,308 @@
   </header>
 
   <div class="flex flex-1 overflow-hidden">
-    <!-- Left sidebar -->
-    <aside class="hidden lg:block w-64 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 overflow-y-auto transition-colors" up-nav>
-      <nav class="p-4 space-y-1 text-sm">
-        <details class="nav-section" open>
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            Start
+    <!-- Mobile sidebar overlay -->
+    <div id="mobile-sidebar-overlay"></div>
+
+    <!-- Mobile sidebar (clone of desktop, visible on small screens) -->
+    <div id="mobile-sidebar">
+      <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
+        <a href="/" class="flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-xs">N</span>
+          <span class="font-semibold text-sm text-slate-800 dark:text-white">Nimbus Docs</span>
+        </a>
+        <button id="mobile-menu-close" type="button" aria-label="Close navigation" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <nav class="sidebar-nav p-3 space-y-0.5 text-sm" up-nav></nav>
+    </div>
+
+    <!-- Left sidebar (desktop) -->
+    <aside class="hidden lg:block w-64 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 overflow-y-auto transition-colors" id="desktop-sidebar" up-nav>
+      <nav class="sidebar-nav p-3 space-y-0.5 text-sm">
+
+        <!-- ── Getting Started ── -->
+        <div class="nav-category">Getting Started</div>
+
+        <details class="nav-section" open data-section="start">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">🚀</span>
+            <span class="flex-1">Start</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="/docs/introduction" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
-            <a href="/docs/installation" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Installation</a>
-            <a href="/docs/folder-structure" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Folder Structure</a>
-            <a href="/docs/configuration" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Configuration</a>
-            <a href="/docs/deployment" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Deployment</a>
-            <a href="/docs/faqs" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">FAQs</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/introduction" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Introduction</a>
+            <a href="/docs/installation" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Installation</a>
+            <a href="/docs/folder-structure" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Folder Structure</a>
+            <a href="/docs/configuration" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Configuration</a>
+            <a href="/docs/deployment" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Deployment</a>
+            <a href="/docs/faqs" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">FAQs</a>
           </div>
         </details>
-        <details class="nav-section">
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            Resources
+
+        <details class="nav-section" data-section="resources">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">📦</span>
+            <span class="flex-1">Resources</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="https://github.com/CodeSyncr/nimbus/blob/main/CONTRIBUTING.md" target="_blank" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Contributing</a>
-            <a href="https://github.com/CodeSyncr/nimbus/releases" target="_blank" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Releases</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="https://github.com/CodeSyncr/nimbus/blob/main/CONTRIBUTING.md" target="_blank" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Contributing ↗</a>
+            <a href="https://github.com/CodeSyncr/nimbus/releases" target="_blank" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Releases ↗</a>
           </div>
         </details>
-        <div class="pt-3">
-          <span class="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Guides</span>
-        </div>
-        <details class="nav-section">
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            Basics
+
+        <!-- ── Guides ── -->
+        <div class="nav-category">Guides</div>
+
+        <details class="nav-section" data-section="basics">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400">📖</span>
+            <span class="flex-1">Basics</span>
+            <span class="nav-count">14</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="/docs/routing" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Routing</a>
-            <a href="/docs/controllers" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Controllers</a>
-            <a href="/docs/http-context" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">HTTP Context</a>
-            <a href="/docs/middleware" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Middleware</a>
-            <a href="/docs/request" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Request</a>
-            <a href="/docs/response" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Response</a>
-            <a href="/docs/body-parser" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Body Parser</a>
-            <a href="/docs/validation" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Validation</a>
-            <a href="/docs/file-uploads" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">File Uploads</a>
-            <a href="/docs/session" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Session</a>
-            <a href="/docs/exception-handling" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Exception Handling</a>
-            <a href="/docs/static-files" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Static Files</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/routing" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Routing</a>
+            <a href="/docs/controllers" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Controllers</a>
+            <a href="/docs/http-context" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">HTTP Context</a>
+            <a href="/docs/middleware" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Middleware</a>
+            <a href="/docs/request" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Request</a>
+            <a href="/docs/response" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Response</a>
+            <a href="/docs/body-parser" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Body Parser</a>
+            <a href="/docs/validation" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Validation</a>
+            <a href="/docs/file-uploads" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">File Uploads</a>
+            <a href="/docs/locale" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Localization</a>
+            <a href="/docs/api-resources" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">API Resources</a>
+            <a href="/docs/session" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Session</a>
+            <a href="/docs/exception-handling" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Exception Handling</a>
+            <a href="/docs/static-files" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Static Files</a>
           </div>
         </details>
-        <details class="nav-section">
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            Nimbus Template
+
+        <details class="nav-section" data-section="template">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400">🎨</span>
+            <span class="flex-1">Templates</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="/docs/nimbus-template" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">.nimbus syntax &amp; layouts</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/nimbus-template" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">.nimbus Syntax &amp; Layouts</a>
           </div>
         </details>
-        <details class="nav-section">
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            Inertia
+
+        <details class="nav-section" data-section="inertia">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400">⚡</span>
+            <span class="flex-1">Inertia</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="/docs/inertia" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
-            <a href="/docs/inertia-setup" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Setup</a>
-            <a href="/docs/inertia-hmr" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">HMR &amp; Vite</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/inertia" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Introduction</a>
+            <a href="/docs/inertia-setup" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Setup</a>
+            <a href="/docs/inertia-hmr" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">HMR &amp; Vite</a>
           </div>
         </details>
-        <details class="nav-section">
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            Data Layer
+
+        <!-- ── Data & Auth ── -->
+        <div class="nav-category">Data &amp; Auth</div>
+
+        <details class="nav-section" data-section="data-layer">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-cyan-100 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400">🗄️</span>
+            <span class="flex-1">Data Layer</span>
+            <span class="nav-count">20</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="/docs/database" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Database &amp; ORM</a>
-            <span class="block px-2 py-1 text-xs font-medium text-slate-400 mt-2">Query builders</span>
-            <a href="/docs/database-query-select" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Select</a>
-            <a href="/docs/database-query-insert" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Insert</a>
-            <a href="/docs/database-query-raw" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Raw</a>
-            <span class="block px-2 py-1 text-xs font-medium text-slate-400 mt-2">Migrations</span>
-            <a href="/docs/database-migrations-intro" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
-            <a href="/docs/database-migrations-schema" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Schema builder</a>
-            <a href="/docs/database-migrations-table" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Table builder</a>
-            <span class="block px-2 py-1 text-xs font-medium text-slate-400 mt-2">Models</span>
-            <a href="/docs/database-models-intro" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
-            <a href="/docs/database-models-schema-classes" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Schema classes</a>
-            <a href="/docs/database-models-crud" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">CRUD operations</a>
-            <a href="/docs/database-models-hooks" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Hooks</a>
-            <a href="/docs/database-models-query-builder" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Query builder</a>
-            <a href="/docs/database-models-naming-strategy" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Naming strategy</a>
-            <a href="/docs/database-models-query-scopes" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Query scopes</a>
-            <a href="/docs/database-models-serializing" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Serializing models</a>
-            <a href="/docs/database-models-relationships" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Relationships</a>
-            <a href="/docs/database-models-factories" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Model factories</a>
-            <a href="/docs/seeders" class="flex items-center gap-2 py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 mt-2">Seeders</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/database" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Database &amp; ORM</a>
+            <span class="block px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-slate-400/80 mt-1.5">Query Builders</span>
+            <a href="/docs/database-query-select" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Select</a>
+            <a href="/docs/database-query-insert" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Insert</a>
+            <a href="/docs/database-query-raw" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Raw</a>
+            <span class="block px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-slate-400/80 mt-1.5">Migrations</span>
+            <a href="/docs/database-migrations-intro" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Introduction</a>
+            <a href="/docs/database-migrations-schema" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Schema Builder</a>
+            <a href="/docs/database-migrations-table" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Table Builder</a>
+            <span class="block px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-slate-400/80 mt-1.5">Models</span>
+            <a href="/docs/database-models-intro" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Introduction</a>
+            <a href="/docs/database-models-schema-classes" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Schema Classes</a>
+            <a href="/docs/database-models-crud" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">CRUD Operations</a>
+            <a href="/docs/database-models-hooks" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Hooks</a>
+            <a href="/docs/database-models-query-builder" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Query Builder</a>
+            <a href="/docs/database-models-naming-strategy" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Naming Strategy</a>
+            <a href="/docs/database-models-query-scopes" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Query Scopes</a>
+            <a href="/docs/database-models-serializing" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Serializing Models</a>
+            <a href="/docs/database-models-relationships" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Relationships</a>
+            <a href="/docs/database-models-factories" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Model Factories</a>
+            <a href="/docs/seeders" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem] mt-1">Seeders</a>
+            <span class="block px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-slate-400/80 mt-1.5">NoSQL &amp; Multi-DB</span>
+            <a href="/docs/nosql" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">NoSQL / MongoDB</a>
+            <a href="/docs/nosql-query-builder" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">NoSQL Query Builder</a>
+            <a href="/docs/multi-db" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Multiple Connections</a>
           </div>
         </details>
-        <details class="nav-section">
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            Auth
+
+        <details class="nav-section" data-section="auth">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">🔐</span>
+            <span class="flex-1">Auth</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="/docs/auth-introduction" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
-            <a href="/docs/session-guard" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Session Guard</a>
-            <a href="/docs/access-tokens" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Access Tokens</a>
-            <a href="/docs/authorization" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Authorization</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/auth-introduction" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Introduction</a>
+            <a href="/docs/session-guard" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Session Guard</a>
+            <a href="/docs/access-tokens" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Access Tokens</a>
+            <a href="/docs/authorization" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Authorization</a>
           </div>
         </details>
-        <details class="nav-section">
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            Security
+
+        <details class="nav-section" data-section="security">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">🛡️</span>
+            <span class="flex-1">Security</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="/docs/shield" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Shield</a>
-            <a href="/docs/cors" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">CORS</a>
-            <a href="/docs/csrf" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">CSRF</a>
-            <a href="/docs/rate-limiting" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Rate Limiting</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/shield" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Shield</a>
+            <a href="/docs/cors" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">CORS</a>
+            <a href="/docs/csrf" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">CSRF</a>
+            <a href="/docs/rate-limiting" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Rate Limiting</a>
           </div>
         </details>
-        <details class="nav-section">
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            Core Concepts
+
+        <!-- ── Architecture ── -->
+        <div class="nav-category">Architecture</div>
+
+        <details class="nav-section" data-section="core-concepts">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">⚙️</span>
+            <span class="flex-1">Core Concepts</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="/docs/application-lifecycle" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Application Lifecycle</a>
-            <a href="/docs/dependency-injection" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Dependency Injection</a>
-            <a href="/docs/service-providers" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Service Providers</a>
-            <a href="/docs/plugins" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Plugins</a>
-            <a href="/docs/container-services" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Container Services</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/application-lifecycle" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Application Lifecycle</a>
+            <a href="/docs/dependency-injection" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Dependency Injection</a>
+            <a href="/docs/service-providers" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Service Providers</a>
+            <a href="/docs/plugins" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Plugins</a>
+            <a href="/docs/container-services" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Container Services</a>
           </div>
         </details>
-        <details class="nav-section">
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            Digging Deeper
+
+        <details class="nav-section" data-section="digging-deeper">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-teal-100 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400">🔧</span>
+            <span class="flex-1">Digging Deeper</span>
+            <span class="nav-count">10</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="/docs/cache" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Cache</a>
-            <a href="/docs/drive" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Drive (Storage)</a>
-            <a href="/docs/transmit" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Transmit</a>
-            <a href="/docs/events" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Events</a>
-            <a href="/docs/logger" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Logger</a>
-            <a href="/docs/mail" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Mail</a>
-            <a href="/docs/queue" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Queue</a>
-            <a href="/docs/scheduler" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Scheduler</a>
-            <a href="/docs/websockets" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">WebSockets</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/cache" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Cache</a>
+            <a href="/docs/drive" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Drive (Storage)</a>
+            <a href="/docs/transmit" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Transmit</a>
+            <a href="/docs/events" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Events</a>
+            <a href="/docs/logger" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Logger</a>
+            <a href="/docs/mail" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Mail</a>
+            <a href="/docs/notification" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Notifications</a>
+            <a href="/docs/queue" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Queue</a>
+            <a href="/docs/scheduler" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Scheduler</a>
+            <a href="/docs/websockets" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">WebSockets</a>
           </div>
         </details>
-        <details class="nav-section">
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            AI
+
+        <!-- ── Advanced ── -->
+        <div class="nav-category">Advanced</div>
+
+        <details class="nav-section" data-section="advanced">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-fuchsia-100 dark:bg-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-400">✨</span>
+            <span class="flex-1">Advanced Features</span>
+            <span class="nav-count">8</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="/docs/ai" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">AI SDK</a>
-            <a href="/docs/mcp" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">MCP</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/workflow" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Workflow Engine</a>
+            <a href="/docs/feature-flags" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Feature Flags</a>
+            <a href="/docs/multi-tenancy" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Multi-Tenancy</a>
+            <a href="/docs/presence" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Presence Tracking</a>
+            <a href="/docs/openapi" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">OpenAPI / Swagger</a>
+            <a href="/docs/studio" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Nimbus Studio</a>
+            <a href="/docs/edge-functions" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Edge Functions</a>
+            <a href="/docs/metrics" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Metrics &amp; Monitoring</a>
           </div>
         </details>
-        <details class="nav-section">
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            Command Line
+
+        <!-- ── Plugins ── -->
+        <div class="nav-category">Plugins</div>
+
+        <details class="nav-section" data-section="plugins">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400">🧩</span>
+            <span class="flex-1">Plugins</span>
+            <span class="nav-count">7</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="/docs/cli" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
-            <a href="/docs/creating-commands" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Creating Commands</a>
-            <a href="/docs/command-arguments" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Command Arguments</a>
-            <a href="/docs/command-flags" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Command Flags</a>
-            <a href="/docs/prompts" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Prompts</a>
-            <a href="/docs/terminal-ui" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Terminal UI</a>
-            <a href="/docs/repl" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Repl</a>
-            <a href="/docs/hot-reload" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Hot Reload</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/plugins" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Plugin System</a>
+            <a href="/docs/telescope" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Telescope</a>
+            <a href="/docs/horizon" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Horizon</a>
+            <a href="/docs/pulse" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Pulse</a>
+            <a href="/docs/socialite" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Socialite</a>
+            <a href="/docs/transmit" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Transmit</a>
+            <a href="/docs/unpoly" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Unpoly</a>
           </div>
         </details>
-        <details class="nav-section">
-          <summary class="flex items-center gap-2 py-2 px-3 rounded-md text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/80 dark:hover:bg-slate-800">
-            <span class="nav-chevron text-slate-400 shrink-0 transition-transform">▼</span>
-            Testing
+
+        <!-- ── Tools ── -->
+        <div class="nav-category">Tools</div>
+
+        <details class="nav-section" data-section="ai">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400">🤖</span>
+            <span class="flex-1">AI</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
-          <div class="ml-2 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 pl-3">
-            <a href="/docs/testing-introduction" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">Introduction</a>
-            <a href="/docs/http-tests" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">HTTP Tests</a>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/ai" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">AI SDK</a>
+            <a href="/docs/ai-video" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Video Pipeline</a>
+            <a href="/docs/mcp" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">MCP</a>
           </div>
         </details>
+
+        <details class="nav-section" data-section="cli">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">💻</span>
+            <span class="flex-1">Command Line</span>
+            <span class="nav-count">8</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
+          </summary>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/cli" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Introduction</a>
+            <a href="/docs/creating-commands" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Creating Commands</a>
+            <a href="/docs/command-arguments" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Command Arguments</a>
+            <a href="/docs/command-flags" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Command Flags</a>
+            <a href="/docs/prompts" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Prompts</a>
+            <a href="/docs/terminal-ui" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Terminal UI</a>
+            <a href="/docs/repl" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">REPL</a>
+            <a href="/docs/hot-reload" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Hot Reload</a>
+          </div>
+        </details>
+
+        <details class="nav-section" data-section="testing">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-lime-100 dark:bg-lime-500/20 text-lime-600 dark:text-lime-400">🧪</span>
+            <span class="flex-1">Testing</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
+          </summary>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/testing-introduction" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Introduction</a>
+            <a href="/docs/http-tests" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">HTTP Tests</a>
+          </div>
+        </details>
+
+        <!-- Bottom spacer -->
+        <div class="h-8"></div>
       </nav>
     </aside>
 
@@ -720,6 +918,130 @@
         if (last) last.innerHTML = '<span class="inline-block px-3 py-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm">Failed to get response.</span>';
       });
     });
+
+    // ── Sidebar behavior: auto-open, persist, mobile, scroll-to-active ──
+    (function() {
+      var STORAGE_KEY = 'nimbus-nav-sections';
+      var path = window.location.pathname;
+
+      // Restore open/closed state from localStorage
+      function restoreSectionState() {
+        try {
+          var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+          document.querySelectorAll('#desktop-sidebar .nav-section[data-section]').forEach(function(det) {
+            var key = det.getAttribute('data-section');
+            if (saved[key] === true) det.setAttribute('open', '');
+            else if (saved[key] === false) det.removeAttribute('open');
+          });
+        } catch(e) {}
+      }
+
+      // Save open/closed state to localStorage
+      function saveSectionState() {
+        var state = {};
+        document.querySelectorAll('#desktop-sidebar .nav-section[data-section]').forEach(function(det) {
+          state[det.getAttribute('data-section')] = det.hasAttribute('open');
+        });
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+      }
+
+      // Auto-open the section containing the current active link
+      function autoOpenActiveSection() {
+        document.querySelectorAll('#desktop-sidebar .nav-section').forEach(function(det) {
+          var links = det.querySelectorAll('a[href]');
+          for (var i = 0; i < links.length; i++) {
+            if (links[i].getAttribute('href') === path) {
+              det.setAttribute('open', '');
+              return;
+            }
+          }
+        });
+      }
+
+      // Scroll the active link into view within the sidebar
+      function scrollToActive() {
+        var sidebar = document.getElementById('desktop-sidebar');
+        if (!sidebar) return;
+        var active = sidebar.querySelector('a.up-current') || sidebar.querySelector('a[href="' + path + '"]');
+        if (active) {
+          setTimeout(function() {
+            active.scrollIntoView({ block: 'center', behavior: 'instant' });
+          }, 50);
+        }
+      }
+
+      // Clone desktop nav into mobile sidebar
+      function populateMobileSidebar() {
+        var desktopNav = document.querySelector('#desktop-sidebar .sidebar-nav');
+        var mobileNav = document.querySelector('#mobile-sidebar .sidebar-nav');
+        if (desktopNav && mobileNav) {
+          mobileNav.innerHTML = desktopNav.innerHTML;
+          // Auto-open active section in mobile too
+          mobileNav.querySelectorAll('.nav-section').forEach(function(det) {
+            var links = det.querySelectorAll('a[href]');
+            for (var i = 0; i < links.length; i++) {
+              if (links[i].getAttribute('href') === path) {
+                det.setAttribute('open', '');
+                break;
+              }
+            }
+          });
+        }
+      }
+
+      // Mobile sidebar toggle
+      var mobileBtn = document.getElementById('mobile-menu-btn');
+      var mobileClose = document.getElementById('mobile-menu-close');
+      var mobileOverlay = document.getElementById('mobile-sidebar-overlay');
+      var mobileSidebar = document.getElementById('mobile-sidebar');
+
+      function openMobileSidebar() {
+        mobileSidebar.classList.add('active');
+        mobileOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeMobileSidebar() {
+        mobileSidebar.classList.remove('active');
+        mobileOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      if (mobileBtn) mobileBtn.addEventListener('click', openMobileSidebar);
+      if (mobileClose) mobileClose.addEventListener('click', closeMobileSidebar);
+      if (mobileOverlay) mobileOverlay.addEventListener('click', closeMobileSidebar);
+
+      // Close mobile sidebar on link click
+      if (mobileSidebar) {
+        mobileSidebar.addEventListener('click', function(e) {
+          if (e.target.closest('a[href^="/docs/"]')) {
+            closeMobileSidebar();
+          }
+        });
+      }
+
+      // Listen for toggle events to persist state
+      document.addEventListener('toggle', function(e) {
+        if (e.target.closest('#desktop-sidebar') && e.target.classList.contains('nav-section')) {
+          saveSectionState();
+        }
+      }, true);
+
+      // Initialize
+      restoreSectionState();
+      autoOpenActiveSection();
+      populateMobileSidebar();
+      scrollToActive();
+
+      // After Unpoly navigation, re-highlight active section
+      up.on('up:fragment:inserted', function() {
+        var newPath = window.location.pathname;
+        if (newPath !== path) {
+          path = newPath;
+          autoOpenActiveSection();
+          scrollToActive();
+        }
+      });
+    })();
   </script>
 </body>
 </html>

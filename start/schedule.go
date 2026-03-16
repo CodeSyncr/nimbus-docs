@@ -1,9 +1,7 @@
 package start
 
 import (
-	"context"
-
-	"github.com/CodeSyncr/nimbus/scheduler"
+	"github.com/CodeSyncr/nimbus/schedule"
 )
 
 // RegisterSchedule defines scheduled tasks for the application.
@@ -11,13 +9,12 @@ import (
 //
 // Example:
 //
-//   s.EveryHour(func(ctx context.Context) error {
-//     // do work
-//     return nil
-//   })
-//
-func RegisterSchedule(s *scheduler.Scheduler) {
+//	s.EveryMinute("health-check", func(ctx context.Context) error {
+//	    return healthService.Ping(ctx)
+//	})
+//	s.Daily("03:00", "nightly-cleanup", func(ctx context.Context) error {
+//	    return cleanupService.Run(ctx)
+//	})
+func RegisterSchedule(s *schedule.Scheduler) {
 	// No tasks by default.
-	_ = context.Background()
 }
-

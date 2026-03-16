@@ -1,0 +1,76 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Feature Flags</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Runtime feature toggling without deployments. Define flags with defaults, check them anywhere, and toggle via API or admin panel.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Setup</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/flags"
+
+app.Use(flags.NewPlugin())</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Defining Flags</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>// Boolean flag with default
+flags.Define("dark_mode", false)
+
+// Integer flag
+flags.Define("max_upload_mb", 10)
+
+// String flag
+flags.Define("maintenance_message", "")
+
+// Boolean for beta features
+flags.Define("beta_features", false)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Checking Flags</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>// Boolean check
+if flags.Enabled("dark_mode") {
+    // Show dark theme
+}
+
+// Get typed values
+maxUpload := flags.Get[int]("max_upload_mb")
+message := flags.Get[string]("maintenance_message")
+
+// Toggle at runtime (via API or admin panel)
+flags.Set("dark_mode", true)
+flags.Set("max_upload_mb", 25)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Examples</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">A/B Testing</h3>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func (ctrl *ProductController) Show(c *http.Context) error {
+    product := getProduct(c.Param("id"))
+
+    if flags.Enabled("new_product_page") {
+        return c.View("products/show_v2", product)
+    }
+    return c.View("products/show", product)
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Gradual Rollout</h3>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func (ctrl *CheckoutController) Store(c *http.Context) error {
+    if flags.Enabled("new_payment_flow") {
+        return processPaymentV2(c)
+    }
+    return processPayment(c)
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Maintenance Mode</h3>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func MaintenanceMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if flags.Enabled("maintenance_mode") {
+            msg := flags.Get[string]("maintenance_message")
+            http.Error(w, msg, http.StatusServiceUnavailable)
+            return
+        }
+        next.ServeHTTP(w, r)
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Always define flags with sensible defaults</li>
+  <li>Use descriptive names: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">new_checkout_flow</code> not <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">flag1</code></li>
+  <li>Remove flags after a feature is fully rolled out</li>
+  <li>Use flags for rollouts and experiments, not permanent configuration</li>
+  <li>Combine with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">cache</code> to store flag state in Redis for multi-instance sync</li>
+</ul>

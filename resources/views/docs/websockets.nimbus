@@ -1,21 +1,99 @@
 @layout('layout-docs')
-<h1 class="text-3xl font-bold text-slate-900 mb-4">WebSockets</h1>
-<p class="text-slate-600 mb-6">Hub: <code class="bg-slate-100 px-1 rounded">websocket.NewHub()</code>. Run() in goroutine. Upgrade(w, r) upgrades HTTP and registers client. Broadcast(msg []byte) sends to all. Conn wraps the connection (ReadMessage, WriteMessage, Close).</p>
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">WebSockets</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Real-time bidirectional communication via WebSocket. Create a Hub, upgrade HTTP connections, and broadcast messages to all connected clients.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Usage</h2>
-<pre><code>hub := websocket.NewHub()
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Quick Start</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/websocket"
+
+hub := websocket.NewHub()
 go hub.Run()
 
 app.Router.Get("/ws", func(c *http.Context) error {
     conn, err := hub.Upgrade(c.Response, c.Request)
-    if err != nil { return err }
+    if err != nil {
+        return err
+    }
     defer conn.Close()
+
     for {
         _, msg, err := conn.ReadMessage()
-        if err != nil { break }
+        if err != nil {
+            break
+        }
         hub.Broadcast(msg)
     }
     return nil
 })</code></pre>
 
-<p class="text-slate-600 text-sm">Broadcast sends to all connected clients. Conn embeds gorilla/websocket.Conn.</p>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Hub API</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">NewHub()</code></td><td class="px-4 py-2">Create a new WebSocket hub</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hub.Run()</code></td><td class="px-4 py-2">Start the hub (run in a goroutine)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hub.Upgrade(w, r)</code></td><td class="px-4 py-2">Upgrade HTTP connection to WebSocket</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hub.Broadcast(msg)</code></td><td class="px-4 py-2">Send message to all connected clients</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Connection API</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Conn</code> wraps gorilla/websocket and provides:</p>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">conn.ReadMessage()</code></td><td class="px-4 py-2">Read a message (blocks)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">conn.WriteMessage(type, data)</code></td><td class="px-4 py-2">Write a message to the client</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">conn.Close()</code></td><td class="px-4 py-2">Close the connection</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Chat Room</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>hub := websocket.NewHub()
+go hub.Run()
+
+app.Router.Get("/ws/chat", func(c *http.Context) error {
+    conn, err := hub.Upgrade(c.Response, c.Request)
+    if err != nil {
+        return err
+    }
+    defer conn.Close()
+
+    // Announce join
+    hub.Broadcast([]byte(`{"event":"join","user":"` + c.Query("name") + `"}`))
+
+    for {
+        _, msg, err := conn.ReadMessage()
+        if err != nil {
+            break
+        }
+
+        // Wrap message with sender info
+        payload := fmt.Sprintf(`{"event":"message","user":"%s","text":"%s"}`,
+            c.Query("name"), string(msg))
+        hub.Broadcast([]byte(payload))
+    }
+    return nil
+})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Client Side</h3>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>const ws = new WebSocket('ws://localhost:3000/ws/chat?name=Alice');
+ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.event === 'message') {
+        appendMessage(data.user, data.text);
+    }
+};
+ws.send('Hello everyone!');</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Always run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hub.Run()</code> in a separate goroutine</li>
+  <li>Handle connection errors gracefully — clients disconnect unexpectedly</li>
+  <li>Use JSON for message format — consistent and easy to parse</li>
+  <li>Combine with <a href="/docs/presence" class="text-amber-600 dark:text-amber-400 hover:underline">Presence</a> to track who's online</li>
+  <li>Consider <a href="/docs/transmit" class="text-amber-600 dark:text-amber-400 hover:underline">Transmit (SSE)</a> for server-to-client only communication</li>
+</ul>

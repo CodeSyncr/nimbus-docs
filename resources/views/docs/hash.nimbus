@@ -1,9 +1,9 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Hashing</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus provides bcrypt password hashing via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hash.Make</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hash.Check</code> for secure password storage.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus provides bcrypt password hashing via the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hash</code> package. Hash passwords on registration, verify on login, and tune cost for your security needs.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Hash a Password</h2>
-<pre data-file="app/models/user.go"><code>import "github.com/CodeSyncr/nimbus/hash"
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="app/models/user.go"><code>import "github.com/CodeSyncr/nimbus/hash"
 
 func (u *User) SetPassword(plain string) error {
     h, err := hash.Make(plain)
@@ -13,9 +13,56 @@ func (u *User) SetPassword(plain string) error {
 }</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Verify a Password</h2>
-<pre data-file="app/controllers/auth_controller.go"><code>if !u.CheckPassword(password) {
-    return ctx.View("auth/login", map[string]any{"error": "Invalid credentials"})
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="app/controllers/auth.go"><code>// hash.Check(plain, hashed) returns true if they match
+if !hash.Check(password, user.PasswordHash) {
+    return c.JSON(401, map[string]string{"error": "Invalid credentials"})
+}
+
+// In a login controller
+func (ctrl *AuthController) Login(c *http.Context) error {
+    email := c.FormValue("email")
+    password := c.FormValue("password")
+
+    var user models.User
+    if err := ctrl.DB.Where("email = ?", email).First(&user).Error; err != nil {
+        return c.View("auth/login", map[string]any{"error": "User not found"})
+    }
+
+    if !hash.Check(password, user.PasswordHash) {
+        return c.View("auth/login", map[string]any{"error": "Invalid credentials"})
+    }
+
+    ctrl.Guard.Login(c.Request.Context(), &user)
+    return c.Redirect(302, "/dashboard")
 }</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Custom Cost</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hash.MakeWithCost(plain, 12)</code> for a higher bcrypt cost (slower, more secure). Default is 10.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Higher cost = slower hashing = more secure. Default is 10. Use 12+ for production:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Custom cost (12 is ~4x slower than 10)
+hashed, err := hash.MakeWithCost(plaintext, 12)
+
+// Default cost (10)
+hashed, err := hash.Make(plaintext)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">API Reference</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Function</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">hash.Make(plain)</code></td><td class="px-4 py-2">Hash with default cost (10)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">hash.MakeWithCost(plain, cost)</code></td><td class="px-4 py-2">Hash with custom bcrypt cost (4-31)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">hash.Check(plain, hashed)</code></td><td class="px-4 py-2">Returns true if plain matches hashed</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">With Model Hooks</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Auto-hash passwords using a BeforeCreate hook:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>database.RegisterHooks(db, "users", database.Hooks{
+    BeforeCreate: func(db *gorm.DB) {
+        if u, ok := db.Statement.Dest.(*User); ok && u.PasswordHash != "" {
+            hashed, _ := hash.Make(u.PasswordHash)
+            u.PasswordHash = hashed
+        }
+    },
+})</code></pre>

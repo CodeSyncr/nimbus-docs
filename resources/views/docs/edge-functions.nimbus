@@ -1,0 +1,70 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Edge Functions</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Serverless-style request handlers optimized for CDN and edge deployment. Lightweight, isolated handlers with simplified context — no middleware chain, no database, just fast computation.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Defining Edge Functions</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/edge"
+
+edge.Register("hello", func(ctx *edge.Context) *edge.Response {
+    return edge.JSON(200, map[string]string{
+        "message": "Hello from the edge!",
+        "region":  ctx.Region,
+    })
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">When to Use Edge Functions</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><strong>Geolocation</strong> — Return region-specific content</li>
+  <li><strong>A/B testing</strong> — Route traffic without backend round-trips</li>
+  <li><strong>Auth token validation</strong> — Validate JWTs at the edge</li>
+  <li><strong>Redirects</strong> — URL rewriting and redirects close to the user</li>
+  <li><strong>Transformations</strong> — Modify headers or response formats</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Geo-Routing</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>edge.Register("geo-router", func(ctx *edge.Context) *edge.Response {
+    switch ctx.Region {
+    case "eu-west-1", "eu-central-1":
+        return edge.Redirect("https://eu.myapp.com" + ctx.Path)
+    case "ap-southeast-1", "ap-northeast-1":
+        return edge.Redirect("https://ap.myapp.com" + ctx.Path)
+    default:
+        return edge.Redirect("https://us.myapp.com" + ctx.Path)
+    }
+})
+
+edge.Register("feature-gate", func(ctx *edge.Context) *edge.Response {
+    cookie := ctx.Cookie("beta_user")
+    if cookie == "true" {
+        return edge.JSON(200, map[string]any{
+            "features": []string{"new_dashboard", "ai_search", "dark_mode"},
+        })
+    }
+    return edge.JSON(200, map[string]any{
+        "features": []string{"dark_mode"},
+    })
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Edge Context</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Edge functions receive a simplified context with request data but no database or full middleware stack:</p>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Property</th><th class="px-4 py-2 text-left font-semibold">Type</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Region</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">Deployment region</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Path</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">Request path</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Method</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">HTTP method</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Headers</code></td><td class="px-4 py-2">map</td><td class="px-4 py-2">Request headers</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Cookie(name)</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">Get cookie value</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Query(key)</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">Get query parameter</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Keep edge functions pure and fast — no database calls</li>
+  <li>Use for routing, validation, and transformations only</li>
+  <li>Return cached responses when possible</li>
+  <li>Handle all error cases — no middleware recovery at the edge</li>
+</ul>

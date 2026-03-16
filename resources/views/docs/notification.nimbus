@@ -1,0 +1,164 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Notifications</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus notifications deliver messages across multiple channels — email and realtime broadcast — from a single, unified interface. Implement the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">notification.Notification</code> interface, then call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">notification.Send()</code> to dispatch on all channels.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">The Notification Interface</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Every notification implements two methods — return <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nil</code> or an empty channel to skip a channel:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/notification"
+
+type Notification interface {
+    // ToMail returns the mail message, or nil to skip email.
+    ToMail() *mail.Message
+    // ToBroadcast returns a channel name and payload for realtime delivery.
+    // Return empty channel string to skip broadcast.
+    ToBroadcast() (channel string, payload any)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Creating a Notification</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="app/notifications/order_shipped.go"><code>package notifications
+
+import (
+    "fmt"
+    "github.com/CodeSyncr/nimbus/mail"
+)
+
+type OrderShipped struct {
+    OrderID   uint
+    UserEmail string
+    UserName  string
+}
+
+func (n *OrderShipped) ToMail() *mail.Message {
+    return &mail.Message{
+        To:      []string{n.UserEmail},
+        Subject: fmt.Sprintf("Order #%d Shipped!", n.OrderID),
+        HTML:    fmt.Sprintf("&lt;h1&gt;Hi %s&lt;/h1&gt;&lt;p&gt;Your order #%d has shipped.&lt;/p&gt;", n.UserName, n.OrderID),
+    }
+}
+
+func (n *OrderShipped) ToBroadcast() (string, any) {
+    return fmt.Sprintf("users/%s/orders", n.UserEmail), map[string]any{
+        "event":    "order.shipped",
+        "order_id": n.OrderID,
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Sending Notifications</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">notification.Send()</code> dispatches on <strong>all</strong> channels. Use the single-channel helpers when you only need one:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/notification"
+
+// Send on all channels (mail + broadcast)
+err := notification.Send(&OrderShipped{
+    OrderID:   42,
+    UserEmail: "jane@example.com",
+    UserName:  "Jane",
+})
+
+// Send mail only
+err = notification.SendMail(&OrderShipped{...})
+
+// Broadcast only (via Transmit SSE)
+notification.Broadcast(&OrderShipped{...})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Channel Behavior</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Function</th><th class="px-4 py-2 text-left font-semibold">Channel</th><th class="px-4 py-2 text-left font-semibold">Skip condition</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Send(n)</code></td><td class="px-4 py-2">Mail + Broadcast</td><td class="px-4 py-2">Skips each channel if nil/empty</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">SendMail(n)</code></td><td class="px-4 py-2">Mail only</td><td class="px-4 py-2">Skips if <code class="text-xs">ToMail()</code> returns nil or <code class="text-xs">mail.Default</code> is nil</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="text-xs bg-slate-100 dark:bg-slate-800 px-1 rounded">Broadcast(n)</code></td><td class="px-4 py-2">Broadcast (Transmit SSE)</td><td class="px-4 py-2">No-op if channel is empty or Transmit not registered</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Database Notifications</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">For persistent in-app notifications (bell icon, inbox), use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.NotificationStore</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/database"
+
+// Create a store (wraps GORM, auto-migrates notifications table)
+store := database.NewNotificationStore(db)
+
+// Send a notification
+store.Send("user:42", "order.shipped", map[string]any{
+    "order_id": 42,
+    "message":  "Your order has shipped!",
+})
+
+// Retrieve notifications
+all, _ := store.All("user:42")         // all notifications
+unread, _ := store.Unread("user:42")   // unread only
+read, _ := store.Read("user:42")       // read only
+
+// Mark as read
+store.MarkAsRead("user:42", notificationID)
+store.MarkAllAsRead("user:42")
+
+// Delete
+store.Delete("user:42", notificationID)
+
+// Count
+count, _ := store.UnreadCount("user:42")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">DatabaseNotification Model</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type DatabaseNotification struct {
+    ID         uint      `gorm:"primaryKey"`
+    Notifiable string    `gorm:"index"`      // e.g. "user:42"
+    Type       string                        // e.g. "order.shipped"
+    Data       JSON                          // JSON payload
+    ReadAt     *time.Time                    // nil = unread
+    CreatedAt  time.Time
+    UpdatedAt  time.Time
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Notifiable Interface</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Models can implement <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Notifiable</code> to provide their notification key:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Notifiable interface {
+    NotifiableKey() string  // e.g. "user:42"
+}
+
+// Example
+func (u *User) NotifiableKey() string {
+    return fmt.Sprintf("user:%d", u.ID)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Complete Example</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Combining channels with database persistence:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func ShipOrder(order *Order, user *User) error {
+    n := &OrderShipped{
+        OrderID:   order.ID,
+        UserEmail: user.Email,
+        UserName:  user.Name,
+    }
+
+    // 1. Send email + broadcast
+    if err := notification.Send(n); err != nil {
+        logger.Error("notification failed", "err", err)
+    }
+
+    // 2. Persist to database for in-app inbox
+    store.Send(user.NotifiableKey(), "order.shipped", map[string]any{
+        "order_id": order.ID,
+        "message":  fmt.Sprintf("Order #%d has shipped!", order.ID),
+    })
+
+    return nil
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">API Endpoint Example</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// GET /api/notifications
+func ListNotifications(c *http.Context) error {
+    user := auth.UserFromContext(c.Request.Context())
+    store := database.NewNotificationStore(database.Get())
+    notifications, _ := store.Unread(fmt.Sprintf("user:%s", user.GetID()))
+    return c.JSON(200, notifications)
+}
+
+// POST /api/notifications/:id/read
+func MarkRead(c *http.Context) error {
+    user := auth.UserFromContext(c.Request.Context())
+    id, _ := strconv.Atoi(c.Param("id"))
+    store := database.NewNotificationStore(database.Get())
+    store.MarkAsRead(fmt.Sprintf("user:%s", user.GetID()), uint(id))
+    return c.JSON(200, map[string]string{"status": "ok"})
+}</code></pre>

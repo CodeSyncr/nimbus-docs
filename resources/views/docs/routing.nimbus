@@ -462,6 +462,75 @@ app.Router.Get("/users/:id", showUserHandler)
 // GET /users/42   → showUserHandler    (dynamic match)
 // GET /users/     → showUserHandler    (trailing slash stripped, matches /users with no :id)</code></pre>
 
+<!-- ───────────────── Route model binding ───────────────── -->
+<h2 id="route-model-binding" class="text-xl font-semibold text-slate-900 mt-8 mb-2">Route model binding</h2>
+<p class="text-slate-600 mb-4">
+  Route model binding automatically resolves URL parameters to model instances. Instead of manually querying the database in every handler, define a <code class="bg-slate-100 px-1 rounded">Bindable</code> model and the router injects it into the context.
+</p>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Implement the Bindable interface</h3>
+<pre><code>import "github.com/CodeSyncr/nimbus/router"
+
+type User struct {
+    ID    uint
+    Name  string
+    Email string
+}
+
+func (u *User) RouteKey() string { return "id" }
+
+func (u *User) FindForRoute(value string) (any, error) {
+    var user User
+    err := db.Where("id = ?", value).First(&user).Error
+    return &user, err
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Register model bindings</h3>
+<pre><code>app.Router.Use(router.BindModel(router.ModelBinding{
+    Param:      "id",
+    ContextKey: "user",
+    Model:      &User{},
+}))</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Use in handlers</h3>
+<pre><code>app.Router.Get("/users/:id", func(c *http.Context) error {
+    user, _ := c.Get("user")
+    return c.JSON(200, user.(*User))
+})</code></pre>
+<p class="text-slate-600 mb-4">
+  If the model is not found, the binding middleware automatically returns a <code class="bg-slate-100 px-1 rounded">404</code> error.
+</p>
+
+<!-- ───────────────── Typed param helpers ───────────────── -->
+<h2 id="typed-params" class="text-xl font-semibold text-slate-900 mt-8 mb-2">Typed param helpers</h2>
+<p class="text-slate-600 mb-4">
+  Convert route parameters to typed values without boilerplate <code class="bg-slate-100 px-1 rounded">strconv</code> calls:
+</p>
+<pre><code>// Get param as int (returns 0 on parse error)
+id := c.ParamInt("id")
+
+// Get param as int64
+id64 := c.ParamInt64("id")</code></pre>
+
+<!-- ───────────────── Fallback routes ───────────────── -->
+<h2 id="fallback-routes" class="text-xl font-semibold text-slate-900 mt-8 mb-2">Fallback routes</h2>
+<p class="text-slate-600 mb-4">
+  Register a dedicated fallback handler that runs when no other route matches. Unlike a catch-all <code class="bg-slate-100 px-1 rounded">/*</code> route, <code class="bg-slate-100 px-1 rounded">Fallback()</code> is explicitly reserved for 404-style handling and is registered after all other routes.
+</p>
+<pre><code>// SPA fallback — serve index.html for all unmatched routes
+app.Router.Fallback(func(c *http.Context) error {
+    return c.View("index", nil)
+})
+
+// API fallback — structured JSON error
+api := app.Router.Group("/api")
+api.Fallback(func(c *http.Context) error {
+    return c.JSON(404, map[string]string{
+        "error":   "not_found",
+        "message": "The requested endpoint does not exist.",
+    })
+})</code></pre>
+
 <!-- ───────────────── 404 handling ───────────────── -->
 <h2 id="handling-404" class="text-xl font-semibold text-slate-900 mt-8 mb-2">Handling 404</h2>
 <p class="text-slate-600 mb-4">

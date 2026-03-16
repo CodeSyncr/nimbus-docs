@@ -25,14 +25,12 @@ func (a *AI) Generate(c *http.Context) error {
 
 	response, err := ai.Generate(c.Request.Context(), prompt)
 	if err != nil {
-		return c.View("apps/ai/index", map[string]any{
-			"title": "AI SDK",
+		return c.View("apps/ai/result", map[string]any{
 			"error": err.Error(),
 		})
 	}
 
-	return c.View("apps/ai/index", map[string]any{
-		"title": "AI SDK",
-		"text":  response.Text,
+	return c.View("apps/ai/result", map[string]any{
+		"text": response.Text,
 	})
 }

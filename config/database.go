@@ -3,8 +3,26 @@
 | Database Configuration
 |--------------------------------------------------------------------------
 |
-| Connection settings for the primary database. Supported drivers:
-| sqlite, postgres, mysql.
+| Connection settings for SQL and NoSQL databases. Nimbus supports
+| multiple named connections — register them in start/kernel.go.
+|
+| Supported SQL drivers:  sqlite, postgres, mysql
+| Supported NoSQL drivers: mongodb
+|
+| Multi-DB Example (in start/kernel.go):
+|
+|   database.ConnectAll([]database.ConnectionConfig{
+|       {Name: "default", Driver: config.Database.Driver, DSN: config.Database.DSN},
+|       {Name: "analytics", Driver: config.Database.Connections["analytics"].Driver, DSN: config.Database.Connections["analytics"].DSN},
+|   })
+|
+| NoSQL Example (in start/kernel.go):
+|
+|   mongo, _ := nosql.ConnectMongo(ctx, nosql.MongoConfig{
+|       URI:      config.Database.MongoURI,
+|       Database: config.Database.MongoDatabase,
+|   })
+|   nosql.Register("mongo", mongo)
 |
 */
 
@@ -12,9 +30,22 @@ package config
 
 var Database DatabaseConfig
 
-type DatabaseConfig struct {
+type DatabaseConnectionConfig struct {
 	Driver string
 	DSN    string
+}
+
+type DatabaseConfig struct {
+	// Primary SQL connection
+	Driver string
+	DSN    string
+
+	// Additional named SQL connections
+	Connections map[string]DatabaseConnectionConfig
+
+	// MongoDB / NoSQL
+	MongoURI      string
+	MongoDatabase string
 }
 
 func loadDatabase() {
@@ -43,8 +74,23 @@ func loadDatabase() {
 		dsn = cfg("database.dsn", "database.sqlite")
 	}
 
+	// Build additional named connections from env
+	connections := make(map[string]DatabaseConnectionConfig)
+
+	// Example: ANALYTICS_DB_DRIVER=postgres, ANALYTICS_DB_DSN=...
+	analyticsDriver := cfg("analytics_db.driver", "")
+	if analyticsDriver != "" {
+		connections["analytics"] = DatabaseConnectionConfig{
+			Driver: analyticsDriver,
+			DSN:    cfg("analytics_db.dsn", ""),
+		}
+	}
+
 	Database = DatabaseConfig{
-		Driver: driver,
-		DSN:    dsn,
+		Driver:        driver,
+		DSN:           dsn,
+		Connections:   connections,
+		MongoURI:      cfg("mongo.uri", ""),
+		MongoDatabase: cfg("mongo.database", ""),
 	}
 }

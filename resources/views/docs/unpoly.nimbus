@@ -1,0 +1,217 @@
+@layout('layout-docs')
+
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Plugin</span>
+    <span class="px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 text-xs font-semibold">Progressive Enhancement</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Unpoly — Progressive Enhancement</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">Unpoly is a progressive enhancement framework that lets you build fast, server-rendered applications with the feel of a single-page app. The Nimbus Unpoly plugin provides server-side protocol support — request detection, response helpers, and CDN configuration.</p>
+
+  <!-- ── Overview ── -->
+  <h2 id="overview" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Overview
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">The Unpoly plugin handles the server side of the <a href="https://unpoly.com" class="text-amber-600 hover:text-amber-700 underline" target="_blank">Unpoly protocol</a>. It reads Unpoly's request headers and provides convenient helpers to set response headers, so you can:</p>
+  <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400 mb-6">
+    <li>Detect Unpoly requests and only render the changed fragment</li>
+    <li>Set the document title for fragment updates</li>
+    <li>Emit events on the client from the server</li>
+    <li>Accept or dismiss overlays (modals, drawers, popups)</li>
+    <li>Expire cached content selectively</li>
+    <li>Validate form fields live</li>
+  </ul>
+
+  <!-- ── Installation ── -->
+  <h2 id="installation" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Installation
+  </h2>
+  <pre><code class="language-bash">$ nimbus plugin:install unpoly</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">Or add manually:</p>
+  <pre data-file="bin/server.go"><code class="language-go">import "github.com/CodeSyncr/nimbus/plugins/unpoly"
+
+app.Use(unpoly.New())</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">The plugin automatically injects the Unpoly CSS and JS from a CDN, and adds the server-protocol middleware to all routes.</p>
+
+  <!-- ── CDN Configuration ── -->
+  <h2 id="cdn" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> CDN Configuration
+  </h2>
+  <pre data-file="config/unpoly.go"><code class="language-go">package config
+
+import "github.com/CodeSyncr/nimbus/plugins/unpoly"
+
+var Unpoly = unpoly.Config{
+    // Unpoly version to load from CDN (default: "3.10.0")
+    Version: "3.10.0",
+
+    // Custom CDN URLs (optional — auto-generated from version)
+    CSSURL: "https://cdn.example.com/unpoly.min.css",
+    JSURL:  "https://cdn.example.com/unpoly.min.js",
+
+    // Set to true to skip CDN injection (if you bundle Unpoly yourself)
+    DisableCDN: false,
+}</code></pre>
+
+  <!-- ── Request Helpers ── -->
+  <h2 id="request-helpers" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Request Helpers
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Detect Unpoly requests and read their metadata:</p>
+  <pre data-file="app/controllers/pages.go"><code class="language-go">import "github.com/CodeSyncr/nimbus/plugins/unpoly"
+
+func (ctrl *PagesController) Show(c *http.Context) error {
+    up := unpoly.FromContext(c)
+
+    // Is this an Unpoly request? (has X-Up-Version header)
+    if up.IsUnpoly() {
+        // What fragment is Unpoly targeting?
+        target := up.Target()      // e.g. ".main-content"
+        failTarget := up.FailTarget() // target on error
+
+        // What mode is the request in?
+        mode := up.Mode()          // "root", "modal", "drawer", "popup", "cover"
+        failMode := up.FailMode()
+
+        // Is this a form validation request?
+        if up.Validate() != "" {
+            // Only the named field is being validated
+            return c.JSON(map[string]any{
+                "valid": true,
+            })
+        }
+
+        // Read Unpoly context (shared state across fragments)
+        ctx := up.Context()        // map[string]any from X-Up-Context
+    }
+
+    return c.View("pages/show", data)
+}</code></pre>
+
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Method</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Header</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Returns</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>IsUnpoly()</code></td><td class="px-4 py-2"><code>X-Up-Version</code></td><td class="px-4 py-2"><code>bool</code></td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Version()</code></td><td class="px-4 py-2"><code>X-Up-Version</code></td><td class="px-4 py-2"><code>string</code></td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Target()</code></td><td class="px-4 py-2"><code>X-Up-Target</code></td><td class="px-4 py-2"><code>string</code> — CSS selector</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>FailTarget()</code></td><td class="px-4 py-2"><code>X-Up-Fail-Target</code></td><td class="px-4 py-2"><code>string</code></td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Mode()</code></td><td class="px-4 py-2"><code>X-Up-Mode</code></td><td class="px-4 py-2"><code>string</code></td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>FailMode()</code></td><td class="px-4 py-2"><code>X-Up-Fail-Mode</code></td><td class="px-4 py-2"><code>string</code></td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Validate()</code></td><td class="px-4 py-2"><code>X-Up-Validate</code></td><td class="px-4 py-2"><code>string</code> — field name</td></tr>
+        <tr><td class="px-4 py-2"><code>Context()</code></td><td class="px-4 py-2"><code>X-Up-Context</code></td><td class="px-4 py-2"><code>map[string]any</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Response Helpers ── -->
+  <h2 id="response-helpers" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Response Helpers
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Control Unpoly's client-side behavior from the server:</p>
+  <pre data-file="app/controllers/forms.go"><code class="language-go">func (ctrl *FormsController) Submit(c *http.Context) error {
+    up := unpoly.FromContext(c)
+
+    // Change what fragment to update in the response
+    up.SetTarget(".notification-area")
+
+    // Set the document title after fragment update
+    up.SetTitle("Form Submitted — My App")
+
+    // Render nothing (dismiss without changing content)
+    up.RenderNothing()
+
+    // Emit a client-side event
+    up.EmitEvent("form:submitted", map[string]any{
+        "id": 42,
+    })
+
+    // Accept an overlay (close modal/drawer with a value)
+    up.AcceptLayer(map[string]any{
+        "user_id": 42,
+        "status": "created",
+    })
+
+    // Dismiss an overlay (close without a value)
+    up.DismissLayer(map[string]any{
+        "reason": "cancelled",
+    })
+
+    // Expire cached content matching a path pattern
+    up.ExpireCache("/users/*")
+
+    // Update shared context
+    up.SetContext(map[string]any{
+        "flash": "User created successfully",
+    })
+
+    return c.View("forms/success", nil)
+}</code></pre>
+
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Method</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Response Header</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Effect</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>SetTarget()</code></td><td class="px-4 py-2"><code>X-Up-Target</code></td><td class="px-4 py-2">Override which fragment to swap</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>SetTitle()</code></td><td class="px-4 py-2"><code>X-Up-Title</code></td><td class="px-4 py-2">Set document title after update</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>RenderNothing()</code></td><td class="px-4 py-2"><code>X-Up-Target: :none</code></td><td class="px-4 py-2">Skip rendering, keep current page</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>EmitEvent()</code></td><td class="px-4 py-2"><code>X-Up-Events</code></td><td class="px-4 py-2">Emit custom DOM event on client</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>AcceptLayer()</code></td><td class="px-4 py-2"><code>X-Up-Accept-Layer</code></td><td class="px-4 py-2">Close overlay with success value</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>DismissLayer()</code></td><td class="px-4 py-2"><code>X-Up-Dismiss-Layer</code></td><td class="px-4 py-2">Close overlay with dismiss value</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>ExpireCache()</code></td><td class="px-4 py-2"><code>X-Up-Expire-Cache</code></td><td class="px-4 py-2">Expire client cache by path pattern</td></tr>
+        <tr><td class="px-4 py-2"><code>SetContext()</code></td><td class="px-4 py-2"><code>X-Up-Context</code></td><td class="px-4 py-2">Update shared context across fragments</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── How It Works ── -->
+  <h2 id="how-it-works" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> How It Works
+  </h2>
+  <div class="space-y-4 mb-6">
+    <div class="flex gap-4 items-start">
+      <div class="w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-sm font-bold flex-shrink-0">1</div>
+      <div>
+        <div class="font-semibold text-slate-900 dark:text-white text-sm">Click / Form Submit</div>
+        <p class="text-slate-600 dark:text-slate-400 text-sm">Unpoly intercepts link clicks and form submissions, adding <code>X-Up-*</code> request headers.</p>
+      </div>
+    </div>
+    <div class="flex gap-4 items-start">
+      <div class="w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-sm font-bold flex-shrink-0">2</div>
+      <div>
+        <div class="font-semibold text-slate-900 dark:text-white text-sm">Server Middleware</div>
+        <p class="text-slate-600 dark:text-slate-400 text-sm">The Nimbus middleware parses these headers and makes them available via <code>unpoly.FromContext(c)</code>.</p>
+      </div>
+    </div>
+    <div class="flex gap-4 items-start">
+      <div class="w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-sm font-bold flex-shrink-0">3</div>
+      <div>
+        <div class="font-semibold text-slate-900 dark:text-white text-sm">Fragment Response</div>
+        <p class="text-slate-600 dark:text-slate-400 text-sm">Your controller renders the full page. Unpoly's client extracts only the targeted CSS selector and swaps it in the DOM.</p>
+      </div>
+    </div>
+    <div class="flex gap-4 items-start">
+      <div class="w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-sm font-bold flex-shrink-0">4</div>
+      <div>
+        <div class="font-semibold text-slate-900 dark:text-white text-sm">SPA-like UX</div>
+        <p class="text-slate-600 dark:text-slate-400 text-sm">No full page reload, smooth transitions, URL and history updated — all with traditional server-rendered templates.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="p-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 mb-8">
+    <p class="text-amber-800 dark:text-amber-400 text-sm"><strong>Tip:</strong> Unpoly works seamlessly with Nimbus's <code>.nimbus</code> template engine. You get SPA-like navigation and overlay modals with zero JavaScript bundling needed.</p>
+  </div>
+</div>

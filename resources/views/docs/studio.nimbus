@@ -1,0 +1,52 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Studio (Admin Panel)</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Auto-generated admin panel for your GORM models. Get CRUD interfaces, search, filtering, pagination, and relationship browsing with zero configuration.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Setup</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/studio"
+
+app.Use(studio.New())
+// Admin panel at /studio</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">What Studio Generates</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Studio automatically discovers all GORM models and generates:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><strong>CRUD interfaces</strong> — Create, read, update, delete for every model</li>
+  <li><strong>Database statistics</strong> — Row counts, table sizes</li>
+  <li><strong>Search and filtering</strong> — Full-text search across model fields</li>
+  <li><strong>Pagination</strong> — Navigate large datasets</li>
+  <li><strong>Relationship browsing</strong> — Navigate between related models</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>app.Use(studio.New(studio.Config{
+    Prefix:   "/admin",     // URL prefix (default: /studio)
+    Models:   []any{&User{}, &Product{}, &Order{}},  // Explicit model list
+    ReadOnly: false,        // Set true to disable writes
+}))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: E-Commerce Admin</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>// Register Studio with specific models
+app.Use(studio.New(studio.Config{
+    Prefix: "/admin",
+    Models: []any{
+        &models.User{},
+        &models.Product{},
+        &models.Order{},
+        &models.Category{},
+        &models.Review{},
+    },
+}))
+
+// Protect with auth middleware
+admin := app.Router.Group("/admin")
+admin.Use(auth.RequireAuth())
+admin.Use(auth.RequireRole("admin"))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Always protect Studio routes with authentication middleware</li>
+  <li>Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ReadOnly: true</code> for production monitoring dashboards</li>
+  <li>Specify explicit <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Models</code> list rather than exposing all tables</li>
+  <li>Change the default prefix from <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/studio</code> to something less predictable in production</li>
+</ul>

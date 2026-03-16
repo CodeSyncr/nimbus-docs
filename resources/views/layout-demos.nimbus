@@ -3,70 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ .title }} · Nimbus</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' };
-  </script>
+  <title>{{ .title }} — Nimbus</title>
+
+  {{/* Fonts */}}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'DM Sans', system-ui, sans-serif; }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Mona+Sans:ital,wdth,wght@0,75..125,200..900;1,75..125,200..900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+  {{/* Design system — all shared CSS lives here */}}
+  <link rel="stylesheet" href="/public/css/app.css">
+
+  {{/* Unpoly — progressive enhancement, partial page updates */}}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/unpoly@3.12.0/unpoly.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/unpoly@3.12.0/unpoly.min.js"></script>
+  <script>
+    // Theme-specific confirmation override
+    // We set it after Unpoly loads
+    up.layer.confirm = function(options) {
+      alert('Override running for: ' + options.confirm);
+      console.log('Unpoly confirmation triggered:', options.confirm);
+      if (!options.confirm) return Promise.resolve();
+      
+      return up.layer.ask('/demos/todo/confirm', {
+        data: { 
+          title: 'Confirm Action', 
+          message: options.confirm 
+        },
+        target: '.m-confirm',
+        size: 'small',
+        dismissable: 'button key'
+      });
+    };
+  </script>
 </head>
-<body class="min-h-screen bg-white text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200 transition-colors duration-200">
-  <header class="sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-14">
-        <a href="/" class="flex items-center gap-2 text-slate-800 dark:text-white font-semibold hover:opacity-90 transition">
-          <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-sm font-bold">N</span>
-          Nimbus
-        </a>
-        <nav class="flex items-center gap-4">
-          <a href="/" class="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Home</a>
-          <a href="/demos" class="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Demos</a>
-          <a href="/docs" class="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Docs</a>
-          <button id="theme-toggle" type="button" aria-label="Toggle theme" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-amber-500/50 transition">
-            <svg id="sun-icon" class="w-5 h-5 text-amber-500 hidden dark:block" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/></svg>
-            <svg id="moon-icon" class="w-5 h-5 text-slate-600 dark:text-slate-400 block dark:hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
-          </button>
-        </nav>
+<body>
+
+  <!-- ── NAV ── -->
+  <header>
+    <nav>
+      <a href="/" class="logo">
+        <div class="logo-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+          </svg>
+        </div>
+        Nimbus
+      </a>
+
+      <div class="nav-mid">
+        <a href="/"       class="nav-link">Framework</a>
+        <a href="#"       class="nav-link">Packages</a>
+        <a href="#"       class="nav-link">Resources</a>
+        <a href="/demos"  class="nav-link {{ if .activeDemos }}active{{ end }}">Demos</a>
+        <a href="#"       class="nav-link">Docs</a>
       </div>
-    </div>
+
+      <div class="nav-end">
+        <a href="https://github.com/CodeSyncr/nimbus" target="_blank" rel="noopener" class="btn-gh">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2Z"/>
+          </svg>
+          GitHub
+        </a>
+        <a href="https://github.com/CodeSyncr/nimbus" target="_blank" rel="noopener" class="btn-start">
+          Get started
+        </a>
+      </div>
+    </nav>
   </header>
 
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- ── PAGE CONTENT ── -->
+  <main up-main>
     {{ .embed }}
   </main>
 
-  <footer class="border-t border-slate-200 dark:border-slate-800 mt-16 py-8">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500 dark:text-slate-400">
-      <p>Built with <a href="https://github.com/CodeSyncr/nimbus" target="_blank" rel="noopener" class="text-amber-600 dark:text-amber-400 hover:underline">Nimbus</a></p>
-      <div class="flex gap-6">
-        <a href="/" class="hover:text-slate-700 dark:hover:text-slate-300 transition">Home</a>
-        <a href="/demos" class="hover:text-slate-700 dark:hover:text-slate-300 transition">Demos</a>
-        <a href="/docs" class="hover:text-slate-700 dark:hover:text-slate-300 transition">Docs</a>
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="footer-in">
+      <p>&#169; 2025 <a href="/">Nimbus</a> &middot; AdonisJS-style framework for Go</p>
+      <div class="flinks">
+        <a href="/">Home</a>
+        <a href="/demos">Demos</a>
+        <a href="/health">Health</a>
+        <a href="https://github.com/CodeSyncr/nimbus" target="_blank" rel="noopener">GitHub</a>
+        <a href="#">Docs</a>
       </div>
     </div>
   </footer>
 
-  <script>
-    (function() {
-      const storageKey = 'theme';
-      const getTheme = () => localStorage.getItem(storageKey) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      const applyTheme = (theme) => {
-        document.documentElement.classList.toggle('dark', theme === 'dark');
-        localStorage.setItem(storageKey, theme);
-      };
-      applyTheme(getTheme());
-      document.addEventListener('click', (e) => {
-        if (e.target.closest('#theme-toggle')) {
-          const next = getTheme() === 'dark' ? 'light' : 'dark';
-          applyTheme(next);
-        }
-      });
-    })();
-  </script>
 </body>
 </html>
