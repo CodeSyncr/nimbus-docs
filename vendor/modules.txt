@@ -1,3 +1,14 @@
+# aidanwoods.dev/go-paseto v1.6.0
+## explicit; go 1.24.0
+aidanwoods.dev/go-paseto
+aidanwoods.dev/go-paseto/internal/encoding
+aidanwoods.dev/go-paseto/internal/hashing
+aidanwoods.dev/go-paseto/internal/random
+# aidanwoods.dev/go-result v0.3.1
+## explicit; go 1.19
+aidanwoods.dev/go-result/option
+aidanwoods.dev/go-result/result
+aidanwoods.dev/go-result/types
 # filippo.io/edwards25519 v1.2.0
 ## explicit; go 1.24.0
 filippo.io/edwards25519
@@ -7,9 +18,10 @@ filippo.io/edwards25519/field
 github.com/AlecAivazis/survey/v2
 github.com/AlecAivazis/survey/v2/core
 github.com/AlecAivazis/survey/v2/terminal
-# github.com/CodeSyncr/nimbus v0.1.6 => ../nimbus
+# github.com/CodeSyncr/nimbus v0.1.7 => ../nimbus
 ## explicit; go 1.26
 github.com/CodeSyncr/nimbus
+github.com/CodeSyncr/nimbus/auth
 github.com/CodeSyncr/nimbus/cache
 github.com/CodeSyncr/nimbus/cli
 github.com/CodeSyncr/nimbus/cli/ui
@@ -36,6 +48,7 @@ github.com/CodeSyncr/nimbus/plugins/unpoly
 github.com/CodeSyncr/nimbus/queue
 github.com/CodeSyncr/nimbus/router
 github.com/CodeSyncr/nimbus/schedule
+github.com/CodeSyncr/nimbus/session
 github.com/CodeSyncr/nimbus/validation
 github.com/CodeSyncr/nimbus/view
 # github.com/aws/aws-sdk-go-v2 v1.41.4
@@ -204,6 +217,9 @@ github.com/go-chi/chi/v5
 # github.com/go-sql-driver/mysql v1.9.3
 ## explicit; go 1.21.0
 github.com/go-sql-driver/mysql
+# github.com/golang-jwt/jwt/v5 v5.3.1
+## explicit; go 1.21
+github.com/golang-jwt/jwt/v5
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
@@ -480,8 +496,14 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.48.0
-## explicit; go 1.24.0
+# golang.org/x/crypto v0.49.0
+## explicit; go 1.25.0
+golang.org/x/crypto/blake2b
+golang.org/x/crypto/chacha20
+golang.org/x/crypto/chacha20poly1305
+golang.org/x/crypto/hkdf
+golang.org/x/crypto/internal/alias
+golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/ocsp
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/scrypt
@@ -492,14 +514,15 @@ golang.org/x/sync/semaphore
 golang.org/x/sync/singleflight
 # golang.org/x/sys v0.42.0
 ## explicit; go 1.25.0
+golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.40.0
-## explicit; go 1.24.0
+# golang.org/x/term v0.41.0
+## explicit; go 1.25.0
 golang.org/x/term
-# golang.org/x/text v0.34.0
-## explicit; go 1.24.0
+# golang.org/x/text v0.35.0
+## explicit; go 1.25.0
 golang.org/x/text/cases
 golang.org/x/text/internal
 golang.org/x/text/internal/language

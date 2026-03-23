@@ -125,11 +125,15 @@ func queueDemoHandler(c *http.Context) error {
 
 var docsTitles = map[string]string{
 	// Start
+	"getting-started":  "Getting Started",
 	"introduction":     "Introduction",
 	"installation":     "Installation",
 	"folder-structure": "Folder Structure",
 	"configuration":    "Configuration",
 	"deployment":       "Deployment",
+	"production-readiness": "Production Readiness",
+	"versioning-policy": "Versioning & Release Policy",
+	"release-checklist": "Release Checklist",
 	"faqs":             "FAQs",
 	// Basics
 	"routing":            "Routing",
@@ -181,6 +185,7 @@ var docsTitles = map[string]string{
 	"hash":              "Hashing",
 	"session-guard":     "Session Guard",
 	"access-tokens":     "Access Tokens",
+	"stateless-guard":   "Stateless Guard",
 	"authorization":     "Authorization",
 	// Security
 	"shield":        "Shield",
@@ -194,6 +199,11 @@ var docsTitles = map[string]string{
 	"service-providers":     "Service Providers",
 	"plugins":               "Plugins",
 	"container-services":    "Container Services",
+	// Helpers
+	"helpers-string":        "Fluent String",
+	"helpers-collection":    "Collections",
+	"helpers-time":          "Date & Time",
+	"helpers-pipeline":      "Async Pipelines",
 	// Digging Deeper
 	"cache":              "Cache",
 	"cache-remember":     "Remember & Type-Safe API",
@@ -251,7 +261,7 @@ func docsIndexHandler(c *http.Context) error {
 
 // docsOrder is the reading order for prev/next navigation.
 var docsOrder = []string{
-	"introduction", "installation", "folder-structure", "configuration", "deployment", "faqs",
+	"getting-started", "introduction", "installation", "folder-structure", "configuration", "deployment", "production-readiness", "versioning-policy", "release-checklist", "faqs",
 	"routing", "controllers", "http-context", "middleware", "request", "response", "body-parser",
 	"validation", "file-uploads", "locale", "api-resources", "session", "exception-handling", "static-files",
 	"nimbus-template",
@@ -264,9 +274,10 @@ var docsOrder = []string{
 	"database-models-factories",
 	"migrations", "seeders",
 	"nosql", "nosql-query-builder", "multi-db",
-	"auth", "auth-introduction", "hash", "session-guard", "access-tokens", "authorization",
+	"auth", "auth-introduction", "hash", "session-guard", "access-tokens", "stateless-guard", "authorization",
 	"shield", "cors", "csrf", "rate-limiting", "health",
 	"application-lifecycle", "dependency-injection", "service-providers", "plugins", "container-services",
+	"helpers-string", "helpers-collection", "helpers-time", "helpers-pipeline",
 	"cache", "cache-remember", "cache-backends", "cache-invalidation",
 	"storage", "drive", "transmit", "events", "logger", "mail", "notification", "queue", "scheduler", "websockets",
 	"workflow", "feature-flags", "multi-tenancy", "presence", "openapi", "studio", "edge-functions", "metrics",
@@ -281,6 +292,7 @@ var docsRedirect = map[string]string{
 	"nimbus-templates": "nimbus-template",
 	"layouts":          "nimbus-template",
 	"views":            "nimbus-template",
+	"gettingstarted":   "getting-started",
 }
 
 func docsPageHandler(c *http.Context) error {

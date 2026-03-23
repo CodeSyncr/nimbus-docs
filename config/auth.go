@@ -15,6 +15,7 @@ type AuthConfig struct {
 	DefaultGuard string
 	Session      SessionGuardConfig
 	Token        TokenGuardConfig
+	Stateless    StatelessTokenConfig
 }
 
 type SessionGuardConfig struct {
@@ -28,6 +29,14 @@ type TokenGuardConfig struct {
 	ExpiresIn  int // seconds
 }
 
+type StatelessTokenConfig struct {
+	Driver     string // jwt | paseto
+	Secret     string
+	ExpiresIn  int // seconds
+	HeaderName string
+	Scheme     string
+}
+
 func loadAuth() {
 	Auth = AuthConfig{
 		DefaultGuard: env("AUTH_GUARD", "session"),
@@ -39,6 +48,13 @@ func loadAuth() {
 			HeaderName: "Authorization",
 			Scheme:     "Bearer",
 			ExpiresIn:  envInt("TOKEN_EXPIRES_IN", 86400),
+		},
+		Stateless: StatelessTokenConfig{
+			Driver:     env("AUTH_TOKEN_DRIVER", "jwt"),
+			Secret:     env("AUTH_TOKEN_SECRET", "nimbus-secret-key-32-chars-at-least"),
+			ExpiresIn:  envInt("AUTH_TOKEN_EXPIRES_IN", 86400),
+			HeaderName: "Authorization",
+			Scheme:     "Bearer",
 		},
 	}
 }

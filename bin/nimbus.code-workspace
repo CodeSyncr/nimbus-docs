@@ -7,10 +7,7 @@
 		"path": ".."
 	},
 	{
-		"path": "../../nimbus-inertia-react"
-	},
-	{
-		"path": "../../example-app"
+		"path": "../../cineforge-ai"
 	}
 ],
   "settings": {}

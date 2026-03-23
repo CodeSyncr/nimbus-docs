@@ -1,36 +1,50 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Realtime Presence</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Track who's online in real-time across channels. Perfect for chat rooms, collaborative editing, gaming lobbies, and live dashboards.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Track who is online in real-time across channels using Nimbus Presence over WebSockets. Great for chat rooms, collaboration, and live dashboards.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Setup</h2>
 <pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/presence"
 
-app.Use(presence.New(presence.Config{
-    TTL:             30 * time.Second,  // Heartbeat timeout
-    CleanupInterval: 10 * time.Second,  // Stale member cleanup
+hub := presence.NewHub(presence.Config{
+    Path:          "/_presence",
+    PingInterval:  30 * time.Second,
+    WriteTimeout:  10 * time.Second,
+    MaxMessageSize: 4096,
+    AllowedOrigins: []string{"https://app.example.com"},
+    AuthFunc: func(r *http.Request, channel string) (*presence.User, error) {
+        // Resolve authenticated user for this channel.
+        return &presence.User{ID: "123", Name: "Yash"}, nil
+    },
+})
+
+app.Use(presence.NewPlugin(presence.Config{
+    Path:          "/_presence",
+    PingInterval:  30 * time.Second,
+    WriteTimeout:  10 * time.Second,
+    MaxMessageSize: 4096,
+    AllowedOrigins: []string{"https://app.example.com"},
+    AuthFunc: func(r *http.Request, channel string) (*presence.User, error) {
+        return &presence.User{ID: "123", Name: "Yash"}, nil
+    },
 }))</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">API</h2>
-<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>// Join a channel with optional metadata
-presence.Join("chat:lobby", userID, map[string]any{
-    "name":   "Alice",
-    "avatar": "/img/alice.png",
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>// Hub helpers
+channels := hub.Channels()
+count := hub.UserCount("room-1")
+users := hub.UsersIn("room-1")
+
+// Server-side broadcast into a channel
+hub.Broadcast("room-1", presence.Event{
+    Type: "message",
+    Data: "hello from server",
 })
 
-// Leave a channel
-presence.Leave("chat:lobby", userID)
-
-// Track heartbeat (call periodically from client)
-presence.Heartbeat("chat:lobby", userID)
-
-// Get online members with metadata
-members := presence.Members("chat:lobby")
-for _, m := range members {
-    fmt.Printf("%s is online\n", m.Metadata["name"])
-}
-
-// Count online users
-count := presence.Count("chat:lobby")</code></pre>
+// Plugin routes mounted automatically:
+// GET /_presence?channel=room-1   (WebSocket endpoint)
+// GET /_presence/channels         (list channels)
+// GET /_presence/channels/:name/users
+// POST /_presence/channels/:name/broadcast</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Use Cases</h2>
 <div class="overflow-x-auto mb-4">
@@ -45,44 +59,25 @@ count := presence.Count("chat:lobby")</code></pre>
   </table>
 </div>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Chat Room</h2>
-<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>// Join when user connects to WebSocket
-func handleWSConnect(c *http.Context, conn *websocket.Conn) {
-    user := auth.User(c)
-    room := c.Param("room")
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Client example</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>const ws = new WebSocket("ws://localhost:3333/_presence?channel=room-1");
 
-    presence.Join("chat:"+room, user.ID, map[string]any{
-        "name":   user.Name,
-        "avatar": user.AvatarURL,
-    })
+ws.onmessage = (e) => {
+  const evt = JSON.parse(e.data);
+  // presence:join, presence:leave, presence:state, presence:typing, message, ...
+  console.log(evt.type, evt);
+};
 
-    // Broadcast updated member list
-    members := presence.Members("chat:" + room)
-    hub.BroadcastToRoom(room, map[string]any{
-        "event":   "presence:update",
-        "members": members,
-        "count":   len(members),
-    })
-}
+// typing indicator
+ws.send(JSON.stringify({ type: "typing", data: { typing: true } }));
 
-// Leave when user disconnects
-func handleWSDisconnect(userID uint, room string) {
-    presence.Leave("chat:"+room, userID)
-    // ... broadcast updated list
-}
-
-// Client sends heartbeat every 20 seconds
-func handleHeartbeat(c *http.Context) error {
-    user := auth.User(c)
-    room := c.Param("room")
-    presence.Heartbeat("chat:"+room, user.ID)
-    return c.JSON(200, map[string]string{"status": "ok"})
-}</code></pre>
+// message event
+ws.send(JSON.stringify({ type: "message", data: "hello room" }));</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
 <ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
-  <li>Set TTL slightly longer than client heartbeat interval</li>
-  <li>Include useful metadata (name, avatar) for UI rendering</li>
-  <li>Clean up on WebSocket disconnect, don't rely only on TTL</li>
-  <li>Use channel namespacing (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">chat:</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">doc:</code>) to organize presence data</li>
+  <li>Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">AuthFunc</code> to authorize channel access per request</li>
+  <li>Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">AllowedOrigins</code> explicitly for production deployments</li>
+  <li>Keep channel names scoped (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">chat:</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">doc:</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">game:</code>)</li>
+  <li>Set sane <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">PingInterval</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">WriteTimeout</code> for your network profile</li>
 </ul>

@@ -74,7 +74,8 @@ func NewManager(adapter Adapter) *Manager {
 func (m *Manager) Adapter() Adapter { return m.adapter }
 
 // Register registers a job type for deserialization. Call with a zero-value instance.
-//   queue.Register(&jobs.SendEmail{})
+//
+//	queue.Register(&jobs.SendEmail{})
 func (m *Manager) Register(job Job) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -94,10 +95,10 @@ func (m *Manager) RegisterFunc(name string, fn func() Job) {
 // Dispatch enqueues a job. Returns a DispatchBuilder for options.
 func (m *Manager) Dispatch(job Job) *DispatchBuilder {
 	return &DispatchBuilder{
-		manager: m,
-		job:     job,
-		queue:   "default",
-		delay:   0,
+		manager:    m,
+		job:        job,
+		queue:      "default",
+		delay:      0,
 		maxRetries: 3,
 	}
 }

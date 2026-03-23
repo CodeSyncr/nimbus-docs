@@ -6,6 +6,7 @@
 <pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/websocket"
 
 hub := websocket.NewHub()
+hub.SetAllowedOrigins([]string{"https://app.example.com"})
 go hub.Run()
 
 app.Router.Get("/ws", func(c *http.Context) error {
@@ -92,6 +93,7 @@ ws.send('Hello everyone!');</code></pre>
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
 <ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
   <li>Always run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hub.Run()</code> in a separate goroutine</li>
+  <li>Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">hub.SetAllowedOrigins(...)</code> for cross-origin clients; default is same-origin only</li>
   <li>Handle connection errors gracefully — clients disconnect unexpectedly</li>
   <li>Use JSON for message format — consistent and easy to parse</li>
   <li>Combine with <a href="/docs/presence" class="text-amber-600 dark:text-amber-400 hover:underline">Presence</a> to track who's online</li>

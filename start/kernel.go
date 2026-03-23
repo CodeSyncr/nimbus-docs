@@ -12,6 +12,7 @@ package start
 
 import (
 	"github.com/CodeSyncr/nimbus"
+	"github.com/CodeSyncr/nimbus/auth"
 	"github.com/CodeSyncr/nimbus/errors"
 	"github.com/CodeSyncr/nimbus/middleware"
 	"github.com/CodeSyncr/nimbus/packages/shield"
@@ -88,6 +89,12 @@ func RegisterMiddleware(app *nimbus.App) {
 	//     middleware.CORS(),
 	//     middleware.CSRF(),
 	// )
+
+	// ── Named Middleware ──────────────────────────────────
+	// Register stateless auth if available in container
+	if g, err := app.Container.Make("auth.stateless"); err == nil {
+		Middleware["auth:api"] = auth.RequireStatelessToken(g.(*auth.StatelessGuard))
+	}
 }
 
 // ── Named Middleware ────────────────────────────────────────

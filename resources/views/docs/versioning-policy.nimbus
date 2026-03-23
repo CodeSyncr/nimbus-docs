@@ -1,0 +1,48 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Versioning &amp; Release Policy</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus follows semantic versioning and predictable release practices so teams can upgrade safely.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Semantic versioning</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><strong>Major</strong> (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">X.0.0</code>): breaking API/behavior changes.</li>
+  <li><strong>Minor</strong> (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">0.X.0</code>/<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">X.Y.0</code>): backward-compatible features.</li>
+  <li><strong>Patch</strong> (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">X.Y.Z</code>): backward-compatible fixes and security patches.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Backward compatibility commitments</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Public APIs are kept stable within a major version.</li>
+  <li>Deprecations should be documented before removal.</li>
+  <li>Behavioral changes affecting production should be called out in release notes.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Deprecation lifecycle</h2>
+<ol class="list-decimal pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Mark feature as deprecated in docs and changelog.</li>
+  <li>Provide migration path and replacement API.</li>
+  <li>Remove only in the next major release unless it is a critical security issue.</li>
+</ol>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Release quality gates</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Every release should pass the CI workflow:</p>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">go test ./...</code></li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">go test -race ./...</code></li>
+  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">go vet ./...</code></li>
+</ul>
+<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">CI workflow location: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.github/workflows/ci.yml</code></p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Upgrade guidance for teams</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Pin framework versions in production and upgrade in staging first.</li>
+  <li>Run migrations and queue workers against the new version before rollout.</li>
+  <li>Review release notes for deprecations and operational changes.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Related docs</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><a href="/docs/production-readiness" class="text-amber-600 dark:text-amber-400 hover:underline">Production Readiness</a></li>
+  <li><a href="/docs/deployment" class="text-amber-600 dark:text-amber-400 hover:underline">Deployment</a></li>
+  <li><a href="/docs/migrations" class="text-amber-600 dark:text-amber-400 hover:underline">Migrations</a></li>
+  <li><a href="/docs/queue" class="text-amber-600 dark:text-amber-400 hover:underline">Queue</a></li>
+</ul>

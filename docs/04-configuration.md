@@ -207,9 +207,10 @@ Configure default guard (session vs token) and their settings.
 var Auth AuthConfig
 
 type AuthConfig struct {
-    DefaultGuard string           // session | token
+    DefaultGuard string           // session | token | stateless
     Session      SessionGuardConfig
     Token        TokenGuardConfig
+    Stateless    StatelessTokenConfig
 }
 
 type SessionGuardConfig struct {
@@ -222,6 +223,12 @@ type TokenGuardConfig struct {
     Scheme     string    // Token prefix (Bearer)
     ExpiresIn  int       // Token lifetime (seconds)
 }
+
+type StatelessTokenConfig struct {
+    Driver    string         // jwt | paseto
+    Secret    string         // Signing secret or PASETO key
+    ExpiresIn time.Duration  // Token lifetime
+}
 ```
 
 **Environment variables:**
@@ -230,13 +237,19 @@ AUTH_GUARD=session
 SESSION_COOKIE=nimbus_session
 SESSION_MAX_AGE=604800          # 7 days
 TOKEN_EXPIRES_IN=86400          # 1 day
+
+# Stateless (JWT/PASETO)
+AUTH_TOKEN_DRIVER=jwt           # jwt | paseto
+AUTH_TOKEN_SECRET=your-secret
+AUTH_TOKEN_EXPIRES_IN=24h
 ```
 
 **Real-life example — JWT API auth:**
 ```env
-# Production API config
-AUTH_GUARD=token
-TOKEN_EXPIRES_IN=3600           # 1 hour for security
+# Production API config (JWT)
+AUTH_GUARD=stateless
+AUTH_TOKEN_DRIVER=jwt
+AUTH_TOKEN_EXPIRES_IN=1h
 ```
 
 ---

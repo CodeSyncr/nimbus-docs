@@ -1,0 +1,125 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Collections</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">The <code>collect</code> package brings Laravel-style generic collections to Go. Wrap any slice with <code>collect.Collect(items)</code> to unlock a rich, chainable API for filtering, sorting, aggregating, and transforming data without writing manual loops.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Concept</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4"><code>Collection[T]</code> is a generic wrapper built on Go 1.18+ generics. Transformation methods return a new <code>Collection[T]</code> for chaining. Terminal methods like <code>First()</code>, <code>Sum()</code>, and <code>ToSlice()</code> extract values. Because Go methods cannot introduce new type parameters, cross-type operations like <code>Map</code> and <code>GroupBy</code> are provided as package-level functions.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/collect"
+
+// Filter active users, sort by age, get the top 5
+top5 := collect.Collect(users).
+    Filter(func(u User) bool { return u.IsActive }).
+    Sort(func(a, b User) bool { return a.Age < b.Age }).
+    Take(5).
+    ToSlice()
+</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Available Methods</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Transformation (Chainable)</h3>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Filter(fn)</code></td><td class="px-4 py-2">Keep items where fn returns true</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Reject(fn)</code></td><td class="px-4 py-2">Remove items where fn returns true</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Unique()</code></td><td class="px-4 py-2">Deduplicate via deep equality</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Compact()</code></td><td class="px-4 py-2">Remove zero-value items</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Reverse()</code></td><td class="px-4 py-2">Reverse the order</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Shuffle()</code></td><td class="px-4 py-2">Randomize order</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Sort(fn)</code> / <code>SortDesc(fn)</code></td><td class="px-4 py-2">Stable sort asc/desc</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Take(n)</code> / <code>TakeLast(n)</code></td><td class="px-4 py-2">First/last n items</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Skip(n)</code> / <code>SkipLast(n)</code></td><td class="px-4 py-2">Skip first/last n items</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Slice(start, end)</code></td><td class="px-4 py-2">Sub-slice by index</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Chunk(size)</code></td><td class="px-4 py-2">Split into batches of given size</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Flatten()</code></td><td class="px-4 py-2">Flatten one level deep</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Append(...items)</code></td><td class="px-4 py-2">Add items to end</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Prepend(...items)</code></td><td class="px-4 py-2">Add items to beginning</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Tap(fn)</code></td><td class="px-4 py-2">Debug tap — call fn, return self</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Cross-Type Mappers (Package-Level Functions)</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Map to a different type
+names := collect.MapCollect(users, func(u User) string { return u.Name })
+
+// Group by a key
+byRole := collect.GroupByCollect(users, func(u User) string { return u.Role })
+
+// Key by unique field
+byID := collect.KeyByCollect(users, func(u User) uint { return u.ID })
+
+// Zip two collections
+pairs := collect.ZipCollect(names, ages) // Collection[Pair[string, int]]
+</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Terminal (Aggregation)</h3>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Returns</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Count()</code></td><td class="px-4 py-2"><code>int</code></td><td class="px-4 py-2">Number of items</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>First()</code> / <code>Last()</code></td><td class="px-4 py-2"><code>(T, bool)</code></td><td class="px-4 py-2">First/last item + found</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Nth(n)</code></td><td class="px-4 py-2"><code>(T, bool)</code></td><td class="px-4 py-2">Item at index n</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Random()</code></td><td class="px-4 py-2"><code>(T, bool)</code></td><td class="px-4 py-2">Random item</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Contains(fn)</code> / <code>Some(fn)</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">Any item matches predicate</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Every(fn)</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">All items match predicate</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Sum(fn)</code> / <code>Min(fn)</code> / <code>Max(fn)</code> / <code>Avg(fn)</code></td><td class="px-4 py-2"><code>float64</code></td><td class="px-4 py-2">Numeric aggregates via accessor</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>ToSlice()</code></td><td class="px-4 py-2"><code>[]T</code></td><td class="px-4 py-2">Extract the underlying slice</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Each(fn)</code></td><td class="px-4 py-2">—</td><td class="px-4 py-2">Iterate with index</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Dashboard Analytics</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func (ctrl *DashboardController) Stats(c *http.Context) error {
+    var orders []Order
+    database.Get().Where("created_at > ?", timex.Now().SubDays(30).Time()).Find(&orders)
+
+    coll := collect.Collect(orders)
+
+    stats := map[string]any{
+        "totalRevenue": coll.Sum(func(o Order) float64 { return o.Total }),
+        "avgOrder":     coll.Avg(func(o Order) float64 { return o.Total }),
+        "maxOrder":     coll.Max(func(o Order) float64 { return o.Total }),
+        "count":        coll.Count(),
+    }
+
+    return c.JSON(200, stats)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Batch Processing with Chunk</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func sendBulkEmails(users []User) {
+    batches := collect.Collect(users).Chunk(50)
+
+    for _, batch := range batches {
+        batch.Each(func(i int, u User) {
+            mail.Send(u.Email, "newsletter", map[string]any{"name": u.Name})
+        })
+        time.Sleep(time.Second) // rate limit between batches
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Grouping API Responses</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func (ctrl *ProductController) ByCategory(c *http.Context) error {
+    var products []Product
+    database.Get().Find(&products)
+
+    grouped := collect.GroupByCollect(
+        collect.Collect(products),
+        func(p Product) string { return p.Category },
+    )
+
+    return c.JSON(200, grouped)
+    // { "electronics": [...], "clothing": [...] }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Use <code>Filter</code> + <code>Sort</code> + <code>Take</code> chains instead of raw SQL for simple in-memory operations</li>
+  <li>Use <code>Chunk()</code> for batch processing to avoid memory spikes and API rate limits</li>
+  <li>Use <code>Tap()</code> during development to debug intermediate chain values</li>
+  <li>Use <code>GroupByCollect</code> to structure flat query results into nested API responses</li>
+  <li>Prefer <code>Every()</code> and <code>Some()</code> over manual loops for validation checks</li>
+</ul>

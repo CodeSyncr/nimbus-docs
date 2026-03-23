@@ -132,7 +132,7 @@ func (m *Migrator) Up() error {
 	return nil
 }
 
-// Down rolls back the last batch of migrations (Laravel/Adonis-style).
+// Down rolls back the last batch of migrations (Laravel style).
 func (m *Migrator) Down() error {
 	if err := m.ensureSchemaMigrations(); err != nil {
 		return fmt.Errorf("schema_migrations: %w", err)

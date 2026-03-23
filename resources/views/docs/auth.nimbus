@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Auth & Guards</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus provides a full authentication and authorization system with three guards (Session, Token, BasicAuth), a Gate for fine-grained authorization, personal access tokens, and middleware. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:auth</code> to scaffold everything.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus provides a full authentication and authorization system with four guards (Session, Token, Stateless, BasicAuth), a Gate for fine-grained authorization, personal access tokens, and middleware. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:auth</code> to scaffold everything.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Quick Start</h2>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="Terminal"><code>nimbus make:auth</code></pre>
@@ -46,6 +46,15 @@ app.Router.Post("/logout", authCtrl.Logout)
 
 // Protected group
 dashboard := app.Router.Group("/dashboard", auth.RequireAuth(guard, "/login"))</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Stateless Guard (JWT/PASETO)</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Token-based authentication that doesn't require database lookups for verification. Supports JWT and PASETO drivers.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="start/kernel.go"><code>// Create a stateless guard with JWT driver
+driver := auth.NewJWTDriver(config.Auth.Stateless.Secret)
+guard := auth.NewStatelessGuard(driver, models.UserByID(database.DB))
+
+// Use in routes
+api := app.Router.Group("/api", auth.RequireStatelessToken(guard))</code></pre>
 
 <h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Guard API</h3>
 <div class="overflow-x-auto mb-4">

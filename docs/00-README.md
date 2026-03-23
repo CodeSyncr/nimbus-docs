@@ -23,7 +23,7 @@
 | 06 | [Database & ORM](06-database.md) | GORM integration, models, migrations, seeders, factories, scopes, hooks |
 | 07 | [Middleware](07-middleware.md) | Three-layer middleware, built-in middleware, custom middleware |
 | 08 | [Validation](08-validation.md) | VineJS-style validation, schemas, rules, form requests, database rules |
-| 09 | [Auth & Security](09-auth-security.md) | Session/token guards, policies, Shield, CSRF, CORS, hashing |
+| 09 | [Auth & Security](09-auth-security.md) | Session/token/stateless guards, policies, Shield, CSRF, CORS, hashing |
 | 10 | [Views & Templates](10-views-templates.md) | Edge-inspired .nimbus templates, layouts, components, partials |
 
 ### Framework Features

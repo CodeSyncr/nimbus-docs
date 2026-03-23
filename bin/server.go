@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/CodeSyncr/nimbus"
+	"github.com/CodeSyncr/nimbus/auth"
 	"github.com/CodeSyncr/nimbus/cache"
 	"github.com/CodeSyncr/nimbus/database"
 	"github.com/CodeSyncr/nimbus/database/nosql"
@@ -57,6 +58,7 @@ func Boot() *nimbus.App {
 	bootDatabase(app)
 	bootNoSQL(app)
 	bootQueue()
+	bootStatelessAuth(app)
 
 	registerPlugins(app)
 	registerMiddleware(app)
@@ -142,6 +144,26 @@ func bootNoSQL(app *nimbus.App) {
 func bootQueue() {
 	queue.Boot(&queue.BootConfig{
 		RegisterJobs: start.RegisterQueueJobs,
+	})
+}
+
+func bootStatelessAuth(app *nimbus.App) {
+	var driver auth.TokenDriver
+	switch config.Auth.Stateless.Driver {
+	case "paseto":
+		driver = auth.NewPasetoDriver(config.Auth.Stateless.Secret)
+	default:
+		driver = auth.NewJWTDriver(config.Auth.Stateless.Secret)
+	}
+
+	loader := auth.UserLoaderFunc(func(ctx context.Context, id string) (auth.User, error) {
+		// Example: Load from DB. In a real app, you'd use your User model.
+		return nil, nil // TODO: Implement user loader
+	})
+
+	guard := auth.NewStatelessGuard(driver, loader)
+	app.Container.Singleton("auth.stateless", func() *auth.StatelessGuard {
+		return guard
 	})
 }
 

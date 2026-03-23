@@ -1,0 +1,67 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Stateless Guard (JWT/PASETO)</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Stateless authentication uses self-contained tokens (JWT or PASETO) to carry user identity. This allows the server to verify the user without querying the database or cache on every request, making it ideal for distributed systems and mobile apps.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Concept</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">When a user logs in, the server generates a signed token. The client stores this token (e.g., in localStorage or a secure cookie) and sends it in the <code>Authorization: Bearer &lt;token&gt;</code> header for subsequent requests. The server verifies the signature and extracts the user ID from the token payload.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Configure the stateless guard in your <code>config/auth.go</code> and populate settings via <code>.env</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file=".env"><code>AUTH_TOKEN_DRIVER=paseto    # jwt or paseto
+AUTH_TOKEN_SECRET=your-32-character-secret
+AUTH_TOKEN_EXPIRES_IN=24h</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Drivers</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+  <div class="p-4 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <h3 class="font-bold text-slate-900 dark:text-white mb-1">JWT Driver</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Industry standard. Uses HMAC-SHA256 (HS256) for signing. Widely compatible but requires careful secret management.</p>
+  </div>
+  <div class="p-4 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <h3 class="font-bold text-slate-900 dark:text-white mb-1">PASETO Driver</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Modern, secure-by-default alternative (V4 Local). Avoids common JWT pitfalls like "alg: none" or algorithm confusion.</p>
+  </div>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Setup</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Initialize the guard in your application boot process (e.g., <code>bin/server.go</code>):</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="bin/server.go"><code>func bootStatelessAuth(app *nimbus.App) {
+    var driver auth.TokenDriver
+    if config.Auth.Stateless.Driver == "paseto" {
+        driver = auth.NewPasetoDriver(config.Auth.Stateless.Secret)
+    } else {
+        driver = auth.NewJWTDriver(config.Auth.Stateless.Secret)
+    }
+
+    // UserLoader is used only after token validation to load the actual model from DB
+    guard := auth.NewStatelessGuard(driver, models.UserByID(database.DB))
+
+    app.Container.Singleton("auth.stateless", func() *auth.StatelessGuard {
+        return guard
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Usage</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Generating Tokens</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>guard := app.Container.MustMake("auth.stateless").(*auth.StatelessGuard)
+
+// Generate token for user ID 123
+token, err := guard.GenerateToken("123", 24 * time.Hour)</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Middleware Protection</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Register the middleware in your <code>start/kernel.go</code> and use it on your routes:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="start/routes.go"><code>// In kernel.go
+Middleware["auth:api"] = auth.RequireStatelessToken(guard)
+
+// In routes.go
+api := app.Router.Group("/api", Middleware["auth:api"])
+api.Get("/profile", ProfileHandler)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Security Best Practices</h2>
+<ul class="list-disc ml-6 text-slate-600 dark:text-slate-400 space-y-2">
+  <li><strong>Use PASETO</strong>: Favor PASETO over JWT for new applications.</li>
+  <li><strong>Rotate Secrets</strong>: Change your <code>AUTH_TOKEN_SECRET</code> regularly. Changing it will invalidate all existing tokens (global logout).</li>
+  <li><strong>Short Expirations</strong>: Use short-lived tokens and implement refresh token logic for improved security.</li>
+  <li><strong>Secure Storage</strong>: If storing tokens in cookies, always use <code>HttpOnly</code> and <code>Secure</code> flags.</li>
+</ul>

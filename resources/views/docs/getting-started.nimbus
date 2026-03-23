@@ -1,28 +1,67 @@
 @layout('layout-docs')
-<h1 class="text-3xl font-bold text-slate-900 mb-4">Getting Started</h1>
-<p class="text-slate-600 mb-6">Install the Nimbus CLI, create a new app, and run the development server.</p>
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Getting Started</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">A practical path to build your first Nimbus app: install CLI, scaffold project, add one route, one model, and one background job.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Install the CLI</h2>
-<p class="text-slate-600 mb-2">From the Nimbus repository directory:</p>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Developer roadmap (30-45 min)</h2>
+<ol class="list-decimal pl-6 mb-6 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Install CLI and create a new app</li>
+  <li>Run server and verify first route</li>
+  <li>Add a Todo model and run migrations</li>
+  <li>Add create/list endpoints with validation</li>
+  <li>Dispatch a queue job and run worker</li>
+  <li>Enable Horizon and monitor queue metrics</li>
+</ol>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">1) Install the CLI</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">From the Nimbus repository directory:</p>
 <pre><code>cd /path/to/nimbus
 go install ./cmd/nimbus</code></pre>
-<p class="text-slate-600 mb-4 text-sm">Ensure <code class="bg-slate-100 px-1 rounded">$HOME/go/bin</code> is in your PATH. For zsh: <code class="bg-slate-100 px-1 rounded">export PATH="$HOME/go/bin:$PATH"</code> (add to <code class="bg-slate-100 px-1 rounded">~/.zshrc</code> if needed).</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">Ensure <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">$HOME/go/bin</code> is in your PATH. For zsh: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">export PATH="$HOME/go/bin:$PATH"</code> (add to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">~/.zshrc</code> if needed).</p>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Create a new app</h2>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">2) Create a new app</h2>
 <pre><code>nimbus new myapp
 cd myapp
 go mod tidy
 nimbus serve</code></pre>
-<p class="text-slate-600 mb-4">The server runs at <code class="bg-slate-100 px-1 rounded">http://localhost:3333</code> (or the port set in <code class="bg-slate-100 px-1 rounded">.env</code>).</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Server runs at <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">http://localhost:3333</code> (or your <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">PORT</code> in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code>).</p>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Using Nimbus in an existing project</h2>
-<p class="text-slate-600 mb-2">Add the dependency and bootstrap the app:</p>
-<pre><code>go get github.com/CodeSyncr/nimbus@latest
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">3) Add your first route</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">In your app routes file:</p>
+<pre><code>app.Router.Get("/healthz", func(c *http.Context) error {
+  return c.JSON(200, map[string]any{
+    "status": "ok",
+    "service": "myapp",
+  })
+})</code></pre>
 
-// In main.go
-app := nimbus.New()
-app.Router.Use(middleware.Logger(), middleware.Recover())
-app.Router.Get("/", func(c *http.Context) error {
-    return c.JSON(http.StatusOK, map[string]string{"hello": "nimbus"})
-})
-app.Run()</code></pre>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">4) Add model + migration</h2>
+<pre><code>nimbus make:model Todo -m
+nimbus migration:run</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">Then add fields like <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Title</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Done</code> in your model/migration.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">5) Add queue-backed workflow</h2>
+<pre><code>// Dispatch from a handler
+queue.Dispatch(&jobs.SendWelcomeEmail{UserID: user.ID}).
+  OnQueue("emails").
+  Retries(5).
+  Dispatch(c.Request.Context())
+
+// Run worker in separate process
+nimbus queue:work</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">6) Production defaults you should set early</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_DRIVER=redis</code> (or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database</code>)</li>
+  <li>Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_REDIS_VISIBILITY_TIMEOUT_SECONDS</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_DB_LEASE_SECONDS</code></li>
+  <li>Keep jobs idempotent and implement <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Failed()</code></li>
+  <li>Use WebSocket/Presence origin allowlists for realtime endpoints</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Where to go next</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><a href="/docs/routing" class="text-amber-600 dark:text-amber-400 hover:underline">Routing</a> + <a href="/docs/controllers" class="text-amber-600 dark:text-amber-400 hover:underline">Controllers</a></li>
+  <li><a href="/docs/database" class="text-amber-600 dark:text-amber-400 hover:underline">Database</a> + <a href="/docs/migrations" class="text-amber-600 dark:text-amber-400 hover:underline">Migrations</a></li>
+  <li><a href="/docs/validation" class="text-amber-600 dark:text-amber-400 hover:underline">Validation</a></li>
+  <li><a href="/docs/queue" class="text-amber-600 dark:text-amber-400 hover:underline">Queue</a> + <a href="/docs/horizon" class="text-amber-600 dark:text-amber-400 hover:underline">Horizon</a></li>
+  <li><a href="/docs/websockets" class="text-amber-600 dark:text-amber-400 hover:underline">WebSockets</a> + <a href="/docs/presence" class="text-amber-600 dark:text-amber-400 hover:underline">Presence</a></li>
+</ul>

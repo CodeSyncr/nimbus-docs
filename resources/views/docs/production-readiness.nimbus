@@ -1,0 +1,63 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Production Readiness</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Use this checklist before shipping Nimbus apps to production. It focuses on reliability, security, observability, and safe deployment workflows.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">1) Core runtime safety</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">APP_ENV=production</code> and verify config is loaded from environment.</li>
+  <li>Run behind a reverse proxy (TLS termination, forwarded headers, request limits).</li>
+  <li>Ensure graceful shutdown is configured for rolling deploys.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">2) Database & migrations</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Run migrations in CI/staging before production rollout.</li>
+  <li>Keep migrations small and reversible (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Up</code>/<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Down</code>).</li>
+  <li>For DDL that cannot run in transactions, mark migration as non-transactional and document rollback path.</li>
+  <li>Never edit an already-applied migration in production.</li>
+</ul>
+<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">Related: <a href="/docs/migrations" class="text-amber-600 dark:text-amber-400 hover:underline">Migrations</a>, <a href="/docs/database" class="text-amber-600 dark:text-amber-400 hover:underline">Database</a></p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">3) Queue reliability</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_DRIVER=redis</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database</code> (not sync) in production.</li>
+  <li>Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_REDIS_VISIBILITY_TIMEOUT_SECONDS</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_DB_LEASE_SECONDS</code> to at least 2x p95 job runtime.</li>
+  <li>Set bounded retries and keep job handlers idempotent.</li>
+  <li>Run dedicated worker processes and monitor backlog growth.</li>
+</ul>
+<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">Related: <a href="/docs/queue" class="text-amber-600 dark:text-amber-400 hover:underline">Queue</a>, <a href="/docs/horizon" class="text-amber-600 dark:text-amber-400 hover:underline">Horizon</a></p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">4) Realtime security</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Configure explicit WebSocket/Presence origin allowlists.</li>
+  <li>Authorize channels in Presence via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">AuthFunc</code>.</li>
+  <li>Avoid broad CORS rules unless absolutely necessary.</li>
+</ul>
+<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">Related: <a href="/docs/websockets" class="text-amber-600 dark:text-amber-400 hover:underline">WebSockets</a>, <a href="/docs/presence" class="text-amber-600 dark:text-amber-400 hover:underline">Presence</a>, <a href="/docs/cors" class="text-amber-600 dark:text-amber-400 hover:underline">CORS</a></p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">5) Health checks & observability</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Expose health endpoints for load balancers and orchestration probes.</li>
+  <li>Track queue counters (dispatch/processed/failed/retried/reclaimed).</li>
+  <li>Alert on retry spikes, reclaim spikes, and sustained queue backlog.</li>
+</ul>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code># Horizon metrics endpoint (Prometheus format)
+GET /horizon/api/metrics/prometheus</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">Related: <a href="/docs/health" class="text-amber-600 dark:text-amber-400 hover:underline">Health</a>, <a href="/docs/metrics" class="text-amber-600 dark:text-amber-400 hover:underline">Metrics</a></p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">6) Release process</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Run CI gates on every PR: tests, race detector, and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">go vet</code>.</li>
+  <li>Require peer review for migration and queue-related changes.</li>
+  <li>Roll out with staged deploys and rollback plan validated.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Pre-launch quick check</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>[ ] APP_ENV=production configured
+[ ] Migrations tested in staging and rollback verified
+[ ] Queue driver + lease timeouts configured
+[ ] WebSocket/Presence allowed origins configured
+[ ] Health and metrics endpoints reachable
+[ ] Alerts configured for queue failures/retries/reclaims
+[ ] CI checks passing on default branch
+[ ] Deployment rollback plan documented</code></pre>

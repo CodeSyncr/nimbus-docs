@@ -17,6 +17,26 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/unpoly@3.12.0/unpoly.min.css">
   <script src="https://cdn.jsdelivr.net/npm/unpoly@3.12.0/unpoly.min.js"></script>
   <script>
+    // Client-side prototype extensions (loaded once via layout)
+    if (!Array.prototype.forEachPromise) {
+      Array.prototype.forEachPromise = async function(callback) {
+        var that = this;
+        for (var index = 0; index < that.length; index++) {
+          await callback(that[index], index, that);
+        }
+      };
+    }
+
+    if (!Array.prototype.mapPromise) {
+      Array.prototype.mapPromise = async function(callback) {
+        var that = this;
+        for (var index = 0; index < that.length; index++) {
+          that[index] = await callback(that[index], index, that);
+        }
+        return that;
+      };
+    }
+
     // Theme-specific confirmation override
     // We set it after Unpoly loads
     up.layer.confirm = function(options) {

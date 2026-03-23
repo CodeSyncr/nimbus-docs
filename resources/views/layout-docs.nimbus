@@ -320,10 +320,14 @@
           </summary>
           <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
             <a href="/docs/introduction" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Introduction</a>
+            <a href="/docs/getting-started" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Getting Started</a>
             <a href="/docs/installation" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Installation</a>
             <a href="/docs/folder-structure" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Folder Structure</a>
             <a href="/docs/configuration" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Configuration</a>
             <a href="/docs/deployment" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Deployment</a>
+            <a href="/docs/production-readiness" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Production Readiness</a>
+            <a href="/docs/versioning-policy" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Versioning &amp; Release Policy</a>
+            <a href="/docs/release-checklist" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Release Checklist</a>
             <a href="/docs/faqs" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">FAQs</a>
           </div>
         </details>
@@ -441,6 +445,7 @@
             <a href="/docs/auth-introduction" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Introduction</a>
             <a href="/docs/session-guard" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Session Guard</a>
             <a href="/docs/access-tokens" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Access Tokens</a>
+            <a href="/docs/stateless-guard" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Stateless Guard</a>
             <a href="/docs/authorization" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Authorization</a>
           </div>
         </details>
@@ -474,6 +479,21 @@
             <a href="/docs/service-providers" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Service Providers</a>
             <a href="/docs/plugins" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Plugins</a>
             <a href="/docs/container-services" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Container Services</a>
+          </div>
+        </details>
+
+        <details class="nav-section" data-section="helpers">
+          <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
+            <span class="nav-icon bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400">🧰</span>
+            <span class="flex-1">Helpers</span>
+            <span class="nav-count">4</span>
+            <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
+          </summary>
+          <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
+            <a href="/docs/helpers-string" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Fluent String</a>
+            <a href="/docs/helpers-collection" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Collections</a>
+            <a href="/docs/helpers-time" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Date &amp; Time</a>
+            <a href="/docs/helpers-pipeline" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Async Pipelines</a>
           </div>
         </details>
 

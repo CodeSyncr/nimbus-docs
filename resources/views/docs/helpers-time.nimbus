@@ -1,0 +1,136 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Date &amp; Time Helper</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">The <code>timex</code> package is Nimbus's answer to Carbon (Laravel) and Luxon (AdonisJS). It wraps Go's <code>time.Time</code> in a fluent, chainable API for manipulation, comparison, and human-friendly output — no more manual <code>AddDate()</code> gymnastics.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Concept</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4"><code>NimbusTime</code> wraps a standard <code>time.Time</code> value. Every mutator returns a new <code>NimbusTime</code> (immutable — the original is never modified), so you can chain mutations freely. Terminal methods like <code>Time()</code>, <code>ToISO()</code>, and <code>DiffForHumans()</code> extract the final value.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/timex"
+
+// Trial expires 14 days from now, at 11:59 PM
+expiresAt := timex.Now().AddDays(14).EndOfDay()
+fmt.Println(expiresAt.ToDateTimeString()) // "2026-04-01 23:59:59"
+fmt.Println(expiresAt.DiffForHumans())    // "in 14 days"
+</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Entry Points</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Function</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>timex.Now()</code></td><td class="px-4 py-2">Current time</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>timex.Parse(s)</code></td><td class="px-4 py-2">Auto-detects RFC3339, datetime, or date format</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>timex.FromTime(t)</code></td><td class="px-4 py-2">Wrap an existing <code>time.Time</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Available Methods</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Manipulation (Chainable)</h3>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>AddDays(n)</code> / <code>SubDays(n)</code></td><td class="px-4 py-2">Add or subtract days</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>AddHours(n)</code> / <code>SubHours(n)</code></td><td class="px-4 py-2">Add or subtract hours</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>AddMinutes(n)</code> / <code>SubMinutes(n)</code></td><td class="px-4 py-2">Add or subtract minutes</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>AddMonths(n)</code> / <code>SubMonths(n)</code></td><td class="px-4 py-2">Add or subtract months</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>AddYears(n)</code> / <code>SubYears(n)</code></td><td class="px-4 py-2">Add or subtract years</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>StartOfDay()</code> / <code>EndOfDay()</code></td><td class="px-4 py-2">Snap to midnight or 23:59:59</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>StartOfWeek()</code> / <code>EndOfWeek()</code></td><td class="px-4 py-2">Monday start / Sunday end</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>StartOfMonth()</code> / <code>EndOfMonth()</code></td><td class="px-4 py-2">First/last moment of the month</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>StartOfYear()</code> / <code>EndOfYear()</code></td><td class="px-4 py-2">Jan 1 midnight / Dec 31 end</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Comparison (Terminal)</h3>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Returns</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>IsBefore(other)</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">Is before other time</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>IsAfter(other)</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">Is after other time</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>IsSame(other)</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">Exact equality</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>IsBetween(start, end)</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">Falls within a range</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>IsToday()</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">Same calendar date as now</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>IsPast()</code> / <code>IsFuture()</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">Before/after current time</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>IsWeekend()</code> / <code>IsWeekday()</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">Saturday/Sunday or Mon-Fri</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Output (Terminal)</h3>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Example Output</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>ToDateString()</code></td><td class="px-4 py-2"><code>"2026-03-18"</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>ToTimeString()</code></td><td class="px-4 py-2"><code>"15:04:05"</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>ToDateTimeString()</code></td><td class="px-4 py-2"><code>"2026-03-18 15:04:05"</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>ToISO()</code></td><td class="px-4 py-2"><code>"2026-03-18T15:04:05+05:30"</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>DiffForHumans()</code></td><td class="px-4 py-2"><code>"3 days ago"</code> / <code>"in 2 hours"</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>DiffInDays(other)</code></td><td class="px-4 py-2"><code>int</code> — difference in days</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>DiffInHours(other)</code></td><td class="px-4 py-2"><code>int</code> — difference in hours</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Unix()</code></td><td class="px-4 py-2">Unix timestamp (int64)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Time()</code></td><td class="px-4 py-2">Unwrap to <code>time.Time</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Subscription Trial Logic</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func isTrialActive(user User) bool {
+    trialEnd := timex.FromTime(user.CreatedAt).AddDays(14).EndOfDay()
+    return trialEnd.IsFuture()
+}
+
+func daysLeftInTrial(user User) int {
+    trialEnd := timex.FromTime(user.CreatedAt).AddDays(14).EndOfDay()
+    return trialEnd.DiffInDays(timex.Now())
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Weekly Report Date Ranges</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func (ctrl *ReportController) Weekly(c *http.Context) error {
+    weekStart := timex.Now().StartOfWeek()
+    weekEnd := timex.Now().EndOfWeek()
+
+    var orders []Order
+    database.Get().
+        Where("created_at BETWEEN ? AND ?", weekStart.Time(), weekEnd.Time()).
+        Find(&orders)
+
+    return c.JSON(200, map[string]any{
+        "from":   weekStart.ToDateString(),
+        "to":     weekEnd.ToDateString(),
+        "orders": orders,
+    })
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Human-Friendly Timestamps in Templates</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func (ctrl *PostController) Index(c *http.Context) error {
+    var posts []Post
+    database.Get().Order("created_at desc").Find(&posts)
+
+    type PostView struct {
+        Post
+        TimeAgo string
+    }
+    var views []PostView
+    for _, p := range posts {
+        views = append(views, PostView{
+            Post:    p,
+            TimeAgo: timex.FromTime(p.CreatedAt).DiffForHumans(), // "2 hours ago"
+        })
+    }
+
+    return c.View("posts/index", map[string]any{"posts": views})
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Use <code>StartOfDay()</code> / <code>EndOfDay()</code> for date range queries — avoids off-by-one bugs</li>
+  <li>Use <code>DiffForHumans()</code> for UI display, <code>DiffInDays()</code> for business logic</li>
+  <li>Use <code>IsBetween()</code> for eligibility checks (promotions, trial windows, schedules)</li>
+  <li>Always use <code>.Time()</code> when passing into GORM queries to get back the raw <code>time.Time</code></li>
+  <li>Use <code>Parse()</code> for user input — it auto-detects RFC3339, datetime, and date formats</li>
+</ul>

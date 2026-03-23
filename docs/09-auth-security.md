@@ -28,7 +28,8 @@ Nimbus supports two authentication guards:
 | Guard | Use Case | Storage | Header/Cookie |
 |-------|----------|---------|--------------|
 | **Session** | Web applications | Server-side session | Cookie |
-| **Token** | APIs, mobile apps | Database/cache | `Authorization: Bearer <token>` |
+| **Token** | API (Opaque/Stateful) | Database | `Authorization: Bearer <token>` |
+| **Stateless** | API (JWT/PASETO) | Client-side token | `Authorization: Bearer <token>` |
 
 ### Configuration
 
@@ -37,9 +38,10 @@ Nimbus supports two authentication guards:
 var Auth AuthConfig
 
 type AuthConfig struct {
-    DefaultGuard string           // "session" or "token"
+    DefaultGuard string           // "session", "token", or "stateless"
     Session      SessionGuardConfig
     Token        TokenGuardConfig
+    Stateless    StatelessTokenConfig
 }
 
 func loadAuth() {
@@ -112,30 +114,20 @@ func dashboardHandler(c *http.Context) error {
 }
 ```
 
-### Token Guard (API Authentication)
+### Stateless Guard (JWT/PASETO API Authentication)
 
-For APIs and mobile applications:
+For modern APIs, mobile applications, and distributed services where you don't want to query the database for token verification on every request:
 
 ```go
-// Login endpoint — returns a token
+// Login endpoint — returns a stateless token (JWT or PASETO)
 func (ctrl *AuthController) Login(ctx *http.Context) error {
-    var input struct {
-        Email    string
-        Password string
-    }
-    json.NewDecoder(ctx.Request.Body).Decode(&input)
+    // ... verification logic ...
 
-    var user models.User
-    if db.Where("email = ?", input.Email).First(&user).Error != nil {
-        return ctx.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid credentials"})
-    }
-
-    if !hash.Check(input.Password, user.Password) {
-        return ctx.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid credentials"})
-    }
+    // Get the stateless guard from container
+    guard := app.Container.MustMake("auth.stateless").(*auth.StatelessGuard)
 
     // Generate token
-    token, err := auth.GenerateToken(user.GetID(), config.Auth.Token.ExpiresIn)
+    token, err := guard.GenerateToken(user.GetID(), config.Auth.Stateless.ExpiresIn)
     if err != nil {
         return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "token generation failed"})
     }
@@ -143,16 +135,34 @@ func (ctrl *AuthController) Login(ctx *http.Context) error {
     return ctx.JSON(http.StatusOK, map[string]any{
         "token":      token,
         "token_type": "Bearer",
-        "expires_in": config.Auth.Token.ExpiresIn,
         "user":       user,
     })
 }
 
-// Protected API endpoints
-func (ctrl *ProfileController) Show(ctx *http.Context) error {
-    user := auth.UserFromContext(ctx.Request.Context())
-    return ctx.JSON(http.StatusOK, user)
-}
+// Protected API routes using auth:api middleware
+// In start/routes.go:
+// protected := app.Router.Group("/api", start.Middleware["auth:api"])
+```
+
+#### JWT vs PASETO
+
+Nimbus supports both common drivers. Switch them in your `.env`:
+
+- **JWT**: Industry standard, widely supported, but prone to misconfiguration (e.g., `alg: none`).
+- **PASETO**: Modern, secure-by-default alternative that avoids most JWT pitfalls. Recommended for new projects.
+
+```env
+AUTH_TOKEN_DRIVER=paseto
+AUTH_TOKEN_SECRET=your-32-character-hex-key
+```
+
+### Token Guard (Opaque/Stateful API Authentication)
+
+For APIs where you need full control over token revocation (e.g., "Logout from all devices"):
+
+```go
+// Generate stateful token (stored in database)
+token, err := auth.GenerateToken(user.GetID(), config.Auth.Token.ExpiresIn)
 ```
 
 ### User Context

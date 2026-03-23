@@ -8,7 +8,7 @@
 <p class="text-slate-600 mb-4">This creates a file in <code class="bg-slate-100 px-1 rounded">database/migrations/</code> with the migration struct pre-filled. The generated name is timestamped (e.g. <code class="bg-slate-100 px-1 rounded">20260308120000_create_posts</code>) so migrations always run in order.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Migration struct</h2>
-<p class="text-slate-600 mb-4">Each migration is a <code class="bg-slate-100 px-1 rounded">database.Migration</code> with three fields:</p>
+<p class="text-slate-600 mb-4">Each migration is a <code class="bg-slate-100 px-1 rounded">database.Migration</code> with transaction-aware settings:</p>
 <pre><code>var CreatePosts = database.Migration{
     Name: "20260308120000_create_posts",
     Up: func(db *gorm.DB) error {
@@ -25,7 +25,10 @@
     Down: func(db *gorm.DB) error {
         return db.Exec("DROP TABLE IF EXISTS posts").Error
     },
+    // Set true only when your DDL cannot run in a transaction.
+    NonTransactional: false,
 }</code></pre>
+<p class="text-slate-600 mb-4 text-sm">Nimbus wraps supported migrations in a transaction by default (Postgres, SQLite). Use <code class="bg-slate-100 px-1 rounded">NonTransactional: true</code> only for dialect/DDL operations that require it.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Running migrations</h2>
 <p class="text-slate-600 mb-4">Create a <code class="bg-slate-100 px-1 rounded">Migrator</code> with your database connection and a slice of migrations, then call <code class="bg-slate-100 px-1 rounded">Up()</code>:</p>

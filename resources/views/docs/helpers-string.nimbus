@@ -1,0 +1,95 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Fluent String Helper</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">The <code>str</code> package provides a fluent, chainable API for manipulating strings — inspired by Laravel's <code>Str::of()</code> and AdonisJS string helpers. Every transformation method returns a new <code>NimbusString</code> so you can chain without limits.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Concept</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Instead of juggling <code>strings.ToLower()</code>, <code>strings.TrimSpace()</code>, and regexp calls scattered across your code, Nimbus wraps a plain Go string inside <code>NimbusString</code>. You start a chain with <code>str.Str("...")</code> and finish with <code>.String()</code> to get the raw value back. Everything in between is chainable.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/str"
+
+slug := str.Str("  Hello World — Go is Great!  ").
+    Trim().
+    Slug().
+    String() // "hello-world-go-is-great"
+</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Available Methods</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Returns</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Append(s)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Appends a string to the end</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Prepend(s)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Prepends a string to the beginning</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Upper()</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Converts to UPPERCASE</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Lower()</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Converts to lowercase</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Title()</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Title Case Each Word</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Camel()</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">camelCase</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Snake()</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">snake_case</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Kebab()</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">kebab-case</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Pascal()</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">PascalCase</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Slug(sep?)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">URL-safe slug (default sep <code>-</code>)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Trim()</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Removes leading/trailing whitespace</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Replace(old, new)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Replaces first occurrence</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>ReplaceAll(old, new)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Replaces all occurrences</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Limit(n)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Truncate to n characters + &ldquo;...&rdquo;</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Words(n)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Truncate to n words + &ldquo;...&rdquo;</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Pad(len, pad)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Center-pad to length</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>PadLeft(len, pad)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Left-pad to length</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>PadRight(len, pad)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Right-pad to length</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Repeat(n)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Repeats the string n times</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Reverse()</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Reverses the string</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Mask(char, start, len)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Masks characters (e.g. passwords)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Excerpt(phrase, radius)</code></td><td class="px-4 py-2">chain</td><td class="px-4 py-2">Extract text around a phrase</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Contains(sub)</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">Checks if the string contains a substring</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>StartsWith(prefix)</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">Checks if the string starts with prefix</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>EndsWith(suffix)</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">Checks if the string ends with suffix</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Length()</code></td><td class="px-4 py-2"><code>int</code></td><td class="px-4 py-2">Returns rune count (Unicode safe)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>WordCount()</code></td><td class="px-4 py-2"><code>int</code></td><td class="px-4 py-2">Returns word count</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>IsEmpty()</code></td><td class="px-4 py-2"><code>bool</code></td><td class="px-4 py-2">Returns true for empty string</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Split(sep)</code></td><td class="px-4 py-2"><code>[]string</code></td><td class="px-4 py-2">Splits the string by separator</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>String()</code></td><td class="px-4 py-2"><code>string</code></td><td class="px-4 py-2">Terminal — returns the raw Go string</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Building a URL Slug from User Input</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func (ctrl *PostController) Store(c *http.Context) error {
+    title := c.FormValue("title") // "  My Awesome Blog Post!  "
+
+    post := Post{
+        Title: str.Str(title).Trim().String(),
+        Slug:  str.Str(title).Trim().Slug().String(), // "my-awesome-blog-post"
+    }
+    database.Get().Create(&post)
+    return c.Redirect(302, "/posts/"+post.Slug)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Masking Sensitive Data in Logs</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func logSafeEmail(email string) string {
+    // "john.doe@example.com" → "joh****e@example.com"
+    at := strings.Index(email, "@")
+    if at <= 2 {
+        return email
+    }
+    local := str.Str(email[:at]).Mask("*", 3, at-4).String()
+    return local + email[at:]
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Generating API Resource Keys</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func resourceKey(modelName string) string {
+    // "UserProfileSetting" → "user_profile_setting"
+    return str.Str(modelName).Snake().String()
+}
+
+func jsonFieldName(goField string) string {
+    // "CreatedAt" → "createdAt"
+    return str.Str(goField).Camel().String()
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Always call <code>.String()</code> at the end of a chain to extract the raw value</li>
+  <li>Use <code>Slug()</code> for URL-safe strings, <code>Snake()</code> for database column names</li>
+  <li>Use <code>Mask()</code> to redact PII in logs — never log raw emails or tokens</li>
+  <li>Use <code>Limit()</code> or <code>Words()</code> for preview text in listings and feeds</li>
+  <li>Use <code>Excerpt()</code> to build search result snippets with surrounding context</li>
+</ul>

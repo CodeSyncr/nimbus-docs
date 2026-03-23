@@ -1,0 +1,69 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Release Checklist</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Maintainer guide for predictable Nimbus releases. Use this as the canonical checklist before publishing framework updates.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Pre-release (planning)</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Decide version type: patch, minor, or major (SemVer).</li>
+  <li>Review merged changes for breaking API/behavior impacts.</li>
+  <li>Confirm migration, queue, and security changes have docs updates.</li>
+  <li>Prepare release notes outline (features, fixes, breaking changes, upgrade notes).</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Pre-release (quality gates)</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code># Required checks
+go test ./...
+go test -race ./...
+go vet ./...</code></pre>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Ensure CI workflow is green on the target release commit.</li>
+  <li>Smoke-test starter app locally (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus-starter</code>).</li>
+  <li>Verify docs pages render and search index includes new docs.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Release execution</h2>
+<ol class="list-decimal pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Create release branch or use protected main workflow.</li>
+  <li>Update version constant(s) and changelog/release notes.</li>
+  <li>Tag release commit (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">vX.Y.Z</code>).</li>
+  <li>Publish GitHub release with upgrade notes.</li>
+  <li>Validate install path for new version in a clean sample app.</li>
+</ol>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Post-release validation</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li>Create a fresh app using the released version and run boot smoke tests.</li>
+  <li>Run queue worker, migrations, and health endpoint checks in staging.</li>
+  <li>Monitor issue tracker for regressions during first 24-48 hours.</li>
+  <li>Patch quickly if critical issues are reported.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Release template (copy/paste)</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>## Release vX.Y.Z
+
+### Highlights
+- ...
+
+### Fixes
+- ...
+
+### Breaking changes
+- ...
+
+### Upgrade guide
+1. ...
+2. ...
+
+### Verification
+- [ ] go test ./...
+- [ ] go test -race ./...
+- [ ] go vet ./...
+- [ ] starter app smoke test
+</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Related docs</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><a href="/docs/versioning-policy" class="text-amber-600 dark:text-amber-400 hover:underline">Versioning &amp; Release Policy</a></li>
+  <li><a href="/docs/production-readiness" class="text-amber-600 dark:text-amber-400 hover:underline">Production Readiness</a></li>
+  <li><a href="/docs/deployment" class="text-amber-600 dark:text-amber-400 hover:underline">Deployment</a></li>
+</ul>

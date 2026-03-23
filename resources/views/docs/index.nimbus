@@ -1,9 +1,13 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Documentation</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-10">Nimbus is an AdonisJS-style web framework for Go. Explore the guides below to get started.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-10">Nimbus is an Laravel-style web framework for Go. Explore the guides below to get started.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Start</h2>
 <div class="grid gap-3 sm:grid-cols-2 mb-10">
+  <a href="/docs/getting-started" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Getting Started Path</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Build your first app in 30-45 minutes.</p>
+  </a>
   <a href="/docs/introduction" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
     <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Introduction</h3>
     <p class="text-sm text-slate-600 dark:text-slate-400">What is Nimbus and why it exists.</p>
@@ -27,6 +31,49 @@
   <a href="/docs/faqs" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
     <h3 class="font-semibold text-slate-900 dark:text-white mb-1">FAQs</h3>
     <p class="text-sm text-slate-600 dark:text-slate-400">Common questions and answers.</p>
+  </a>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Production Readiness</h2>
+<div class="grid gap-3 sm:grid-cols-2 mb-10">
+  <a href="/docs/production-readiness" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200 sm:col-span-2">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Production Readiness Checklist</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">End-to-end launch checklist: migrations, queue reliability, realtime security, health probes, and release gates.</p>
+  </a>
+  <a href="/docs/queue" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Queue Operations Guide</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Lease tuning, retries, reclaim handling, and production alerts.</p>
+  </a>
+  <a href="/docs/websockets" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Realtime Security Defaults</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Origin allowlists and safe WebSocket/Presence deployment patterns.</p>
+  </a>
+  <a href="/docs/versioning-policy" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200 sm:col-span-2">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Versioning &amp; Release Policy</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">SemVer guarantees, deprecation windows, and CI release gates for stable upgrades.</p>
+  </a>
+  <a href="/docs/release-checklist" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200 sm:col-span-2">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Maintainer Release Checklist</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Step-by-step pre-release, release, and post-release checklist for predictable framework releases.</p>
+  </a>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Choose your stack</h2>
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-10">
+  <a href="/docs/getting-started" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">API-only backend</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400 mb-2">Best for mobile, SPA, and service APIs.</p>
+    <p class="text-xs text-slate-500 dark:text-slate-500">Start with: Routing → Controllers → Validation → Auth → Queue</p>
+  </a>
+  <a href="/docs/nimbus-template" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">SSR with .nimbus templates</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400 mb-2">Best for server-rendered apps with minimal frontend JS.</p>
+    <p class="text-xs text-slate-500 dark:text-slate-500">Start with: Nimbus Template → Routing → Session/Auth → Validation</p>
+  </a>
+  <a href="/docs/inertia" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">SPA with Inertia</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400 mb-2">Best for React/Vue/Svelte apps with server-driven routing.</p>
+    <p class="text-xs text-slate-500 dark:text-slate-500">Start with: Inertia → Inertia Setup → Validation → Auth → Deployment</p>
   </a>
 </div>
 
@@ -115,6 +162,10 @@
   <a href="/docs/access-tokens" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
     <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Access Tokens</h3>
     <p class="text-sm text-slate-600 dark:text-slate-400">Bearer token authentication.</p>
+  </a>
+  <a href="/docs/stateless-guard" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Stateless Guard</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">JWT and PASETO authentication.</p>
   </a>
   <a href="/docs/authorization" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
     <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Authorization</h3>

@@ -1,0 +1,139 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Async Pipelines</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">The <code>pipeline</code> package provides Go-native concurrent processing utilities. Instead of transplanting JavaScript Promises, it embraces goroutines, channels, and <code>sync.WaitGroup</code> to deliver clean, type-safe async patterns that feel at home in Go.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Concept</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Every function in this package accepts a typed slice and a typed callback, uses Go generics for full type safety, and handles goroutine lifecycle, error collection, and synchronization for you. You focus on the business logic — the pipeline handles the concurrency.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/pipeline"
+
+// Process 100 images, max 5 at a time
+errs := pipeline.Pool(images, 5, func(img Image) error {
+    return processAndUpload(img)
+})
+</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Available Functions</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Function</th><th class="px-4 py-2 text-left font-semibold">Concurrency</th><th class="px-4 py-2 text-left font-semibold">Stops on Error?</th><th class="px-4 py-2 text-left font-semibold">Returns</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Sequential(items, fn)</code></td><td class="px-4 py-2">1 (serial)</td><td class="px-4 py-2">Yes</td><td class="px-4 py-2"><code>error</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Parallel(items, fn)</code></td><td class="px-4 py-2">Unlimited</td><td class="px-4 py-2">No</td><td class="px-4 py-2"><code>[]error</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Pool(items, n, fn)</code></td><td class="px-4 py-2">Limited to n</td><td class="px-4 py-2">No</td><td class="px-4 py-2"><code>[]error</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>ParallelMap(items, fn)</code></td><td class="px-4 py-2">Unlimited</td><td class="px-4 py-2">No</td><td class="px-4 py-2"><code>([]R, []error)</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Retry(attempts, delay, fn)</code></td><td class="px-4 py-2">1</td><td class="px-4 py-2">After all retries</td><td class="px-4 py-2"><code>error</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>WithTimeout(d, fn)</code></td><td class="px-4 py-2">1</td><td class="px-4 py-2">On timeout</td><td class="px-4 py-2"><code>(T, error)</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Sequential</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Runs jobs one at a time. Stops immediately on the first error — perfect for ordered operations where later steps depend on earlier ones.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>steps := []func() error{validateInput, createUser, sendWelcomeEmail}
+
+err := pipeline.Sequential(steps, func(step func() error) error {
+    return step()
+})
+</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Parallel &amp; ParallelMap</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2"><code>Parallel</code> fires all items concurrently. <code>ParallelMap</code> does the same but maps each item to a result, preserving the original order.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Fire-and-forget notifications
+errs := pipeline.Parallel(userIDs, func(id uint) error {
+    return notification.Send(id, "Your order shipped!")
+})
+
+// Fetch prices from multiple APIs concurrently
+prices, errs := pipeline.ParallelMap(symbols, func(sym string) (float64, error) {
+    return fetchStockPrice(sym)
+})
+// prices[0] corresponds to symbols[0], guaranteed
+</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Pool (Worker Pool)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Limits concurrency using a semaphore pattern. Crucial for I/O-bound tasks where you'd overwhelm an external service with unlimited goroutines.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Resize images, max 10 concurrent goroutines
+errs := pipeline.Pool(images, 10, func(img Image) error {
+    resized, err := resize(img, 800, 600)
+    if err != nil {
+        return err
+    }
+    return storage.Put(img.Key, resized)
+})
+</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Retry</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Retries a function up to N times with a configurable delay between attempts. Ideal for flaky network calls.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>err := pipeline.Retry(3, 2*time.Second, func() error {
+    return paymentGateway.Charge(order.Total)
+})
+if err != nil {
+    // All 3 attempts failed
+    return c.JSON(500, map[string]string{"error": "payment failed after retries"})
+}
+</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">WithTimeout</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Wraps any function with a deadline. If the function doesn't complete in time, it returns <code>context.DeadlineExceeded</code>.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>result, err := pipeline.WithTimeout(5*time.Second, func() (APIResponse, error) {
+    return externalAPI.FetchData(query)
+})
+if errors.Is(err, context.DeadlineExceeded) {
+    return c.JSON(504, map[string]string{"error": "upstream timeout"})
+}
+</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: E-Commerce Order Fulfillment</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func fulfillOrder(order Order) error {
+    // Step 1: Sequential — these MUST happen in order
+    err := pipeline.Sequential([]string{"validate", "charge", "reserve"}, func(step string) error {
+        switch step {
+        case "validate":
+            return validateInventory(order)
+        case "charge":
+            return pipeline.Retry(3, time.Second, func() error {
+                return chargePayment(order)
+            })
+        case "reserve":
+            return reserveStock(order)
+        }
+        return nil
+    })
+    if err != nil {
+        return err
+    }
+
+    // Step 2: Parallel — these can happen simultaneously
+    pipeline.Parallel(order.Items, func(item OrderItem) error {
+        return generateShippingLabel(item)
+    })
+
+    return nil
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Real-Life Example: Concurrent Data Import with Pool</h2>
+<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>func importCSVRows(rows []CSVRow) {
+    // Insert into DB with max 20 concurrent connections
+    errs := pipeline.Pool(rows, 20, func(row CSVRow) error {
+        product := Product{
+            Name:  row.Name,
+            Price: row.Price,
+            SKU:   row.SKU,
+        }
+        return database.Get().Create(&product).Error
+    })
+
+    for _, err := range errs {
+        logger.Error("import failed", "error", err)
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">When to Use What</h2>
+<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
+  <li><strong>Sequential</strong> — Ordered steps (validation → payment → fulfillment)</li>
+  <li><strong>Parallel</strong> — Fire-and-forget (notifications, cache warming)</li>
+  <li><strong>Pool</strong> — I/O-bound tasks with external limits (DB writes, API calls, file uploads)</li>
+  <li><strong>ParallelMap</strong> — Fetch/transform data concurrently and collect results</li>
+  <li><strong>Retry</strong> — Flaky external services (payments, webhooks, third-party APIs)</li>
+  <li><strong>WithTimeout</strong> — Protect against hanging upstream calls</li>
+</ul>

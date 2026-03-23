@@ -75,6 +75,33 @@ func loadDatabase() {
     }
 }</code></pre>
 
+<h3 class="text-lg font-semibold text-slate-900 mt-6 mb-2">config/auth.go</h3>
+<pre data-file="config/auth.go"><code>package config
+
+type AuthConfig struct {
+    DefaultGuard string
+    Stateless    StatelessTokenConfig
+}
+
+type StatelessTokenConfig struct {
+    Driver    string
+    Secret    string
+    ExpiresIn time.Duration
+}
+
+var Auth AuthConfig
+
+func loadAuth() {
+    Auth = AuthConfig{
+        DefaultGuard: env("AUTH_GUARD", "session"),
+        Stateless: StatelessTokenConfig{
+            Driver:    env("AUTH_TOKEN_DRIVER", "jwt"),
+            Secret:    env("AUTH_TOKEN_SECRET", ""),
+            ExpiresIn: envDuration("AUTH_TOKEN_EXPIRES_IN", 24 * time.Hour),
+        },
+    }
+}</code></pre>
+
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Accessing config</h2>
 <p class="text-slate-600 mb-2">Import the <code class="bg-slate-100 px-1 rounded">config</code> package and access the typed struct fields:</p>
 <pre><code>import "myapp/config"
