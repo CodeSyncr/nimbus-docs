@@ -13,5 +13,5 @@ node_modules/
 coverage/
 .idea/
 .vscode/
-bin/
+bin/server
 nimbus.deploy.json
