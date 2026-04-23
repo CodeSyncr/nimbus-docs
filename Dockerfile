@@ -14,7 +14,7 @@ RUN sed -i '/replace.*=>.*\.\.\//d' go.mod && go mod download
 
 # Copy source and build.
 COPY . .
-RUN sed -i '/replace.*=>.*\.\.\//d' go.mod
+RUN sed -i '/replace.*=>.*\.\.\//d' go.mod && go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o /app/server .
 
 # Stage 2: Runtime
