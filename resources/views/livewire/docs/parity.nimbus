@@ -1,0 +1,161 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Roadmap</div>
+  <h1>Parity matrix</h1>
+  <p class="page-lead">
+    A living checklist tracking how close Nimbus Livewire is to Laravel Livewire v4 behavior.
+    Use this page to understand what’s implemented, what’s “best-effort”, and what’s still missing.
+  </p>
+</div>
+
+<h2 id="overview">Overview</h2>
+<p>
+  Nimbus Livewire aims to feel like Livewire, but it is a Go-first runtime, not a PHP port.
+  Some features can match very closely (directives, event dispatch, action calling).
+  The hardest parity work is on the client: DOM patching/morphing, Alpine state preservation, and fine-grained loading/target semantics.
+</p>
+
+<h2 id="matrix">Parity matrix</h2>
+<div style="overflow-x:auto">
+  <table class="props-table">
+    <thead>
+      <tr>
+        <th>Area</th>
+        <th>Laravel Livewire v4</th>
+        <th>Nimbus status</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Core update cycle</strong></td>
+        <td>State → action → render → patch</td>
+        <td>Implemented</td>
+        <td><code>/livewire-…/update</code> JSON contract; server renders HTML + state.</td>
+      </tr>
+      <tr>
+        <td><strong>DOM patching</strong></td>
+        <td>Morph / preserve state</td>
+        <td>Implemented (best-effort)</td>
+        <td>Morphs instead of swapping root; honors <code>wire:key</code>, <code>wire:ignore(.self)</code>, and <code>wire:replace</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Actions</strong></td>
+        <td><code>wire:click</code>, <code>wire:submit</code>, modifiers</td>
+        <td>Implemented</td>
+        <td>Includes general <code>wire:*</code> DOM event directives.</td>
+      </tr>
+      <tr>
+        <td><strong>Models</strong></td>
+        <td><code>wire:model</code> + modifiers</td>
+        <td>Implemented (best-effort)</td>
+        <td>Supports <code>.live</code>, <code>.blur/.lazy</code>, debounce/throttle.</td>
+      </tr>
+      <tr>
+        <td><strong>Loading/dirty targeting</strong></td>
+        <td><code>wire:loading</code> + <code>wire:target</code></td>
+        <td>Implemented (best-effort)</td>
+        <td><code>wire:target</code> scopes loading to an action name or a model path being synced.</td>
+      </tr>
+      <tr>
+        <td><strong>Events</strong></td>
+        <td><code>$dispatch</code>, listeners</td>
+        <td>Implemented (core)</td>
+        <td><code>Livewire.dispatch</code>, <code>dispatchTo</code>, <code>on</code>, server dispatch queue.</td>
+      </tr>
+      <tr>
+        <td><strong>Navigate</strong></td>
+        <td><code>wire:navigate</code></td>
+        <td>Implemented (best-effort)</td>
+        <td>SPA-style navigation with body morphing (preserves state better than raw <code>innerHTML</code> swaps).</td>
+      </tr>
+      <tr>
+        <td><strong>Alpine $wire</strong></td>
+        <td>Magic object</td>
+        <td>Implemented</td>
+        <td><code>Alpine.magic('wire')</code> maps to <code>Livewire.find</code> proxy.</td>
+      </tr>
+      <tr>
+        <td><strong>$wire.entangle</strong></td>
+        <td>Bidirectional sync</td>
+        <td>Implemented (best-effort)</td>
+        <td>Requires Alpine’s interceptor API; supports deferred by default and <code>.live</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Uploads</strong></td>
+        <td>Temporary uploads + progress</td>
+        <td>Implemented (minimal)</td>
+        <td><code>wire:model</code> on file inputs uploads to a temp endpoint and stores a token object into state.</td>
+      </tr>
+      <tr>
+        <td><strong>Styles</strong></td>
+        <td>Scoped <code>&lt;style&gt;</code> blocks</td>
+        <td>Implemented (best-effort)</td>
+        <td>Component-internal <code>&lt;style&gt;</code> tags are extracted, scoped via CSS nesting, and deduped.</td>
+      </tr>
+      <tr>
+        <td><strong>Lazy loading / islands</strong></td>
+        <td>Dedicated primitives</td>
+        <td>Implemented (best-effort)</td>
+        <td>Lazy/defer supported for embedded components via <code>livewireLazy</code>/<code>livewireDefer</code>; islands supported via <code>wire:island</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Pagination</strong></td>
+        <td>Built-in helpers</td>
+        <td>Implemented (best-effort)</td>
+        <td>Built-in actions: <code>setPage</code>/<code>resetPage</code>/<code>nextPage</code>/<code>previousPage</code> + <code>livewirePaginationLinks()</code>. URL is updated during pagination actions.</td>
+      </tr>
+      <tr>
+        <td><strong>URL query parameters</strong></td>
+        <td>Built-in URL state</td>
+        <td>Implemented (best-effort)</td>
+        <td>Opt in per-component via <code>URLQueryProvider</code>/<code>QueryStringProvider</code>. Full-page routes apply URL values on initial GET; runtime syncs updates via replaceState/pushState.</td>
+      </tr>
+      <tr>
+        <td><strong>Computed properties</strong></td>
+        <td>Computed caching semantics</td>
+        <td>Implemented (best-effort)</td>
+        <td>Go-first: embed <code>livewire.ComputedScope</code> and use <code>Computed()</code> for per-request memoization + optional cache (<code>Persist</code>/<code>Cache</code>).</td>
+      </tr>
+      <tr>
+        <td><strong>Validation</strong></td>
+        <td>Real-time + error bag</td>
+        <td>Implemented (best-effort)</td>
+        <td>422 errors + <code>wire:error</code>, <code>$wire.$errors</code>, and opt-in real-time validation for <code>wire:model.live</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Redirecting</strong></td>
+        <td>Redirect responses</td>
+        <td>Implemented (best-effort)</td>
+        <td>Return <code>livewire.Redirect()</code>/<code>livewire.RedirectNavigate()</code> from actions; runtime handles client-side redirects (optional SPA navigate).</td>
+      </tr>
+      <tr>
+        <td><strong>File downloads</strong></td>
+        <td>Download responses</td>
+        <td>Implemented (best-effort)</td>
+        <td>Return <code>livewire.DownloadFile</code>/<code>livewire.DownloadBytes</code>/<code>livewire.StreamDownload</code> from actions; runtime base64-decodes and triggers a browser download.</td>
+      </tr>
+      <tr>
+        <td><strong>Teleport</strong></td>
+        <td>DOM teleport primitive</td>
+        <td>Implemented (best-effort)</td>
+        <td>Client runtime supports <code>wire:teleport="selector"</code> and moves the node to <code>document.querySelector(selector)</code>, keeping it updated on re-renders.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 id="fixtures">Fixtures page</h2>
+<p>
+  Use <a href="/demos/livewire/fixtures">/demos/livewire/fixtures</a> to manually verify behavior as features land:
+  keyed morphing, ignored regions, entangle, targeted loading, and uploads.
+</p>
+
+<h2 id="notes">Notes / known gaps</h2>
+<ul>
+  <li><strong>DOM morphing is the key unlock</strong>: without it, Alpine state and input focus will be lost on many updates.</li>
+  <li><strong>“1:1” is best-effort</strong>: the goal is matching user-facing behavior, not copying Livewire internals.</li>
+  <li><strong>Docs follow implementation</strong>: as each feature lands, directive docs will be updated to remove “best-effort” caveats.</li>
+</ul>
+

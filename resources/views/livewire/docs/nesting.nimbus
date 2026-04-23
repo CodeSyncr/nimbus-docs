@@ -1,0 +1,75 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Essentials</div>
+  <h1>Nesting components</h1>
+  <p class="page-lead">
+    You can embed multiple Livewire roots on one page. For <strong>parents that re-render from the server</strong> and contain children that must keep stable <code>wire:id</code> values (so their state survives parent updates), Nimbus provides
+    <code>livewire.RenderNested</code>, <code>livewire.NestedWireID</code>, and the optional <code>WireIDRender</code> interface—aligned with the ideas in
+    <a href="https://livewire.laravel.com/docs/4.x/nesting" rel="noopener noreferrer" target="_blank">Laravel Livewire · Nesting components</a>.
+    There is no <code>&lt;livewire:…&gt;</code> tag; you compose HTML in Go.
+  </p>
+</div>
+
+<h2 id="overview">Overview</h2>
+<p>
+  Each component is still a single <code>&lt;div wire:id … wire:component …&gt;</code> tree. The browser runtime already discovers every <code>[wire:id]</code> and binds actions independently. Nesting means the <strong>parent’s inner HTML</strong> includes one or more full child roots produced by <code>RenderNested</code> (or another <code>livewire.Render</code> call).
+</p>
+<p>
+  When the <strong>parent</strong> POSTs an update, the server returns <strong>new outer HTML for the parent</strong>, which replaces the parent’s root in the DOM—including everything inside it. Child components are only preserved if their markup in that response uses the <strong>same</strong> <code>wire:id</code> (and consistent <code>wire:state</code>) as before. <code>NestedWireID(parentWireID, slotKey)</code> derives a deterministic id from the parent’s id and a slot key you choose (same role as Livewire’s <code>wire:key</code> on nested components).
+</p>
+
+<h2 id="render-nested">RenderNested and keys</h2>
+<pre class="code-block"><code>html, err := livewire.RenderNested(parentWireID, "todo-"+id, "todo-item", map[string]any{
+    "todoId": id,
+    "title":  title,
+})
+if err != nil { return "", err }
+// concatenate html into parent template</code></pre>
+<ul>
+  <li><code>parentWireID</code> — the parent root’s <code>wire:id</code> string (see <a href="#wire-id-render">RenderForWireID</a>).</li>
+  <li><code>slotKey</code> — must be non-empty and unique among siblings (e.g. primary key string). Required.</li>
+  <li><code>componentName</code> — registered component name.</li>
+  <li><code>props</code> — passed through the same path as <code>livewire.Render</code> (<code>PropsMount</code> or <code>SetState</code>).</li>
+</ul>
+<p>
+  If <code>parentWireID</code> is empty, the child gets a random <code>wire:id</code> (fine for one-off embeds where the parent never re-renders over that subtree in a way that must preserve the child).
+</p>
+
+<h2 id="wire-id-render">RenderForWireID (parent)</h2>
+<p>
+  Implement <code>WireIDRender</code> with <code>RenderForWireID(wireID string) (template.HTML, error)</code> on the <strong>parent</strong>. The runtime passes the same <code>wire:id</code> the client uses on POST (or a freshly allocated id on first full-page / embed render). Inside that method, call <code>RenderNested(wireID, slotKey, …)</code> so nested ids stay stable.
+</p>
+<p>
+  If you only implement <code>Render()</code>, the framework still calls <code>Render()</code> when building HTML; you do not receive the root id in the method, so you cannot compute stable nested ids from the parent—use <code>RenderForWireID</code> whenever you nest children that must survive parent re-renders.
+</p>
+
+<h2 id="props">Passing props</h2>
+<p>
+  Pass JSON-safe maps into <code>RenderNested</code> (or <code>Render</code>). The child’s <code>MountProps</code> / <code>SetState</code> runs on each nested render. Props are <strong>not</strong> automatically reactive when only the parent’s state changes but the parent does not re-render; when the parent does re-render, nested markup is rebuilt with the props you pass in <code>RenderForWireID</code>. There is no <code>#[Reactive]</code> attribute—refresh the parent or use events (see <a href="/livewire/docs/events">Events</a>).
+</p>
+
+<h2 id="loops">Lists</h2>
+<p>
+  In a loop, always use a stable <code>slotKey</code> per row (for example the record id). Reordering the list without stable keys can reuse the wrong child state—same caveat as Vue/React/Livewire.
+</p>
+
+<h2 id="parent-child">Parent ↔ child communication</h2>
+<ul>
+  <li><strong>Events:</strong> <code>LivewireDispatch</code> / <code>LivewireOnListeners</code> and client <code>Livewire.dispatch</code> — see <a href="/livewire/docs/events">Events</a>.</li>
+  <li><strong><code>$parent</code> / <code>wire:model</code> on a child tag:</strong> not implemented; use explicit props, events, or shared layout actions.</li>
+</ul>
+
+<h2 id="limits">Laravel parity limits</h2>
+<p>
+  Not implemented in Nimbus:
+</p>
+<ul>
+  <li>Blade <code>&lt;livewire:…&gt;</code>, slots, <code>$attributes</code> forwarding, dynamic component tags.</li>
+  <li><code>#[Modelable]</code> / <code>wire:model</code> on a nested component element.</li>
+  <li>Laravel “parent update skips child HTML” morphing—children are included in the parent’s HTML string; stable <code>wire:id</code> keeps the client’s component identity consistent when the subtree is replaced.</li>
+  <li>Islands (<code>@island</code>) — use separate components or a single component with multiple regions.</li>
+</ul>
+<p>
+  Prefer a normal partial or Blade-less include when a region does not need its own POST round-trips.
+</p>

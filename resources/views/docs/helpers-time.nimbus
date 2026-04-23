@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Date &amp; Time Helper</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">The <code>timex</code> package is Nimbus's answer to Carbon (Laravel) and Luxon (AdonisJS). It wraps Go's <code>time.Time</code> in a fluent, chainable API for manipulation, comparison, and human-friendly output — no more manual <code>AddDate()</code> gymnastics.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">The <code>timex</code> package is Nimbus's answer to Carbon (Laravel) and modern date libraries like Luxon. It wraps Go's <code>time.Time</code> in a fluent, chainable API for manipulation, comparison, and human-friendly output — no more manual <code>AddDate()</code> gymnastics.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Concept</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-4"><code>NimbusTime</code> wraps a standard <code>time.Time</code> value. Every mutator returns a new <code>NimbusTime</code> (immutable — the original is never modified), so you can chain mutations freely. Terminal methods like <code>Time()</code>, <code>ToISO()</code>, and <code>DiffForHumans()</code> extract the final value.</p>

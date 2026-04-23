@@ -481,7 +481,7 @@ func (ctrl *OrderController) Show(ctx *http.Context) error {
 package migrations
 
 import (
-    "gorm.io/gorm"
+    "github.com/CodeSyncr/nimbus/lucid"
     "github.com/CodeSyncr/nimbus/database"
     "my-app/app/models"
 )
@@ -555,14 +555,14 @@ The migrator tracks executed migrations in a `schema_migrations` table and runs 
 package seeders
 
 import (
-    "gorm.io/gorm"
+    "github.com/CodeSyncr/nimbus/lucid"
     "github.com/CodeSyncr/nimbus/database"
     "my-app/app/models"
 )
 
 func All() []database.Seeder {
     return []database.Seeder{
-        database.SeedFunc(func(db *gorm.DB) error {
+        database.SeedFunc(func(db *lucid.DB) error {
             users := []models.User{
                 {Name: "Admin", Email: "admin@example.com", Password: "$2a$10$...", Role: "admin"},
                 {Name: "John Doe", Email: "john@example.com", Password: "$2a$10$...", Role: "customer"},

@@ -21,6 +21,7 @@
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">3) Queue reliability</h2>
 <ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
   <li>Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_DRIVER=redis</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database</code> (not sync) in production.</li>
+  <li>Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_BOOT_STRICT=true</code> so invalid queue config fails at boot.</li>
   <li>Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_REDIS_VISIBILITY_TIMEOUT_SECONDS</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_DB_LEASE_SECONDS</code> to at least 2x p95 job runtime.</li>
   <li>Set bounded retries and keep job handlers idempotent.</li>
   <li>Run dedicated worker processes and monitor backlog growth.</li>
@@ -29,20 +30,24 @@
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">4) Realtime security</h2>
 <ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
-  <li>Configure explicit WebSocket/Presence origin allowlists.</li>
+  <li>Configure explicit WebSocket / Presence / <strong>Reverb</strong> origin allowlists (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">REVERB_ALLOWED_ORIGINS</code>).</li>
   <li>Authorize channels in Presence via <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">AuthFunc</code>.</li>
   <li>Avoid broad CORS rules unless absolutely necessary.</li>
 </ul>
-<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">Related: <a href="/docs/websockets" class="text-amber-600 dark:text-amber-400 hover:underline">WebSockets</a>, <a href="/docs/presence" class="text-amber-600 dark:text-amber-400 hover:underline">Presence</a>, <a href="/docs/cors" class="text-amber-600 dark:text-amber-400 hover:underline">CORS</a></p>
+<p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">Related: <a href="/docs/websockets" class="text-amber-600 dark:text-amber-400 hover:underline">WebSockets</a>, <a href="/docs/reverb" class="text-amber-600 dark:text-amber-400 hover:underline">Reverb</a>, <a href="/docs/presence" class="text-amber-600 dark:text-amber-400 hover:underline">Presence</a>, <a href="/docs/cors" class="text-amber-600 dark:text-amber-400 hover:underline">CORS</a></p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">5) Health checks & observability</h2>
 <ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
-  <li>Expose health endpoints for load balancers and orchestration probes.</li>
+  <li>Expose health endpoints for load balancers and orchestration probes (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/livez</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/readyz</code>, legacy <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/health</code>).</li>
   <li>Track queue counters (dispatch/processed/failed/retried/reclaimed).</li>
   <li>Alert on retry spikes, reclaim spikes, and sustained queue backlog.</li>
 </ul>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code># Horizon metrics endpoint (Prometheus format)
-GET /horizon/api/metrics/prometheus</code></pre>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code># Horizon — Prometheus + JSON workloads (when RedisURL configured)
+GET /horizon/api/metrics/prometheus
+GET /horizon/api/workloads
+
+# Reverb — liveness next to WebSocket path
+GET /reverb/health</code></pre>
 <p class="text-slate-600 dark:text-slate-400 mb-4 text-sm">Related: <a href="/docs/health" class="text-amber-600 dark:text-amber-400 hover:underline">Health</a>, <a href="/docs/metrics" class="text-amber-600 dark:text-amber-400 hover:underline">Metrics</a></p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">6) Release process</h2>

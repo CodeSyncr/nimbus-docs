@@ -1,0 +1,30 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:intersect</h1>
+  <p class="page-lead">Fire a server action the first time an element enters the viewport.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  Uses <code>IntersectionObserver</code>. When the element becomes intersecting, the observer disconnects and a single <code>callAction</code> runs with the attribute value (default <code>__sync</code>).
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;div wire:intersect="loadMore"&gt;
+  &lt;!-- triggers loadMore once when scrolled into view --&gt;
+&lt;/div&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Infinite list sentinel</h3>
+<pre class="code-block"><code>&lt;div wire:intersect="nextPage" id="infinite-sentinel"&gt;&lt;/div&gt;</code></pre>
+<h3>Defer expensive work</h3>
+<p>Place the attribute on a section below the fold so analytics or heavy data fetches wait until the user scrolls.</p>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> <code>wire:intersect="action"</code></p>
+<ul>
+  <li><strong>One-shot:</strong> observer disconnects after the first intersecting callback.</li>
+  <li><strong>Root element:</strong> resolved via current component <code>wire:id</code>.</li>
+</ul>

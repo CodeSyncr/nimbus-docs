@@ -1,0 +1,13 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Getting started</div>
+  <h1>Upgrade guide</h1>
+  <p class="page-lead">Notes when moving between plugin versions or changing how assets are served.</p>
+</div>
+
+<h2 id="notes">Notes</h2>
+<ul>
+  <li>If you relied on backend-only JS at <code>/livewire-&lt;hash&gt;/livewire.js</code>, the plugin now prefers Vite at <code>/build/assets/livewire.js</code> when that file exists.</li>
+  <li>Redirects returned from actions can trigger SPA navigation when the JSON response includes <code>navigate: true</code> (see server response shape).</li>
+</ul>

@@ -1,0 +1,116 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Essentials</div>
+  <h1>Forms</h1>
+  <p class="page-lead">
+    Build forms with <code>wire:model</code>, <code>wire:submit</code>, and server-side <code>Call</code> logic—aligned with
+    <a href="https://livewire.laravel.com/docs/4.x/forms" rel="noopener noreferrer" target="_blank">Laravel Livewire · Forms</a>.
+    Nimbus is Go-based; there is no Blade, <code>#[Validate]</code>, or <code>livewire:form</code> Artisan command.
+  </p>
+</div>
+
+<h2 id="submit">Submitting a form</h2>
+<p>
+  Bind fields to JSON state keys with <code>wire:model</code> (or <code>wire:bind</code>). On submit, <code>wire:submit</code> sends the current <code>wire:state</code> and runs your action.
+</p>
+<pre class="code-block"><code>&lt;form wire:submit="save"&gt;
+  &lt;input type="text" wire:model="title" /&gt;
+  &lt;input type="text" wire:model="content" /&gt;
+  &lt;button type="submit"&gt;Save&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<p>
+  In <code>Call("save", …)</code>, read fields from <code>SetState</code>-applied state, persist, then return a redirect effect from your app layer (see <a href="/livewire/docs/actions">Actions</a>) or re-render with a flash message in the template.
+  Use <code>livewire.PickKeys</code> / <code>Fill</code> when mirroring Livewire’s <code>only([...])</code> on maps—see <a href="/livewire/docs/properties">Properties</a>.
+</p>
+
+<h2 id="default-vs-live">Default binding vs <code>.live</code></h2>
+<p>
+  <strong>Breaking parity note:</strong> <code>wire:model</code> without <code>.live</code> updates the browser’s <code>wire:state</code> as the user types but <strong>does not</strong> call <code>__sync</code> on every keystroke. The server sees changes on the next action (<code>wire:submit</code>, <code>wire:click</code>, etc.), matching Livewire’s default.
+  For real-time server updates while typing, add <code>.live</code> (see below).
+</p>
+
+<h2 id="validation">Validation</h2>
+<p>
+  Return <code>livewire.FieldErrors{ "field": "message", … }</code> from <code>Call</code> (or any error implementing <code>FieldErrors() map[string]string</code>). The server responds with <strong>422</strong>, fresh HTML, and an <code>errors</code> map.
+</p>
+<pre class="code-block"><code>import "github.com/CodeSyncr/nimbus/plugins/livewire"
+
+func (c *PostCreate) Call(action string, p map[string]any) error {
+    if action != "save" {
+        return nil
+    }
+    if strings.TrimSpace(c.Title) == "" {
+        return livewire.FieldErrors{"title": "Required"}
+    }
+    // persist…
+    return nil
+}</code></pre>
+<p>
+  In templates, either render error markup server-side in your Nimbus view or add placeholders the client can fill from JSON:
+</p>
+<pre class="code-block"><code>&lt;input wire:model="title" /&gt;
+&lt;span wire:error="title" style="display:none;color:#f87171;"&gt;&lt;/span&gt;</code></pre>
+<p>
+  After each response, the runtime runs <code>applyWireValidationErrors</code> on <code>[wire:error="key"]</code> nodes. Keys must match map entries (use dotted keys for nested state, e.g. <code>form.title</code>).
+</p>
+<p>
+  For larger rule sets, use Nimbus’s validation package or your own helpers inside <code>Call</code>; there is no attribute-driven <code>#[Validate]</code> in Go.
+</p>
+
+<h2 id="form-objects">Form objects</h2>
+<p>
+  There is no <code>Livewire\Form</code> base class. Use a normal Go struct (or a dedicated type) held by your component, expose its fields through <code>State()</code> / <code>SetState()</code>, and prefix keys in the view (<code>wire:model="form.title"</code>) or flatten in <code>SetState</code>. Reuse the same type from create/edit handlers by loading the model in <code>MountRouteParams</code> or <code>MountProps</code>.
+</p>
+
+<h2 id="reset-pull">Resetting and pulling fields</h2>
+<p>
+  Use <code>livewire.ResetStateFields</code>, <code>PullStateField</code>, and <code>PullStateKeys</code> with a baseline snapshot—see <a href="/livewire/docs/properties">Properties</a>.
+</p>
+
+<h2 id="loading">Loading state</h2>
+<p>
+  While any Livewire POST is in flight, every component root <code>[wire:id]</code> gets <code>data-loading</code> (empty string). Use CSS (<code>[data-loading]</code>, <code>.lw-transition-busy</code>, or Tailwind-style selectors) alongside <a href="/livewire/docs/wire-loading">wire:loading</a>.
+</p>
+
+<h2 id="live-blur">Live, blur / lazy, debounce, throttle</h2>
+<p>
+  Modifiers are chained with dots on the attribute name (same pattern as <code>wire:click.prevent</code>):
+</p>
+<ul>
+  <li><code>wire:model.live</code> — debounced <code>__sync</code> (default <strong>250ms</strong>) on <code>input</code>/<code>change</code>.</li>
+  <li><code>wire:model.live.blur</code> or <code>wire:model.live.lazy</code> — sync to the server when the control loses focus (blur), not on every keystroke.</li>
+  <li><code>wire:model.live.debounce.150ms</code> — custom debounce interval.</li>
+  <li><code>wire:model.live.throttle.150ms</code> — throttle <code>__sync</code> to at most one request per interval while typing. If both debounce and throttle appear, debounce wins.</li>
+</ul>
+<p>
+  The same modifiers apply to <code>wire:bind.*</code> when <code>wire:model</code> is not present on the element.
+</p>
+
+<h2 id="dirty">Dirty indicators</h2>
+<p>
+  <a href="/livewire/docs/wire-dirty">wire:dirty</a> compares the current <code>wire:state</code> to the last server-synced snapshot. With plain <code>wire:model</code>, fields go dirty as soon as the user edits; the baseline updates after a successful action that returns new HTML/state.
+</p>
+
+<h2 id="autosave">Real-time saving (<code>updated</code> hook)</h2>
+<p>
+  Livewire’s <code>updated($name, $value)</code> has no direct equivalent. Options: use <code>wire:model.live</code> and validate or persist inside <code>Call("__sync", …)</code> (inspect state deltas there), or run a dedicated action from <code>wire:blur</code> / <code>wire:change</code>.
+</p>
+
+<h2 id="components-ui">Partial views and custom controls</h2>
+<p>
+  Extract repeated field markup with Nimbus partials or shared views; forward attributes onto the inner <code>&lt;input&gt;</code> so <code>wire:model</code> still lands on a real form control. Custom widgets without a native input need to push values into <code>wire:state</code> via <code>Livewire.find(el).set(...)</code> or a small script; full Alpine <code>x-modelable</code> parity is not built in.
+</p>
+
+<h2 id="files">File uploads</h2>
+<p>
+  Multipart file binding like Livewire’s <code>WithFileUploads</code> is not implemented in this runtime; use standard file fields and a normal HTTP handler or document a future plugin.
+</p>
+
+<h2 id="see-also">See also</h2>
+<ul>
+  <li><a href="/livewire/docs/wire-model">wire:model</a> — syntax reference</li>
+  <li><a href="/livewire/docs/wire-submit">wire:submit</a></li>
+  <li><a href="/livewire/docs/actions">Actions</a></li>
+  <li><a href="/livewire/docs/properties">Properties</a></li>
+</ul>

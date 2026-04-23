@@ -71,6 +71,16 @@ s.Hourly("metrics", metricsHandler)
 s.Start(ctx)     // non-blocking, runs in background
 defer s.Stop()   // graceful shutdown</code></pre>
 
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Multi-instance safety (distributed lock)</h2>
+<p class="text-slate-600 mb-2">When running multiple app instances, configure a locker so each scheduled tick runs on only one node:</p>
+<pre><code>import (
+    "github.com/CodeSyncr/nimbus/schedule"
+    "github.com/CodeSyncr/nimbus/redis"
+)
+
+rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+app.Scheduler.WithLocker(schedule.NewRedisLocker(rdb))</code></pre>
+
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Plugin integration</h2>
 <p class="text-slate-600 mb-2">Plugins implement <code class="bg-slate-100 px-1 rounded">HasSchedule</code> to register tasks that start automatically:</p>
 <pre><code>type AnalyticsPlugin struct { nimbus.BasePlugin }

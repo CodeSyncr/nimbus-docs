@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 mb-4">Folder Structure</h1>
-<p class="text-slate-600 mb-4">Every Nimbus app follows a consistent directory layout inspired by AdonisJS. When you run <code class="bg-slate-100 px-1 rounded">nimbus new myapp</code>, the CLI scaffolds the structure below.</p>
+<p class="text-slate-600 mb-4">Every Nimbus app follows a consistent directory layout inspired by Laravel conventions. When you run <code class="bg-slate-100 px-1 rounded">nimbus new myapp</code>, the CLI scaffolds the structure below.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Top-level Overview</h2>
 <pre><code>myapp/
@@ -69,7 +69,7 @@ func Boot() *nimbus.App {
 </ul>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">start/</h2>
-<p class="text-slate-600 mb-4">The <code class="bg-slate-100 px-1 rounded">start/</code> directory holds files that run during application startup, mirroring AdonisJS's <code class="bg-slate-100 px-1 rounded">start/</code> folder.</p>
+<p class="text-slate-600 mb-4">The <code class="bg-slate-100 px-1 rounded">start/</code> directory holds files that run during application startup, mirroring Laravel-style boot organization.</p>
 <ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
   <li><code class="bg-slate-100 px-1 rounded">kernel.go</code> — Registers middleware with the server or the router. This is the only place where middleware is configured.</li>
   <li><code class="bg-slate-100 px-1 rounded">routes.go</code> — Defines all HTTP routes for the application.</li>
@@ -102,11 +102,11 @@ func Boot() *nimbus.App {
   <li><code class="bg-slate-100 px-1 rounded">go.mod</code> / <code class="bg-slate-100 px-1 rounded">go.sum</code> — Go module files managing dependencies.</li>
 </ul>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">AdonisJS Comparison</h2>
-<p class="text-slate-600 mb-4">If you are coming from AdonisJS, here is how the Nimbus structure maps:</p>
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Laravel Comparison</h2>
+<p class="text-slate-600 mb-4">If you are coming from Laravel, here is how the Nimbus structure maps:</p>
 <div class="overflow-x-auto mb-4">
   <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
-    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">AdonisJS</th><th class="px-4 py-2 text-left font-semibold">Nimbus</th><th class="px-4 py-2 text-left font-semibold">Purpose</th></tr></thead>
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Laravel-style concept</th><th class="px-4 py-2 text-left font-semibold">Nimbus</th><th class="px-4 py-2 text-left font-semibold">Purpose</th></tr></thead>
     <tbody>
       <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">server.ts</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">main.go</code></td><td class="px-4 py-2">Untouched entry point</td></tr>
       <tr class="border-t border-slate-200"><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">bin/server.ts</code></td><td class="px-4 py-2"><code class="bg-slate-100 px-1 rounded">bin/server.go</code></td><td class="px-4 py-2">Boot, config, DB</td></tr>

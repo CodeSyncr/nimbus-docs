@@ -218,7 +218,7 @@ myapp/
     └── server.go
 ```
 
-Every config file follows the same pattern: a typed struct, sensible defaults, and environment variable overrides — just like Laravel or AdonisJS.
+Every config file follows the same pattern: a typed struct, sensible defaults, and environment variable overrides — aligned with Laravel-style conventions.
 
 > **Note:** Plugin-specific configs (telescope, horizon, transmit, socialite) are **not** included by default. They are scaffolded automatically when you run `nimbus plugin:install <name>`.
 
@@ -282,13 +282,13 @@ Generates a timestamped migration:
 // database/migrations/20250101120000_create_products_table.go
 package migrations
 
-import "gorm.io/gorm"
+import "github.com/CodeSyncr/nimbus/lucid"
 
 func init() {
-    Register("20250101120000_create_products_table", func(db *gorm.DB) error {
+    Register("20250101120000_create_products_table", func(db *lucid.DB) error {
         // Up
         return db.AutoMigrate(&Product{})
-    }, func(db *gorm.DB) error {
+    }, func(db *lucid.DB) error {
         // Down
         return db.Migrator().DropTable("products")
     })

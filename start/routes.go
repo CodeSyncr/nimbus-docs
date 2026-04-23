@@ -14,6 +14,7 @@ package start
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/CodeSyncr/nimbus"
 	"github.com/CodeSyncr/nimbus/database"
@@ -57,9 +58,14 @@ func RegisterRoutes(app *nimbus.App) {
 	demos.Get("/ai", func(c *http.Context) error { return aiCtrl.Index(c) })
 	demos.Post("/ai/generate", func(c *http.Context) error { return aiCtrl.Generate(c) })
 	demos.Get("/mcp", mcpDemoHandler)
+	demos.Get("/livewire/fixtures", livewireFixturesHandler)
 
 	// Queue demo: dispatch a welcome email job to the "default" queue.
 	demos.Post("/queue/demo", queueDemoHandler)
+
+	// ── Livewire plugin docs (separate from /docs tree) ───
+	app.Router.Get("/livewire/docs", livewireDocsIndexHandler)
+	app.Router.Get("/livewire/docs/:page", livewireDocsPageHandler)
 
 	// ── Documentation ──────────────────────────────────────
 	app.Router.Get("/docs", docsIndexHandler)
@@ -110,13 +116,32 @@ func mcpDemoHandler(c *http.Context) error {
 	return c.View("apps/mcp/index", map[string]any{"title": "MCP Demo"})
 }
 
+func livewireFixturesHandler(c *http.Context) error {
+	return c.View("apps/livewire/fixtures", map[string]any{
+		"title":       "Livewire fixtures",
+		"activeDemos": true,
+	})
+}
+
 func queueDemoHandler(c *http.Context) error {
 	job := &jobs.SendWelcomeEmail{
 		UserID: 1,
 		Email:  "queue-demo@example.com",
 	}
 	if err := queue.Dispatch(job).Dispatch(c.Request.Context()); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to queue job"})
+		// Keep the demo usable even if a durable queue backend (e.g. Redis) isn't running.
+		// We still surface the queue error so it's obvious what to fix.
+		if inlineErr := job.Handle(c.Request.Context()); inlineErr == nil {
+			return c.JSON(http.StatusAccepted, map[string]any{
+				"status":      "processed_inline",
+				"queued":      false,
+				"queue_error": err.Error(),
+			})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]any{
+			"error":       "failed to queue job",
+			"queue_error": err.Error(),
+		})
 	}
 	return c.JSON(http.StatusAccepted, map[string]string{"status": "queued"})
 }
@@ -125,16 +150,16 @@ func queueDemoHandler(c *http.Context) error {
 
 var docsTitles = map[string]string{
 	// Start
-	"getting-started":  "Getting Started",
-	"introduction":     "Introduction",
-	"installation":     "Installation",
-	"folder-structure": "Folder Structure",
-	"configuration":    "Configuration",
-	"deployment":       "Deployment",
+	"getting-started":      "Getting Started",
+	"introduction":         "Introduction",
+	"installation":         "Installation",
+	"folder-structure":     "Folder Structure",
+	"configuration":        "Configuration",
+	"deployment":           "Deployment",
 	"production-readiness": "Production Readiness",
-	"versioning-policy": "Versioning & Release Policy",
-	"release-checklist": "Release Checklist",
-	"faqs":             "FAQs",
+	"versioning-policy":    "Versioning & Release Policy",
+	"release-checklist":    "Release Checklist",
+	"faqs":                 "FAQs",
 	// Basics
 	"routing":            "Routing",
 	"controllers":        "Controllers",
@@ -200,10 +225,10 @@ var docsTitles = map[string]string{
 	"plugins":               "Plugins",
 	"container-services":    "Container Services",
 	// Helpers
-	"helpers-string":        "Fluent String",
-	"helpers-collection":    "Collections",
-	"helpers-time":          "Date & Time",
-	"helpers-pipeline":      "Async Pipelines",
+	"helpers-string":     "Fluent String",
+	"helpers-collection": "Collections",
+	"helpers-time":       "Date & Time",
+	"helpers-pipeline":   "Async Pipelines",
 	// Digging Deeper
 	"cache":              "Cache",
 	"cache-remember":     "Remember & Type-Safe API",
@@ -212,6 +237,7 @@ var docsTitles = map[string]string{
 	"storage":            "Storage",
 	"drive":              "Drive",
 	"transmit":           "Transmit",
+	"reverb":             "Reverb",
 	"events":             "Events",
 	"logger":             "Logger",
 	"mail":               "Mail",
@@ -252,6 +278,446 @@ var docsTitles = map[string]string{
 	"unpoly":    "Unpoly",
 }
 
+// livewireDirectiveDetailSlugs are per-directive doc pages (registered in init).
+var livewireDirectiveDetailSlugs = []string{
+	"wire-bind", "wire-click", "wire-submit", "wire-model", "wire-navigate", "wire-current",
+	"wire-cloak", "wire-dirty", "wire-confirm", "wire-loading", "wire-transition",
+	"wire-init", "wire-intersect", "wire-poll", "wire-offline", "wire-ignore", "wire-ref",
+	"wire-show", "wire-text", "wire-replace", "wire-sort", "wire-stream",
+}
+
+var livewireDirectivePageTOC = []map[string]any{
+	{"id": "intro", "label": "Introduction"},
+	{"id": "basic-usage", "label": "Basic usage"},
+	{"id": "common-use-cases", "label": "Common use cases"},
+	{"id": "reference", "label": "Reference"},
+}
+
+func livewireDirectiveAttrTitle(slug string) string {
+	return "wire:" + strings.TrimPrefix(slug, "wire-")
+}
+
+func init() {
+	for _, slug := range livewireDirectiveDetailSlugs {
+		attr := livewireDirectiveAttrTitle(slug)
+		livewireDocRegistry[slug] = struct {
+			View  string
+			Title string
+			TOC   []map[string]any
+		}{
+			View:  "livewire/docs/" + slug,
+			Title: attr + " · Nimbus Livewire",
+			TOC:   livewireDirectivePageTOC,
+		}
+	}
+}
+
+// livewireDocsOrder is sidebar / prev-next order.
+var livewireDocsOrder = append(append([]string{
+	"quickstart", "installation", "upgrade-guide", "parity", "components", "nesting", "pages", "properties",
+	"actions", "forms", "validation", "pagination", "url-query-parameters", "computed-properties", "redirecting", "file-downloads", "teleport", "events", "lifecycle-hooks", "navigate", "alpine", "styles", "islands", "lazy-loading", "loading-states", "directives",
+}, livewireDirectiveDetailSlugs...), "testing")
+
+// livewireDocRegistry maps URL slug → view name, browser title, and optional TOC (in-page anchors).
+var livewireDocRegistry = map[string]struct {
+	View  string
+	Title string
+	TOC   []map[string]any
+}{
+	"quickstart": {
+		View:  "livewire/docs/quickstart",
+		Title: "Quickstart · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "install", "label": "Install"},
+			{"id": "register", "label": "Register components"},
+			{"id": "mount-route", "label": "Full-page route"},
+			{"id": "layout-script", "label": "Layout script"},
+		},
+	},
+	"installation": {
+		View:  "livewire/docs/installation",
+		Title: "Installation · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "endpoints", "label": "Script & update endpoint"},
+			{"id": "payload", "label": "Update payload"},
+		},
+	},
+	"upgrade-guide": {
+		View:  "livewire/docs/upgrade-guide",
+		Title: "Upgrade guide · Nimbus Livewire",
+		TOC:   []map[string]any{{"id": "notes", "label": "Notes"}},
+	},
+	"parity": {
+		View:  "livewire/docs/parity",
+		Title: "Parity matrix · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "matrix", "label": "Parity matrix"},
+			{"id": "fixtures", "label": "Fixtures page"},
+			{"id": "notes", "label": "Notes / known gaps"},
+		},
+	},
+	"components": {
+		View:  "livewire/docs/components",
+		Title: "Components · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "contract", "label": "Component contract"},
+			{"id": "register", "label": "Registering"},
+			{"id": "namespaced", "label": "Namespaced names"},
+			{"id": "embed-template", "label": "Embed in views"},
+			{"id": "embed-controller", "label": "Embed from Go"},
+			{"id": "props-mount", "label": "PropsMount vs SetState"},
+			{"id": "pages-vs-embed", "label": "Pages vs embedded"},
+			{"id": "state", "label": "State & serialization"},
+			{"id": "scaffold", "label": "Scaffolding"},
+			{"id": "troubleshooting", "label": "Troubleshooting"},
+			{"id": "see-also", "label": "See also"},
+		},
+	},
+	"nesting": {
+		View:  "livewire/docs/nesting",
+		Title: "Nesting components · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "render-nested", "label": "RenderNested & keys"},
+			{"id": "wire-id-render", "label": "RenderForWireID"},
+			{"id": "props", "label": "Passing props"},
+			{"id": "loops", "label": "Lists & slot keys"},
+			{"id": "parent-child", "label": "Parent ↔ child"},
+			{"id": "limits", "label": "Laravel parity limits"},
+		},
+	},
+	"pages": {
+		View:  "livewire/docs/pages-doc",
+		Title: "Pages · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "routing", "label": "Routing to components"},
+			{"id": "layouts", "label": "Layouts"},
+			{"id": "layout-scaffold", "label": "Creating the layout"},
+			{"id": "default-layout", "label": "Default layout options"},
+			{"id": "layout-picker", "label": "Component layouts"},
+			{"id": "title", "label": "Page title"},
+			{"id": "named-slots", "label": "Named slots"},
+			{"id": "route-params", "label": "Route parameters"},
+			{"id": "model-binding", "label": "Model binding"},
+			{"id": "see-also", "label": "See also"},
+		},
+	},
+	"properties": {
+		View:  "livewire/docs/properties",
+		Title: "Properties · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "initializing", "label": "Initializing"},
+			{"id": "fill", "label": "Bulk assignment"},
+			{"id": "only", "label": "PickKeys (only)"},
+			{"id": "binding", "label": "Data binding"},
+			{"id": "reset", "label": "Reset"},
+			{"id": "pull", "label": "Pull"},
+			{"id": "types", "label": "Supported types"},
+			{"id": "wireables", "label": "Custom types"},
+			{"id": "javascript", "label": "JavaScript API"},
+			{"id": "security", "label": "Security"},
+			{"id": "helpers", "label": "Package helpers"},
+			{"id": "see-also", "label": "See also"},
+		},
+	},
+	"actions": {
+		View:  "livewire/docs/actions",
+		Title: "Actions · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "basics", "label": "Basics"},
+			{"id": "parameters", "label": "Parameters"},
+			{"id": "dependency-injection", "label": "Dependency injection"},
+			{"id": "directives", "label": "Event directives"},
+			{"id": "modifiers", "label": "Modifiers"},
+			{"id": "magic", "label": "Magic actions"},
+			{"id": "skip-render", "label": "Skip re-render"},
+			{"id": "javascript-api", "label": "JavaScript API"},
+			{"id": "js-actions", "label": "JS-only actions"},
+			{"id": "loading", "label": "Loading & forms"},
+			{"id": "confirm", "label": "Confirm"},
+			{"id": "security", "label": "Security"},
+			{"id": "see-also", "label": "See also"},
+		},
+	},
+	"forms": {
+		View:  "livewire/docs/forms",
+		Title: "Forms · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "submit", "label": "Submitting"},
+			{"id": "default-vs-live", "label": "Default vs .live"},
+			{"id": "validation", "label": "Validation"},
+			{"id": "form-objects", "label": "Form objects"},
+			{"id": "reset-pull", "label": "Reset & pull"},
+			{"id": "loading", "label": "Loading"},
+			{"id": "live-blur", "label": "Live, blur, debounce"},
+			{"id": "dirty", "label": "Dirty"},
+			{"id": "autosave", "label": "Real-time save"},
+			{"id": "components-ui", "label": "Partials & custom UI"},
+			{"id": "files", "label": "File uploads"},
+			{"id": "see-also", "label": "See also"},
+		},
+	},
+	"validation": {
+		View:  "livewire/docs/validation",
+		Title: "Validation · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "basic", "label": "Basic validation"},
+			{"id": "realtime", "label": "Real-time validation"},
+			{"id": "js", "label": "JavaScript errors"},
+			{"id": "notes", "label": "Notes / limitations"},
+		},
+	},
+	"pagination": {
+		View:  "livewire/docs/pagination",
+		Title: "Pagination · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "basic", "label": "Basic usage"},
+			{"id": "url", "label": "URL query string tracking"},
+			{"id": "reset", "label": "Resetting the page"},
+			{"id": "methods", "label": "Page navigation methods"},
+			{"id": "multiple", "label": "Multiple paginators"},
+			{"id": "hooks", "label": "Hooking into page updates"},
+			{"id": "themes", "label": "Themes & custom views"},
+			{"id": "notes", "label": "Notes / limitations"},
+		},
+	},
+	"url-query-parameters": {
+		View:  "livewire/docs/url-query-parameters",
+		Title: "URL query parameters · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "basic", "label": "Basic usage"},
+			{"id": "init", "label": "Initializing from URL"},
+			{"id": "nullable", "label": "Nullable values"},
+			{"id": "alias", "label": "Aliases"},
+			{"id": "except", "label": "Excluding values"},
+			{"id": "keep", "label": "Display on page load (keep)"},
+			{"id": "history", "label": "Storing in history"},
+			{"id": "method", "label": "QueryString() method"},
+			{"id": "notes", "label": "Notes / limitations"},
+		},
+	},
+	"computed-properties": {
+		View:  "livewire/docs/computed-properties",
+		Title: "Computed properties · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "basic", "label": "Basic usage"},
+			{"id": "performance", "label": "Performance (memoization)"},
+			{"id": "clearing", "label": "Clearing the memo"},
+			{"id": "persist", "label": "Caching between requests (persist)"},
+			{"id": "cache", "label": "Caching across components (cache)"},
+			{"id": "notes", "label": "Notes / limitations"},
+		},
+	},
+	"redirecting": {
+		View:  "livewire/docs/redirecting",
+		Title: "Redirecting · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "basic", "label": "Basic usage"},
+			{"id": "navigate", "label": "Redirect using wire:navigate"},
+			{"id": "intended", "label": "Redirect intended"},
+			{"id": "flash", "label": "Flash messages"},
+			{"id": "notes", "label": "Notes / limitations"},
+		},
+	},
+	"file-downloads": {
+		View:  "livewire/docs/file-downloads",
+		Title: "File downloads · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "basic", "label": "Basic usage"},
+			{"id": "streaming", "label": "Streaming downloads"},
+			{"id": "testing", "label": "Testing file downloads"},
+			{"id": "notes", "label": "Notes / limitations"},
+		},
+	},
+	"teleport": {
+		View:  "livewire/docs/teleport",
+		Title: "Teleport · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "basic", "label": "Basic usage"},
+			{"id": "rules", "label": "Rules"},
+			{"id": "notes", "label": "Notes / limitations"},
+		},
+	},
+	"events": {
+		View:  "livewire/docs/events",
+		Title: "Events · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "dispatch-server", "label": "Dispatching from Go"},
+			{"id": "listen-server", "label": "Listening in Go"},
+			{"id": "dynamic-names", "label": "Dynamic event names"},
+			{"id": "client-dispatch", "label": "Client: find & globals"},
+			{"id": "wire-click-dispatch", "label": "wire:click $dispatch"},
+			{"id": "alpine", "label": "Alpine & vanilla JS"},
+			{"id": "navigate-events", "label": "Navigate events"},
+			{"id": "not-yet", "label": "Not in Nimbus yet"},
+		},
+	},
+	"lifecycle-hooks": {
+		View:  "livewire/docs/lifecycle-hooks",
+		Title: "Lifecycle hooks · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Hook map"},
+			{"id": "request-order", "label": "Request order"},
+			{"id": "first-render", "label": "First render"},
+			{"id": "post-update", "label": "POST update"},
+			{"id": "mount-boot", "label": "Mount vs boot"},
+			{"id": "hydrate-dehydrate", "label": "Hydrate & dehydrate"},
+			{"id": "property-hooks", "label": "Property hooks"},
+			{"id": "exception-hook", "label": "Exception handler"},
+			{"id": "traits-forms", "label": "Traits & forms"},
+			{"id": "directives", "label": "Client directives"},
+		},
+	},
+	"navigate": {
+		View:  "livewire/docs/navigate",
+		Title: "Navigate · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "usage", "label": "Usage"},
+			{"id": "behavior", "label": "Behavior"},
+		},
+	},
+	"alpine": {
+		View:  "livewire/docs/alpine",
+		Title: "Alpine · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "script-order", "label": "Script order"},
+			{"id": "basic", "label": "Alpine inside components"},
+			{"id": "wire-magic", "label": "Magic $wire"},
+			{"id": "reactivity", "label": "Reactivity note"},
+			{"id": "entangle", "label": "Entangle"},
+			{"id": "find", "label": "Livewire.find"},
+			{"id": "bundle", "label": "Bundling"},
+		},
+	},
+	"styles": {
+		View:  "livewire/docs/styles",
+		Title: "Styles · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "scoped", "label": "Scoped styles"},
+			{"id": "root", "label": "Targeting the root"},
+			{"id": "global", "label": "Global styles"},
+			{"id": "dedupe", "label": "Deduplication"},
+			{"id": "browser", "label": "Browser support"},
+		},
+	},
+	"islands": {
+		View:  "livewire/docs/islands",
+		Title: "Islands · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "basic", "label": "Basic usage"},
+			{"id": "lazy", "label": "Lazy / defer"},
+			{"id": "placeholder", "label": "Placeholders"},
+			{"id": "trigger", "label": "Triggering islands"},
+			{"id": "modes", "label": "Append / prepend"},
+			{"id": "js", "label": "JavaScript / Alpine"},
+			{"id": "limits", "label": "Limitations"},
+		},
+	},
+	"lazy-loading": {
+		View:  "livewire/docs/lazy-loading",
+		Title: "Lazy loading · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "lazy-vs-defer", "label": "Lazy vs defer"},
+			{"id": "basic", "label": "Basic example"},
+			{"id": "placeholder", "label": "Placeholder HTML"},
+			{"id": "props", "label": "Passing props"},
+			{"id": "notes", "label": "Notes"},
+		},
+	},
+	"loading-states": {
+		View:  "livewire/docs/loading-states",
+		Title: "Loading states · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "basic", "label": "Basic usage"},
+			{"id": "how", "label": "How it works"},
+			{"id": "tailwind", "label": "Tailwind patterns"},
+			{"id": "css", "label": "Plain CSS"},
+			{"id": "wire-loading", "label": "wire:loading vs data-loading"},
+		},
+	},
+	"directives": {
+		View:  "livewire/docs/directives",
+		Title: "HTML directives · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "intro", "label": "Introduction"},
+			{"id": "overview", "label": "All directives"},
+		},
+	},
+	"testing": {
+		View:  "livewire/docs/testing",
+		Title: "Testing · Nimbus Livewire",
+		TOC: []map[string]any{
+			{"id": "overview", "label": "Overview"},
+			{"id": "quickstart", "label": "Quickstart"},
+			{"id": "api", "label": "API reference"},
+			{"id": "laravel-map", "label": "Laravel → Nimbus map"},
+			{"id": "http", "label": "HTTP / JSON tests"},
+			{"id": "e2e", "label": "Browser / E2E"},
+			{"id": "run", "label": "Plugin tests"},
+		},
+	},
+}
+
+func livewireDocsShortTitle(full string) string {
+	if i := strings.Index(full, " · "); i > 0 {
+		return full[:i]
+	}
+	return full
+}
+
+func livewireDocsIndexHandler(c *http.Context) error {
+	c.Redirect(302, "/livewire/docs/quickstart")
+	return nil
+}
+
+func livewireDocsPageHandler(c *http.Context) error {
+	page := c.Param("page")
+	meta, ok := livewireDocRegistry[page]
+	if !ok {
+		return c.NotFound()
+	}
+	data := map[string]any{
+		"title":       meta.Title,
+		"docNavTitle": livewireDocsShortTitle(meta.Title),
+		"docPage":     page,
+		"toc":         meta.TOC,
+	}
+	idx := -1
+	for ii, s := range livewireDocsOrder {
+		if s == page {
+			idx = ii
+			break
+		}
+	}
+	if idx > 0 {
+		prev := livewireDocsOrder[idx-1]
+		pm := livewireDocRegistry[prev]
+		data["docPrev"] = "/livewire/docs/" + prev
+		data["docPrevTitle"] = livewireDocsShortTitle(pm.Title)
+	}
+	if idx >= 0 && idx < len(livewireDocsOrder)-1 {
+		next := livewireDocsOrder[idx+1]
+		nm := livewireDocRegistry[next]
+		data["docNext"] = "/livewire/docs/" + next
+		data["docNextTitle"] = livewireDocsShortTitle(nm.Title)
+	}
+	return c.View(meta.View, data)
+}
+
 func docsIndexHandler(c *http.Context) error {
 	if unpoly.IsUnpoly(c) {
 		unpoly.SetTitle(c, "Documentation · Nimbus")
@@ -281,7 +747,7 @@ var docsOrder = []string{
 	"cache", "cache-remember", "cache-backends", "cache-invalidation",
 	"storage", "drive", "transmit", "events", "logger", "mail", "notification", "queue", "scheduler", "websockets",
 	"workflow", "feature-flags", "multi-tenancy", "presence", "openapi", "studio", "edge-functions", "metrics",
-	"telescope", "horizon", "pulse", "socialite", "unpoly",
+	"telescope", "horizon", "pulse", "reverb", "socialite", "unpoly",
 	"ai", "ai-video", "mcp",
 	"cli", "creating-commands", "command-arguments", "command-flags", "prompts", "terminal-ui", "repl", "hot-reload",
 	"testing-introduction", "http-tests",

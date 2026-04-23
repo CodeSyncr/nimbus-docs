@@ -1,0 +1,133 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Essentials</div>
+  <h1>Actions</h1>
+  <p class="page-lead">
+    Actions map browser events to your component’s <code>Call(action string, params map[string]any)</code> method. The client POSTs current <code>wire:state</code> plus the action name and parameters; the server applies state, runs the action, then returns fresh HTML (unless you skip rendering). Same mental model as
+    <a href="https://livewire.laravel.com/docs/4.x/actions" rel="noopener noreferrer" target="_blank">Laravel Livewire · Actions</a>;
+    Nimbus is Go-only and not wire-compatible with PHP Livewire.
+  </p>
+</div>
+
+<h2 id="basics">Basics</h2>
+<p>
+  Implement <code>Call</code> on your component: switch on <code>action</code> and read positional arguments from <code>params["0"]</code>, <code>params["1"]</code>, … (strings, numbers, booleans, or <code>nil</code> for JSON null).
+  The built-in <code>__sync</code> action persists <code>wire:model.live</code> (and similar) roundtrips; plain <code>wire:model</code> only hits the server when another action runs. You may no-op or validate in <code>__sync</code>.
+</p>
+<pre class="code-block"><code>func (c *PostCreate) Call(action string, p map[string]any) error {
+    switch action {
+    case "save":
+        return c.persist()
+    case "__sync":
+        return nil
+    default:
+        return fmt.Errorf("unknown action %q", action)
+    }
+}</code></pre>
+<pre class="code-block"><code>&lt;form wire:submit="save"&gt;
+  &lt;input wire:model="title" /&gt;
+  &lt;button type="submit"&gt;Save&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+
+<h2 id="parameters">Passing parameters</h2>
+<p>
+  Use parentheses in the attribute value (like Blade rendering <code>delete({{ $id }})</code> into <code>delete(2)</code>). The runtime parses literals on the client and server.
+</p>
+<pre class="code-block"><code>&lt;button type="button" wire:click="delete(42)"&gt;Delete&lt;/button&gt;</code></pre>
+<p>
+  In <code>Call</code>, read <code>p["0"]</code> (often a <code>float64</code> from JSON—convert to int/string as needed). Treat every parameter as untrusted input: authorize before mutating data.
+</p>
+<p>
+  There is no automatic Eloquent-style model injection; load entities in Go using IDs from <code>params</code>.
+</p>
+
+<h2 id="dependency-injection">Dependency injection</h2>
+<p>
+  Laravel resolves services from the container into action methods. In Nimbus, resolve dependencies inside <code>Call</code> (or store services on the component struct when you construct/register it). There is no automatic DI into <code>Call</code>’s signature.
+</p>
+
+<h2 id="directives">Event directives</h2>
+<ul>
+  <li><code>wire:click</code>, <code>wire:submit</code> — same as before; modifiers can be chained on the attribute name (see below).</li>
+  <li><strong>Other <code>wire:*</code> attributes</strong> whose names are not reserved for state/UI (for example <code>wire:keydown.enter</code>, <code>wire:input</code>, <code>wire:change</code>, <code>wire:trix-change</code>) bind a DOM listener and dispatch the same POST as <code>wire:click</code>.</li>
+</ul>
+<p>
+  Reserved structural directives (not treated as generic events) include <code>wire:model</code>, <code>wire:bind</code>, <code>wire:loading</code>, <code>wire:init</code>, <code>wire:poll</code>, <code>wire:intersect</code>, <code>wire:navigate</code>, <code>wire:id</code>, <code>wire:state</code>, and others listed in the <a href="/livewire/docs/directives">directives</a> index.
+</p>
+
+<h2 id="modifiers">Modifiers (partial)</h2>
+<p>
+  Chain segments with dots on the attribute name, e.g. <code>wire:click.prevent</code>, <code>wire:keydown.enter.prevent</code>.
+</p>
+<ul>
+  <li><strong>Behavior:</strong> <code>prevent</code> (default for <code>click</code> / <code>submit</code>), <code>stop</code>, <code>once</code>, <code>self</code> (only if <code>event.target</code> is the element), <code>capture</code>, <code>passive</code>, <code>window</code>, <code>document</code> (listen on <code>window</code> / <code>document</code> instead of the element).</li>
+  <li><strong>Key filters</strong> (for <code>keydown</code> / <code>keyup</code> / <code>keypress</code>): <code>enter</code>, <code>escape</code>, <code>tab</code>, <code>space</code>, arrow keys, <code>shift</code>, <code>ctrl</code>, <code>alt</code>, <code>meta</code>/<code>cmd</code>, and several punctuation aliases (see client source <code>LW_KEY_ALIASES</code>).</li>
+</ul>
+<p>
+  <strong>Not implemented yet:</strong> <code>debounce</code>, <code>throttle</code>, <code>outside</code>, <code>preserve-scroll</code>, <code>async</code> parallel queue, and Alpine’s full modifier set. Use plain JS or CSS where needed.
+</p>
+
+<h2 id="magic">Magic actions (built-in)</h2>
+<p>
+  These run on the server without calling your <code>Call</code> handler (state is updated inside the plugin, then the component re-renders):
+</p>
+<ul>
+  <li><code>$refresh</code> / <code>$reload</code> — re-render with current state (same idea as Livewire’s <code>$refresh</code>).</li>
+  <li><code>$set('key', value)</code> in the template: <code>wire:click="$set('query','')"</code> — two arguments, JSON literals supported.</li>
+  <li><code>$toggle('boolKey')</code> — toggles a boolean-like value in <code>State()</code>.</li>
+</ul>
+<p>
+  <code>$parent</code>, <code>$dispatch</code> to other Livewire components, and PHP-only helpers are not replicated. For browser-only dispatch, use <code>Livewire.find(el).dispatch('name', detail)</code> (see below).
+</p>
+
+<h2 id="skip-render">Skipping re-render (renderless)</h2>
+<p>
+  Return <code>livewire.ErrSkipRender</code> from <code>Call</code> to update serialized state on the server and merge it into <code>wire:state</code> on the client <strong>without</strong> replacing the component’s HTML—useful for logging, analytics, or side effects that do not change markup (similar in spirit to <code>#[Renderless]</code> / <code>skipRender()</code>).
+</p>
+
+<h2 id="javascript-api">JavaScript: <code>Livewire.find</code></h2>
+<p>
+  <code>Livewire.find(selectorOrElement)</code> returns an API object:
+</p>
+<ul>
+  <li><code>.get(path)</code> / <code>.set(path, value, sync)</code> — client state (see <a href="/livewire/docs/properties">Properties</a>).</li>
+  <li><code>.call(actionExpr, mergeParams?)</code> — runs a server action; supports <code>'delete(2)'</code> or <code>'save'</code>; optional <code>mergeParams</code> overrides positional keys.</li>
+  <li><code>.dispatch(name, detail)</code> — fires a bubbling <code>CustomEvent</code> on <code>document</code> (client-only; not the same as Livewire’s server event bus).</li>
+</ul>
+<p>
+  With Alpine on the page, the runtime registers <code>$wire</code> (see <a href="/livewire/docs/alpine">Alpine</a>). Without Alpine, use <code>Livewire.find(...)</code> from <code>onclick</code> or plain scripts.
+</p>
+<p>
+  Promise return values from actions (for <code>await $wire.getPostCount()</code>) and <code>#[Json]</code>-style responses are not implemented; actions are request/response HTML or <code>noHtml</code> state merges.
+</p>
+
+<h2 id="js-actions">JavaScript-only actions (<code>$js</code>)</h2>
+<p>
+  Not implemented. Use normal scripts plus <code>Livewire.find</code> for optimistic UI, then <code>.call</code> to persist.
+</p>
+
+<h2 id="loading">Loading UI and double submit</h2>
+<p>
+  <code>wire:loading</code> and busy state are documented under <a href="/livewire/docs/wire-loading">wire:loading</a>. Laravel disables an entire form during <code>wire:submit</code>; Nimbus does not yet disable all controls automatically—use <code>wire:loading</code> or disable buttons in your template while requests are in flight if you need parity.
+</p>
+
+<h2 id="confirm">Confirming dangerous actions</h2>
+<p>
+  <code>wire:confirm="Message"</code> on the same element as the action shows <code>window.confirm</code> before the request is sent. See <a href="/livewire/docs/wire-confirm">wire:confirm</a>.
+</p>
+
+<h2 id="security">Security</h2>
+<ul>
+  <li>Any registered action name could be invoked with crafted POSTs—keep <code>Call</code> strict and authorize by user/session, not only by visible buttons.</li>
+  <li>Validate action parameters like request input.</li>
+  <li>Keep sensitive helpers unexported in Go; only <code>Call</code> switches should expose server behavior.</li>
+</ul>
+
+<h2 id="see-also">See also</h2>
+<ul>
+  <li><a href="/livewire/docs/components">Components</a> — <code>Call</code> contract</li>
+  <li><a href="/livewire/docs/forms">Forms</a> — validation and <code>wire:submit</code></li>
+  <li><a href="/livewire/docs/properties">Properties</a> — state and <code>Livewire.find</code></li>
+  <li><a href="/livewire/docs/directives">HTML directives</a> — full list</li>
+</ul>

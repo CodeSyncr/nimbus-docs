@@ -1,0 +1,31 @@
+{
+  "app": "nimbus-starter",
+  "target": "render",
+  "region": "auto",
+  "port": 3000,
+  "go_version": "1.26",
+  "environment": "production",
+  "env": {},
+  "build": {
+    "command": "go build -o ./bin/server .",
+    "output": "./bin/server",
+    "ldflags": "-s -w",
+    "cgo_enabled": false
+  },
+  "resources": {
+    "memory": "512mb",
+    "cpus": 1
+  },
+  "health": {
+    "path": "/health",
+    "interval": 15,
+    "timeout": 5
+  },
+  "scaling": {
+    "min_instances": 1,
+    "max_instances": 3
+  },
+  "hooks": {
+    "release": "./bin/server migrate"
+  }
+}

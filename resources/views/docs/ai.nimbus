@@ -271,7 +271,7 @@ func init() {
 <pre data-file="start/kernel.go"><code>import (
     "github.com/CodeSyncr/nimbus/plugins/ai"
     "gorm.io/driver/postgres"
-    "gorm.io/gorm"
+    "github.com/CodeSyncr/nimbus/lucid"
 )
 
 func Boot(app *nimbus.App) {
@@ -482,7 +482,7 @@ answer, err := qa.Ask(ctx, "What are the payment terms?")</code></pre>
 </table>
 
 <h3 class="text-lg font-medium text-slate-900 dark:text-white mt-6 mb-2">Example: Redis Memory with Sliding Window</h3>
-<pre data-file="app/controllers/chat.go"><code>import "github.com/redis/go-redis/v9"
+<pre data-file="app/controllers/chat.go"><code>import "github.com/CodeSyncr/nimbus/redis"
 
 func (ctrl *Chat) Message(c *http.Context) error {
     rdb := redis.NewClient(&amp;redis.Options{Addr: "localhost:6379"})

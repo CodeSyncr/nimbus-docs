@@ -1,0 +1,119 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Essentials</div>
+  <h1>Pages</h1>
+  <p class="page-lead">
+    Livewire page components are full routes that render a single registered component inside your app layout, with optional titles and route parameters—see
+    <a href="https://livewire.laravel.com/docs/4.x/pages" rel="noopener noreferrer" target="_blank">Laravel Livewire · Pages</a>.
+    Nimbus provides the same idea via <code>livewire.Route</code> and optional interfaces on your Go component types. This runtime is not PHP Livewire–compatible.
+  </p>
+</div>
+
+<h2 id="routing">Routing to components</h2>
+<p>
+  Register your page component (typically under a <code>pages::…</code> name), then mount it on a GET path. This is the equivalent of
+  <code>Route::livewire('/posts/create', 'pages::post.create')</code>.
+</p>
+<pre class="code-block"><code>livewire.Route(app.Router, "/posts/create", "pages::post.create", livewire.PageOptions{
+    Layout: "layouts/app",
+    Title:  "Create post",
+})</code></pre>
+<p>
+  On each request, Nimbus builds a fresh component instance, runs <code>MountRouteParams</code> when you implement it, renders inner HTML, wraps it in the Livewire root (<code>wire:id</code>, <code>wire:component</code>, <code>wire:state</code>), and passes the result into your layout as <code>{{ .embed }}</code>.
+</p>
+
+<h2 id="layouts">Layouts</h2>
+<p>
+  When <code>PageOptions.Layout</code> is non-empty (after normalizing <code>layouts::app</code> → <code>layouts/app</code>), the plugin renders that Nimbus view with at least:
+</p>
+<ul>
+  <li><code>.title</code> — string for <code>&lt;title&gt;</code> (from options or <code>TitlePicker</code>)</li>
+  <li><code>.embed</code> — <code>template.HTML</code> of the full component root (the Livewire wrapper plus your markup)</li>
+</ul>
+<p>
+  Laravel’s layout uses <code>{{ $slot }}</code>; Nimbus passes the page body as <code>{{ .embed }}</code> so the data is a plain Go map. Include <code>{{ livewireStyles }}</code> / <code>{{ livewireScripts }}</code> like <code>@livewireStyles</code> / <code>@livewireScripts</code>.
+</p>
+
+<h2 id="layout-scaffold">Creating the default layout</h2>
+<p>
+  If you do not have a layout yet, generate the conventional file (same role as <code>php artisan livewire:layout</code>):
+</p>
+<pre class="code-block"><code>nimbus livewire:layout</code></pre>
+<p>
+  That creates <code>resources/views/layouts/app.nimbus</code> with <code>{{ .embed }}</code>, a dynamic <code>&lt;title&gt;</code>, and Livewire helpers. Adjust paths or assets to match your app.
+</p>
+
+<h2 id="default-layout">Default layout and per-route options</h2>
+<p>
+  Laravel’s <code>component_layout</code> in <code>config/livewire.php</code> sets a global default. Nimbus has no separate Livewire config file: pass the default layout (and optional title) on each <code>livewire.Route</code> call via <code>PageOptions</code>.
+  If many routes share the same layout, use a small helper in your <code>start/routes.go</code> (or similar) that fills <code>PageOptions{Layout: "layouts/app"}</code> so you do not repeat literals.
+</p>
+
+<h2 id="layout-picker">Component-specific layouts</h2>
+<p>
+  Laravel uses <code>#[Layout('layouts::dashboard')]</code> or <code>-&gt;layout(...)</code> on the view. In Nimbus, implement <code>LayoutPicker</code> and return a non-empty view name to override <code>PageOptions.Layout</code> for that component only (also accepts <code>layouts::…</code> style names; they are normalized).
+</p>
+<pre class="code-block"><code>func (p *AdminDashboard) Layout() string {
+    return "layouts/dashboard" // or "layouts::dashboard"
+}</code></pre>
+
+<h2 id="title">Setting the page title</h2>
+<p>
+  Your layout should output the passed title, for example:
+</p>
+<pre class="code-block"><code>&lt;title&gt;{{ if .title }}{{ .title }}{{ else }}My app{{ end }}&lt;/title&gt;</code></pre>
+<p>
+  Static title from the route (like a default): set <code>PageOptions.Title</code>. Per-component or dynamic title: implement <code>TitlePicker</code> with <code>Title() string</code>; when non-empty it overrides the option’s title for that render. The demo component <code>pages::demo.show</code> in the plugin uses this pattern.
+</p>
+
+<h2 id="named-slots">Named layout slots</h2>
+<p>
+  <strong>Not implemented.</strong>
+  Laravel lets you fill extra named slots (for example <code>&lt;x-slot:lang&gt;</code>) from the component view. The built-in <code>livewire.Route</code> handler only supplies <code>title</code> and <code>embed</code> to the layout.
+  If you need extra layout variables, render the page yourself: call <code>livewire.RenderPageForRequest</code>, then <code>view.Render</code> with a map that includes <code>embed</code>, <code>title</code>, and any other keys your layout expects.
+</p>
+
+<h2 id="route-params">Accessing route parameters</h2>
+<p>
+  Define path segments in the router (for example <code>/posts/:id</code>). On the <strong>initial</strong> full-page GET, Nimbus collects <code>c.Params</code> into <code>map[string]string</code> and, if your component implements <code>Mountable</code>, calls <code>MountRouteParams(params) error</code> before render—equivalent to Livewire’s <code>mount($id)</code> when names align.
+</p>
+<pre class="code-block"><code>livewire.Route(app.Router, "/posts/:id", "pages::post.show", livewire.PageOptions{
+    Layout: "layouts/app",
+})
+
+// On the component:
+func (p *PostShow) MountRouteParams(params map[string]string) error {
+    id := strings.TrimSpace(params["id"])
+    if id == "" {
+        return fmt.Errorf("missing id")
+    }
+    p.PostID = id
+    return nil
+}</code></pre>
+<p>
+  Subsequent <code>wire:</code> POST updates <strong>do not</strong> call <code>MountRouteParams</code> again; state comes from <code>wire:state</code> and <code>SetState</code>. Design fields you need across updates as part of serialized state.
+</p>
+
+<h2 id="model-binding">Route model binding</h2>
+<p>
+  <strong>Not automatic.</strong>
+  Laravel can resolve <code>{post}</code> to an Eloquent model. In Go/Nimbus you load the model (or run a query) inside <code>MountRouteParams</code> using the string param, or in <code>Render()</code> / actions as needed. There is no framework hook that type-hints models from the path for you.
+</p>
+<pre class="code-block"><code>func (p *PostShow) MountRouteParams(params map[string]string) error {
+    id := strings.TrimSpace(params["post"]) // or "id", matching your route
+    post, err := models.FindPostByID(id)
+    if err != nil {
+        return err
+    }
+    p.Post = post
+    p.syncStateFromPost()
+    return nil
+}</code></pre>
+
+<h2 id="see-also">See also</h2>
+<ul>
+  <li><a href="/livewire/docs/components">Components</a> — registration, <code>{{ livewire }}</code>, <code>PropsMount</code></li>
+  <li><a href="/livewire/docs/quickstart">Quickstart</a> — end-to-end setup</li>
+  <li><a href="/livewire/docs/installation">Installation</a> — script URL and update endpoint</li>
+</ul>

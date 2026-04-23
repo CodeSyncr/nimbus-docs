@@ -1,0 +1,47 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:bind</h1>
+  <p class="page-lead">
+    In <strong>Nimbus Livewire</strong>, <code>wire:bind</code> is a shorthand for two-way binding on <strong>form controls</strong>—the same code path as <code>wire:model</code>.
+    It does <strong>not</strong> implement Laravel Livewire&nbsp;v4-style <code>wire:bind:class</code>, <code>wire:bind:style</code>, or other attribute binding.
+  </p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  Use <code>wire:bind</code> when you prefer that name over <code>wire:model</code> on inputs, textareas, and checkboxes.
+  If an element has both <code>wire:model</code> and <code>wire:bind</code>, <code>wire:model</code> wins.
+</p>
+<p>
+  For reactive classes, styles, or arbitrary attributes without a server round-trip, use your own JS or Alpine alongside Nimbus—this runtime keeps <code>wire:bind</code> limited to control values for predictable state.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<p>Bind a text field to component state key <code>message</code> (same behavior as <code>wire:model</code>; use <code>wire:bind.live</code> for debounced <code>__sync</code> while typing):</p>
+<pre class="code-block"><code>&lt;input type="text" wire:bind="message" name="message" /&gt;</code></pre>
+<p>Equivalent:</p>
+<pre class="code-block"><code>&lt;input type="text" wire:model="message" name="message" /&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Text input</h3>
+<pre class="code-block"><code>&lt;input type="text" wire:bind="title" placeholder="Title" /&gt;</code></pre>
+<h3>Checkbox → boolean in state</h3>
+<pre class="code-block"><code>&lt;input type="checkbox" wire:bind="accepted" /&gt;</code></pre>
+<h3>Textarea</h3>
+<pre class="code-block"><code>&lt;textarea wire:bind="body" rows="6"&gt;&lt;/textarea&gt;</code></pre>
+<h3>What Livewire v4 documents but Nimbus does not support</h3>
+<p>
+  Patterns such as <code>wire:bind:class="…"</code>, <code>wire:bind:style</code>, <code>wire:bind:href</code>, or <code>wire:bind:disabled</code> are <strong>not</strong> parsed by this runtime.
+  Use server-rendered attributes, or Alpine/<code>x-bind</code>, or extend the client in your app if you need that behavior.
+</p>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> <code>wire:bind="stateKey"</code></p>
+<ul>
+  <li><strong>Element:</strong> form controls only (same as <code>wire:model</code>).</li>
+  <li><strong>Value:</strong> dot path supported via nested keys in JSON state (e.g. <code>user.name</code> if your state shape includes it).</li>
+  <li><strong>Modifiers:</strong> none in Nimbus.</li>
+  <li><strong>Precedence:</strong> if <code>wire:model</code> is present, <code>wire:bind</code> is ignored.</li>
+</ul>

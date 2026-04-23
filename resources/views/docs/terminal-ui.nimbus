@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Terminal UI</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">This guide covers terminal UI helpers for commands. Inspired by <a href="https://docs.adonisjs.com/guides/ace/terminal-ui" target="_blank" rel="noopener" class="text-amber-600 dark:text-amber-400 hover:underline">AdonisJS Ace Terminal UI</a>.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">This guide covers terminal UI helpers for commands, following Laravel-style CLI UX patterns for prompts, logs, and task feedback.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Displaying log messages</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.Logger()</code> for severity levels: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Debug</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Info</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Success</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Warning</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Error</code>.</p>

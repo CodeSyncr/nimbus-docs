@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 mb-4">Project Structure</h1>
-<p class="text-slate-600 mb-6">A new Nimbus app follows an AdonisJS-inspired layout. Each directory has a clear purpose, and the CLI scaffolds the same structure as the starter you are reading.</p>
+<p class="text-slate-600 mb-6">A new Nimbus app follows a Laravel-inspired layout. Each directory has a clear purpose, and the CLI scaffolds the same structure as the starter you are reading.</p>
 
 <pre><code>├── app/
 │   ├── controllers/

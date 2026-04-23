@@ -1,0 +1,17 @@
+# Nimbus Forge
+.git
+.gitignore
+.env
+.env.*
+*.md
+tmp/
+vendor/
+node_modules/
+.DS_Store
+*.test
+*.spec
+coverage/
+.idea/
+.vscode/
+bin/
+nimbus.deploy.json

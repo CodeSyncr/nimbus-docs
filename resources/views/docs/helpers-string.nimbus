@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Fluent String Helper</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">The <code>str</code> package provides a fluent, chainable API for manipulating strings — inspired by Laravel's <code>Str::of()</code> and AdonisJS string helpers. Every transformation method returns a new <code>NimbusString</code> so you can chain without limits.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">The <code>str</code> package provides a fluent, chainable API for manipulating strings — inspired by Laravel's <code>Str::of()</code>. Every transformation method returns a new <code>NimbusString</code> so you can chain without limits.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Concept</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Instead of juggling <code>strings.ToLower()</code>, <code>strings.TrimSpace()</code>, and regexp calls scattered across your code, Nimbus wraps a plain Go string inside <code>NimbusString</code>. You start a chain with <code>str.Str("...")</code> and finish with <code>.String()</code> to get the raw value back. Everything in between is chainable.</p>

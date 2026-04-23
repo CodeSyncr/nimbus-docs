@@ -1,0 +1,30 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:poll</h1>
+  <p class="page-lead">Periodically invoke a server action on a timer.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  The client scans attributes named <code>wire:poll</code> or <code>wire:poll.{interval}</code>. Each unique tuple of component id + action + interval registers one <code>setInterval</code> loop.
+  Default interval when using plain <code>wire:poll</code> is 2000&nbsp;ms.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;div wire:poll="refresh"&gt;&lt;/div&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Custom interval</h3>
+<pre class="code-block"><code>&lt;div wire:poll.1500ms="syncCounters"&gt;&lt;/div&gt;
+&lt;div wire:poll.30s="heartbeat"&gt;&lt;/div&gt;</code></pre>
+<h3>Polling busy dashboards</h3>
+<p>Prefer longer intervals in production to reduce load; pair with <code>wire:offline</code> to pause UI expectations when disconnected.</p>
+
+<h2 id="reference">Reference</h2>
+<ul>
+  <li><strong><code>wire:poll</code> value:</strong> action name; empty → <code>__sync</code>.</li>
+  <li><strong><code>wire:poll.500ms</code> / <code>wire:poll.2s</code>:</strong> numeric + <code>ms</code> or <code>s</code> suffix.</li>
+  <li><strong>Deduping:</strong> same signature reuses one timer.</li>
+</ul>

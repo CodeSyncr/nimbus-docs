@@ -100,7 +100,7 @@
   <!-- ── FOOTER ── -->
   <footer>
     <div class="footer-in">
-      <p>&#169; 2025 <a href="/">Nimbus</a> &middot; AdonisJS-style framework for Go</p>
+      <p>&#169; 2025 <a href="/">Nimbus</a> &middot; Laravel-inspired framework for Go</p>
       <div class="flinks">
         <a href="/">Home</a>
         <a href="/demos">Demos</a>

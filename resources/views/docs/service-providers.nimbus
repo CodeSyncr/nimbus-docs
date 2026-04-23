@@ -20,13 +20,13 @@
 import (
     "github.com/CodeSyncr/nimbus"
     "github.com/CodeSyncr/nimbus/database"
-    "gorm.io/gorm"
+    "github.com/CodeSyncr/nimbus/lucid"
 )
 
 type DatabaseProvider struct{}
 
 func (p *DatabaseProvider) Register(app *nimbus.App) error {
-    app.Container.Singleton("db", func() (*gorm.DB, error) {
+    app.Container.Singleton("db", func() (*lucid.DB, error) {
         return database.Connect(config.Database.Driver, config.Database.DSN)
     })
     return nil

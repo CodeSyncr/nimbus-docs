@@ -31,6 +31,7 @@ func Load() {
 	loadSession()
 	loadStatic()
 	loadStorage()
+	loadLivewire()
 
 	// ── Plugins & Security ─────────────────────────────
 	loadShield()

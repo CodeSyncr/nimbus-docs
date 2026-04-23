@@ -2,6 +2,9 @@
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">WebSockets</h1>
 <p class="text-slate-600 dark:text-slate-400 mb-6">Real-time bidirectional communication via WebSocket. Create a Hub, upgrade HTTP connections, and broadcast messages to all connected clients.</p>
 
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Reverb plugin (channels + Redis)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-4">For Laravel-style <strong>named channels</strong>, JSON subscribe/unsubscribe, and multi-instance <strong>Redis Pub/Sub</strong> fan-out, use the optional <a href="/docs/reverb" class="text-amber-600 dark:text-amber-400 hover:underline">Reverb</a> plugin (<code>nimbus plugin:install reverb</code>). The core <code>websocket</code> package below is a simple broadcast-all hub.</p>
+
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Quick Start</h2>
 <pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/websocket"
 
@@ -98,4 +101,5 @@ ws.send('Hello everyone!');</code></pre>
   <li>Use JSON for message format — consistent and easy to parse</li>
   <li>Combine with <a href="/docs/presence" class="text-amber-600 dark:text-amber-400 hover:underline">Presence</a> to track who's online</li>
   <li>Consider <a href="/docs/transmit" class="text-amber-600 dark:text-amber-400 hover:underline">Transmit (SSE)</a> for server-to-client only communication</li>
+  <li>Use <a href="/docs/reverb" class="text-amber-600 dark:text-amber-400 hover:underline">Reverb</a> when you need channel subscriptions and horizontal scaling</li>
 </ul>

@@ -25,7 +25,7 @@ go install ./cmd/nimbus</code></pre>
 <p class="text-slate-600 mb-4">Scaffold a fresh Nimbus project with the <code class="bg-slate-100 px-1 rounded">new</code> command:</p>
 <pre><code>nimbus new myapp
 cd myapp</code></pre>
-<p class="text-slate-600 mb-4">This creates a ready-to-run project with the AdonisJS-style folder structure:</p>
+<p class="text-slate-600 mb-4">This creates a ready-to-run project with a Laravel-inspired folder structure:</p>
 <pre><code>myapp/
   bin/server.go         # Boot sequence (config, middleware, routes, DB)
   start/kernel.go       # Middleware registration
@@ -65,7 +65,7 @@ func main() {
 
     app.Run()
 }</code></pre>
-<p class="text-slate-600 mb-4">However, for production apps we recommend using <code class="bg-slate-100 px-1 rounded">nimbus new</code> which generates the full AdonisJS-style structure with <code class="bg-slate-100 px-1 rounded">bin/server.go</code>, <code class="bg-slate-100 px-1 rounded">start/kernel.go</code>, and <code class="bg-slate-100 px-1 rounded">start/routes.go</code>.</p>
+<p class="text-slate-600 mb-4">However, for production apps we recommend using <code class="bg-slate-100 px-1 rounded">nimbus new</code> which generates the full Laravel-inspired structure with <code class="bg-slate-100 px-1 rounded">bin/server.go</code>, <code class="bg-slate-100 px-1 rounded">start/kernel.go</code>, and <code class="bg-slate-100 px-1 rounded">start/routes.go</code>.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Environment</h2>
 <p class="text-slate-600 mb-4">Create a <code class="bg-slate-100 px-1 rounded">.env</code> file in your project root (the CLI creates one for you):</p>

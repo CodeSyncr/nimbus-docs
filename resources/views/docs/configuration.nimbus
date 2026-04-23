@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 mb-4">Configuration</h1>
-<p class="text-slate-600 mb-6">Nimbus uses environment-driven configuration inspired by AdonisJS. Each subsystem has its own config file that reads from <code class="bg-slate-100 px-1 rounded">.env</code> via godotenv.</p>
+<p class="text-slate-600 mb-6">Nimbus uses environment-driven configuration inspired by Laravel conventions. Each subsystem has its own config file that reads from <code class="bg-slate-100 px-1 rounded">.env</code> via godotenv.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">How it works</h2>
 <p class="text-slate-600 mb-2">When the application boots, <code class="bg-slate-100 px-1 rounded">bin/server.go</code> calls <code class="bg-slate-100 px-1 rounded">config.Load()</code> as the very first step. This:</p>

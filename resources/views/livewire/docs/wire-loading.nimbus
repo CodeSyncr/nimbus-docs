@@ -1,0 +1,34 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:loading</h1>
+  <p class="page-lead">Toggle visibility while a Livewire request is in flight, optionally scoped with <code>wire:target</code>.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  The runtime tracks in-flight POST updates and SPA navigation. Elements marked with <code>wire:loading</code> are shown while busy and hidden when idle (best-effort <code>display</code> toggling).
+  Add <code>wire:target</code> to scope loading to a specific action or a model path being synced.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;button type="button" wire:click="save"&gt;Save&lt;/button&gt;
+&lt;span wire:loading&gt;Saving…&lt;/span&gt;</code></pre>
+<pre class="code-block"><code>&lt;button type="button" wire:click="save"&gt;Save&lt;/button&gt;
+&lt;span wire:loading wire:target="save"&gt;Saving…&lt;/span&gt;</code></pre>
+<pre class="code-block"><code>&lt;input wire:model.live="title" /&gt;
+&lt;span wire:loading wire:target="title"&gt;Syncing title…&lt;/span&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Full-page overlay</h3>
+<pre class="code-block"><code>&lt;div wire:loading class="lw-overlay"&gt;Please wait&lt;/div&gt;</code></pre>
+<h3>Spinner next to label</h3>
+<p>Place a small inline element beside buttons; it appears for both click actions and background <code>__sync</code> from models.</p>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> boolean <code>wire:loading</code></p>
+<ul>
+  <li><strong>Scope:</strong> global busy by default; add <code>wire:target</code> to scope to an action name or model path.</li>
+  <li>Pair with <code>wire:transition</code> if you prefer class-based busy styling.</li>
+</ul>

@@ -1,0 +1,81 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Features</div>
+  <h1>Alpine.js</h1>
+  <p class="page-lead">
+    Nimbus does <strong>not</strong> ship the Alpine script—you include
+    <a href="https://alpinejs.dev" rel="noopener noreferrer" target="_blank">Alpine.js</a>
+    from a CDN or your own bundle. The Livewire runtime registers an Alpine magic property
+    <code>$wire</code> (same idea as
+    <a href="https://livewire.laravel.com/docs/4.x/alpine" rel="noopener noreferrer" target="_blank">Laravel Livewire · Alpine</a>)
+    when Alpine starts, and <code>Livewire.find()</code> returns the same shape of object for plain JavaScript.
+  </p>
+</div>
+
+<h2 id="script-order">Script order</h2>
+<p>
+  Load the Nimbus Livewire script first, then Alpine, then call <code>Alpine.start()</code> if you import the module build. The runtime listens for <code>alpine:init</code> and also calls the registrer on boot so late-loaded Alpine still gets <code>$wire</code>.
+</p>
+<pre class="code-block"><code>&lt;script src="/livewire-….js" defer&gt;&lt;/script&gt;
+&lt;script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"&gt;&lt;/script&gt;</code></pre>
+
+<h2 id="basic">Alpine inside components</h2>
+<p>
+  Use <code>x-data</code>, <code>x-show</code>, <code>x-on:click</code>, etc. anywhere inside a component’s inner HTML. Pure client toggles do not require a server round-trip. After Livewire replaces component HTML (e.g. after an action), Alpine will re-initialize on the new subtree the same way as in a non-Livewire page.
+</p>
+
+<h2 id="wire-magic">Magic <code>$wire</code></h2>
+<p>
+  Inside any element that lives under a <code>[wire:id]</code> root, Alpine expressions can use <code>$wire</code>:
+</p>
+<ul>
+  <li><strong>Read properties</strong> — <code>$wire.title</code>, nested keys via <code>getByPath</code> (e.g. <code>$wire.user.name</code> when present in <code>wire:state</code>).</li>
+  <li><strong>Assign</strong> — <code>$wire.title = ''</code> updates client <code>wire:state</code> and bound inputs with <strong>no</strong> server request (same as <code>Livewire.find(el).set('title','', false)</code>).</li>
+  <li><strong>Call actions</strong> — <code>$wire.save()</code>, <code>$wire.deletePost(1)</code> (positional args map to <code>params["0"]</code>, …).</li>
+  <li><strong>Refresh</strong> — <code>$wire.$refresh()</code> or <code>$wire.$reload()</code> runs the magic <code>$refresh</code> action (full server re-render).</li>
+  <li><strong>Low-level API</strong> — <code>$wire.get('path')</code>, <code>$wire.set('path', val, sync)</code>, <code>$wire.call('actionExpr', merge)</code>, <code>$wire.dispatch</code>, <code>$wire.dispatchSelf</code> match <code>Livewire.find</code>.</li>
+</ul>
+<pre class="code-block"><code>&lt;form wire:submit="save"&gt;
+  &lt;input wire:model="title" type="text" /&gt;
+  &lt;small&gt;Length: &lt;span x-text="$wire.title.length"&gt;&lt;/span&gt;&lt;/small&gt;
+  &lt;button type="button" x-on:click="$wire.title = ''"&gt;Clear&lt;/button&gt;
+  &lt;input type="text" x-on:blur="$wire.save()" /&gt;
+  &lt;button type="submit"&gt;Save&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<p>
+  Quote string literals passed into actions when values are not numbers (e.g. UUIDs):
+  <code>x-on:click="$wire.remove('{{ .UUID }}')"</code> so the rendered JS is valid.
+</p>
+
+<h2 id="reactivity">Reactivity note</h2>
+<p>
+  Laravel’s <code>$wire</code> is deeply integrated with Alpine’s reactivity engine. Nimbus exposes a Proxy that reads current <code>wire:state</code> on each access; <code>x-text="$wire.foo"</code> may not re-run when another script only mutates the attribute unless Alpine is triggered (e.g. input events from <code>wire:model</code>, or <code>$wire.set</code> which runs <code>refreshComponentUI</code>). If a counter UI lags, prefer <code>wire:model.live</code>, or drive the display from Alpine-local <code>x-data</code> and sync on submit.
+</p>
+
+<h2 id="entangle">Entangle</h2>
+<p>
+  <code>$wire.entangle('property')</code> is implemented as a best-effort bridge for rare cases where you need two-way sync between Alpine and Livewire state.
+  By default, it is deferred (no network request) and syncs on the next Livewire round-trip; use <code>.live</code> to sync immediately.
+</p>
+<pre class="code-block"><code>&lt;div x-data="{ open: $wire.entangle('showDropdown') }"&gt;
+  &lt;button type="button" x-on:click="open = !open"&gt;Toggle&lt;/button&gt;
+  &lt;div x-show="open"&gt;...&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div x-data="{ open: $wire.entangle('showDropdown').live }"&gt;
+  ...
+&lt;/div&gt;</code></pre>
+<p>
+  Note: this requires Alpine’s interceptor/effect APIs (Alpine v3). If Alpine is present but doesn’t expose the needed hooks, Nimbus falls back to a snapshot value and warns.
+</p>
+
+<h2 id="find">JavaScript: <code>Livewire.find</code></h2>
+<p>
+  <code>Livewire.find(selectorOrElement)</code> returns the same <code>$wire</code>-compatible Proxy; the root is re-resolved on each access when you pass a selector string or an element still in the document, so it tracks replacement after updates when possible.
+</p>
+
+<h2 id="bundle">bundling Alpine with Livewire</h2>
+<p>
+  If you bundle both with Vite/esbuild, import Alpine before <code>Alpine.start()</code> and ensure the Livewire script has run (so <code>livewire:init</code> and magics are registered). Nimbus does not publish an ESM <code>Livewire, Alpine</code> twin of Laravel’s vendor bundle—you wire scripts the way your app already does.
+</p>

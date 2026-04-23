@@ -6,7 +6,7 @@
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
   <div class="hero-in">
-    <div class="eyebrow fi-anim d1"><hr>AdonisJS-style · Built for Go<hr></div>
+    <div class="eyebrow fi-anim d1"><hr>Laravel-style · Built for Go<hr></div>
     <h1 class="hero-h1 fi-anim d2">The <span class="grad">clean stack</span><br>for Go Artisans.</h1>
     <p class="hero-sub fi-anim d3">{{ .tagline }}</p>
     <div class="ctas fi-anim d4">

@@ -20,6 +20,7 @@ func main() {
     // ...
 }</code></pre>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbusmcp</code> alias to avoid conflict with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">github.com/mark3labs/mcp-go/mcp</code>.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MCP_PREFIX</code> to prepend all mounted MCP routes (for example, <code>/internal</code> turns <code>/mcp/weather</code> into <code>/internal/mcp/weather</code>).</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Creating a Server</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Create an MCP server with tools, resources, and prompts:</p>
@@ -84,6 +85,7 @@ func handleGetWeather(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallTo
     }
   }
 }</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">If <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">MCP_PREFIX</code> is set, include it in the URL (for example <code>http://localhost:3333/internal/mcp/weather</code>).</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Transport</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Uses <strong>Streamable HTTP</strong> (MCP spec): POST for JSON-RPC, GET for SSE. Compatible with Cursor, Claude Desktop, and other MCP clients.</p>

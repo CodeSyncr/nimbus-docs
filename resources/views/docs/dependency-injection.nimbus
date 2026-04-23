@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 mb-4">Dependency Injection</h1>
-<p class="text-slate-600 mb-6">Nimbus ships with an IoC (Inversion of Control) container inspired by AdonisJS and Laravel. It lives in <code class="bg-slate-100 px-1 rounded">container.Container</code> and is available as <code class="bg-slate-100 px-1 rounded">app.Container</code> after <code class="bg-slate-100 px-1 rounded">nimbus.New()</code>.</p>
+<p class="text-slate-600 mb-6">Nimbus ships with an IoC (Inversion of Control) container inspired by Laravel conventions. It lives in <code class="bg-slate-100 px-1 rounded">container.Container</code> and is available as <code class="bg-slate-100 px-1 rounded">app.Container</code> after <code class="bg-slate-100 px-1 rounded">nimbus.New()</code>.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Binding types</h2>
 <div class="overflow-x-auto mb-4">

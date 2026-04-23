@@ -45,6 +45,8 @@
     </div>
   </div>
 
+  <p class="text-slate-600 dark:text-slate-400 mt-6 mb-2">For bidirectional WebSockets and channel subscriptions, use the <a href="/docs/reverb" class="text-amber-600 dark:text-amber-400 hover:underline">Reverb</a> plugin instead of Transmit.</p>
+
   <!-- ── Installation ── -->
   <h2 id="installation" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
     <span class="text-amber-500">§</span> Installation

@@ -1,0 +1,29 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:offline</h1>
+  <p class="page-lead">Show or hide content based on the browser’s online flag.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  On load and whenever <code>window</code> fires <code>online</code>/<code>offline</code>, the runtime scans <code>[wire:offline]</code> elements and toggles <code>display</code> so they are visible only while <code>navigator.onLine === false</code>.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;div wire:offline&gt;
+  You are offline — changes may not save.
+&lt;/div&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Banner above forms</h3>
+<pre class="code-block"><code>&lt;div class="banner" wire:offline&gt;Reconnect to continue.&lt;/div&gt;</code></pre>
+<h3>Disable-like hint</h3>
+<p>Combine with CSS; the runtime does not disable inputs automatically.</p>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> boolean <code>wire:offline</code></p>
+<ul>
+  <li><strong>Detection:</strong> standard <code>navigator.onLine</code> (best-effort; false positives possible).</li>
+</ul>

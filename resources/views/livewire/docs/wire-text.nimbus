@@ -1,0 +1,29 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:text</h1>
+  <p class="page-lead">Mirror a state path into an element’s <code>textContent</code> on every refresh.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  Unlike server-rendered mustache output, <code>wire:text</code> keeps a DOM node in sync after client-side state changes (input events, sync responses) without waiting for a full HTML swap.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;span wire:text="count"&gt;0&lt;/span&gt;
+&lt;button type="button" wire:click="increment"&gt;+&lt;/button&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Character count</h3>
+<pre class="code-block"><code>&lt;textarea wire:model="bio"&gt;&lt;/textarea&gt;
+&lt;span wire:text="bio"&gt;&lt;/span&gt; &lt;!-- shows live text; pair with length in server if needed --&gt;</code></pre>
+<h3>Clock / formatted strings</h3>
+<p>If you store a preformatted string in state, bind it directly; complex formatting still belongs on the server.</p>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> <code>wire:text="path.to.value"</code></p>
+<ul>
+  <li><strong>Coercion:</strong> <code>undefined</code>/<code>null</code> become empty string.</li>
+</ul>

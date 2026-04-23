@@ -3,8 +3,9 @@
 <p class="text-slate-600 dark:text-slate-400 mb-6">Inertia lets you build single-page apps using <strong>Vue</strong>, <strong>React</strong>, or <strong>Svelte</strong> without building an API. Your Go backend renders pages and passes props; the frontend handles routing and UI. Use Inertia when you want a modern SPA with server-driven routing. Use Unpoly for server-rendered HTML with progressive enhancement.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Installation</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">The plugin uses <a href="https://github.com/petaki/inertia-go" class="text-amber-600 dark:text-amber-400 hover:underline">petaki/inertia-go</a> as the server adapter:</p>
-<pre data-file="Terminal"><code>go get github.com/petaki/inertia-go</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Install the official Nimbus Inertia plugin:</p>
+<pre data-file="Terminal"><code>nimbus plugin install inertia</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">You can also use the legacy alias: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus plugin:install inertia</code>.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Create an Inertia app</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">--kit</code> flag when creating a new app:</p>

@@ -1,0 +1,28 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:show</h1>
+  <p class="page-lead">Toggle visibility from expressions evaluated against client JSON state.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  On each state refresh, the runtime evaluates the attribute: empty or <code>true</code> shows the element; paths read via dot notation from state; a leading <code>!</code> negates truthiness.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;p wire:show="errorMessage"&gt;Something went wrong.&lt;/p&gt;</code></pre>
+<p>Initial text can come from your server template; <code>wire:show</code> only toggles visibility from JSON state.</p>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Boolean flag</h3>
+<pre class="code-block"><code>&lt;div wire:show="isAdmin"&gt;Admin toolbar&lt;/div&gt;</code></pre>
+<h3>Inverted</h3>
+<pre class="code-block"><code>&lt;div wire:show="!loading"&gt;Content ready&lt;/div&gt;</code></pre>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> <code>wire:show</code>, <code>wire:show="path"</code>, <code>wire:show="!path"</code></p>
+<ul>
+  <li><strong>Truthiness:</strong> strings empty? false; numbers 0 false; arrays/objects truthy if non-empty heuristics match JS expectations in client.</li>
+</ul>

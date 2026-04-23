@@ -1,0 +1,31 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:cloak</h1>
+  <p class="page-lead">Hide flash-of-unstyled or pre-hydration content until the Livewire runtime has attached.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  During boot, every element carrying <code>wire:cloak</code> has <code>display:none</code> applied. After the bundle binds listeners and state, your server-rendered markup is already consistent—cloak mainly prevents flicker before JS runs.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;div wire:cloak&gt;
+  &lt;p&gt;Visible after runtime boots.&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Whole component shell</h3>
+<pre class="code-block"><code>&lt;div wire:id="..." wire:cloak&gt;
+  &lt;!-- interactive region --&gt;
+&lt;/div&gt;</code></pre>
+<h3>Nested sections</h3>
+<p>Cloak only subtrees that depend on client binding if you want the rest of the page to show immediately.</p>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> boolean attribute <code>wire:cloak</code> (no value required).</p>
+<ul>
+  <li>Original inline <code>display</code> is stored on the element for restoration where supported.</li>
+</ul>

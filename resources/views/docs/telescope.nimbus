@@ -167,7 +167,7 @@ func (ctrl *UsersController) Show(c *http.Context) error {
   <h2 id="watchers" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
     <span class="text-amber-500">§</span> Watchers Reference
   </h2>
-  <p class="text-slate-600 dark:text-slate-400 mb-4">Each watcher records specific data. Framework subsystems call these automatically, but you can also record entries manually:</p>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Each watcher records specific data. Core hooks auto-record requests, exceptions, queries, logs, views, queue lifecycle, schedule runs, and event dispatches. The rest can be recorded manually when integrating your subsystem:</p>
   <pre data-file="Manual Recording"><code class="language-go">// Record a job execution
 plugin.RecordJob("SendWelcomeEmail", "default", "completed",
     150*time.Millisecond, map[string]any{"user_id": 42}, nil)

@@ -1,0 +1,45 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:model</h1>
+  <p class="page-lead">
+    Two-way bind controls to keys in <code>wire:state</code>. Default binding keeps the client in sync locally; add <code>.live</code> to round-trip to the server while typing (debounced). See
+    <a href="/livewire/docs/forms">Forms</a> for full patterns.
+  </p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  On <code>input</code> and <code>change</code>, the client updates JSON state on the component root and refreshes dependent UI (<code>wire:dirty</code>, <code>wire:show</code>, <code>wire:text</code>).
+  Unless you use <code>.live</code> (or <code>.live.blur</code> / etc.), the runtime does <strong>not</strong> POST <code>__sync</code> on every keystroke—only when another action runs (submit, click, …).
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;input type="text" wire:model="message" /&gt;</code></pre>
+
+<h2 id="live">Live and blur</h2>
+<pre class="code-block"><code>&lt;input type="text" wire:model.live="query" /&gt;
+&lt;input type="text" wire:model.live.blur="title" /&gt;</code></pre>
+<p>
+  <code>.lazy</code> is treated like <code>.blur</code>. Default debounce for <code>.live</code> alone is <strong>250ms</strong>. Customize with <code>.debounce.150ms</code> or use <code>.throttle.150ms</code> for periodic sync while typing.
+</p>
+
+<h2 id="nested">Nested keys</h2>
+<p>Dotted paths map into nested JSON objects (via <code>setByPath</code>), e.g. <code>wire:model="form.title"</code>.</p>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Checkbox as boolean</h3>
+<pre class="code-block"><code>&lt;input type="checkbox" wire:model="agree" /&gt;</code></pre>
+<h3>Select</h3>
+<pre class="code-block"><code>&lt;select wire:model="country"&gt;
+  &lt;option value="us"&gt;US&lt;/option&gt;
+  &lt;option value="ca"&gt;CA&lt;/option&gt;
+&lt;/select&gt;</code></pre>
+
+<h2 id="reference">Reference</h2>
+<ul>
+  <li><strong>Attribute names:</strong> <code>wire:model</code>, <code>wire:model.live</code>, <code>wire:model.live.blur</code>, <code>wire:model.live.debounce.Nms</code>, <code>wire:model.live.throttle.Nms</code> (same for <code>wire:bind</code> when no <code>wire:model</code> is present).</li>
+  <li><strong>Value:</strong> state key path string.</li>
+  <li><strong>Validation UI:</strong> pair with <code>wire:error="key"</code> spans for 422 responses.</li>
+</ul>

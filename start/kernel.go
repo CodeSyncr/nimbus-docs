@@ -66,10 +66,12 @@ func RegisterMiddleware(app *nimbus.App) {
 		},
 	}
 
+	// Order: Logger (outer) → errors.Handler → Recover (inner) so panics become
+	// AppError inside Recover and are rendered by Handler (HTML/JSON) instead of plain http.Error.
 	app.Router.Use(
 		middleware.Logger(),
-		middleware.Recover(),
 		errors.Handler(),
+		middleware.Recover(),
 		shield.Guard(shieldCfg),
 		shield.CSRFGuard(shieldCfg.CSRF),
 		unpoly.ServerProtocol(),

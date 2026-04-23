@@ -1,3 +1,6 @@
 .env
 *.sqlite
 tmp/
+
+# Local Netlify folder
+.netlify

@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 mb-4">Controllers</h1>
-<p class="text-slate-600 mb-4">Controllers organize your request handling logic into structs with action methods. Instead of defining inline handler functions for every route, you group related actions into a controller — just like AdonisJS.</p>
+<p class="text-slate-600 mb-4">Controllers organize your request handling logic into structs with action methods. Instead of defining inline handler functions for every route, you group related actions into a controller — following Laravel-style organization.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">What Is a Controller?</h2>
 <p class="text-slate-600 mb-4">A controller is a Go struct whose methods match the Nimbus handler signature: <code class="bg-slate-100 px-1 rounded">func(*http.Context) error</code>. Each method represents one action (listing resources, showing a single resource, creating, updating, or deleting).</p>

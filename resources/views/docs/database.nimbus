@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Database & ORM</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus provides a full-featured ORM built on GORM, inspired by <a href="https://docs.adonisjs.com/guides/database/lucid" class="text-amber-600 dark:text-amber-400 hover:underline">AdonisJS Lucid</a>. Configure connections, use the query builder, models, migrations, relationships, pagination, transactions, hooks, serialization, and factories.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus provides a full-featured ORM built on GORM, inspired by Laravel-style model workflows. Configure connections, use the query builder, models, migrations, relationships, pagination, transactions, hooks, serialization, and factories.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Documentation</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Detailed guides for each topic:</p>

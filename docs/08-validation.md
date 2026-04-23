@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Nimbus provides a powerful validation system inspired by **VineJS** (the validation library used by AdonisJS). It offers:
+Nimbus provides a powerful validation system inspired by modern Laravel-style validation ergonomics. It offers:
 
 - **Chainable rule builder** — `validation.String().Required().Min(1).Max(255).Email()`
 - **Struct-based validation** — Define rules alongside your data structure

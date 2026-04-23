@@ -4,7 +4,7 @@ import "github.com/CodeSyncr/nimbus/database"
 
 // User demonstrates hasMany, hasOne, and manyToMany relationships.
 //
-// AdonisJS equivalent:
+// Laravel-style equivalent:
 //
 //	export default class User extends BaseModel {
 //	    @hasMany(() => Post)
@@ -28,7 +28,7 @@ type User struct {
 
 // Post demonstrates belongsTo and hasMany.
 //
-// AdonisJS equivalent:
+// Laravel-style equivalent:
 //
 //	export default class Post extends BaseModel {
 //	    @column()

@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Queue</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Background job processing (Laravel/AdonisJS style). Queue is <strong>core</strong>—no plugin needed. Call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">queue.Boot()</code> in your app bootstrap.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Background job processing (Laravel-inspired). Queue is <strong>core</strong>—no plugin needed. Call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">queue.Boot()</code> in your app bootstrap.</p>
 <p class="text-slate-600 dark:text-slate-400 mb-6 text-sm">Recommended reading order: <a href="/docs/getting-started" class="text-amber-600 dark:text-amber-400 hover:underline">Getting Started</a> → <a href="/docs/queue" class="text-amber-600 dark:text-amber-400 hover:underline">Queue</a> → <a href="/docs/horizon" class="text-amber-600 dark:text-amber-400 hover:underline">Horizon</a> → <a href="/docs/deployment" class="text-amber-600 dark:text-amber-400 hover:underline">Deployment</a>.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Installation</h2>
@@ -18,6 +18,7 @@ queue.Boot(&queue.BootConfig{RegisterJobs: start.RegisterQueueJobs})</code></pre
       <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">REDIS_URL</code></td><td class="px-4 py-2">Redis (for redis driver)</td><td class="px-4 py-2">redis://localhost:6379</td></tr>
       <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_REDIS_VISIBILITY_TIMEOUT_SECONDS</code></td><td class="px-4 py-2">Redis in-flight lease timeout before reclaim</td><td class="px-4 py-2">60</td></tr>
       <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_DB_LEASE_SECONDS</code></td><td class="px-4 py-2">Database processing lease timeout before reclaim</td><td class="px-4 py-2">120</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_BOOT_STRICT</code></td><td class="px-4 py-2">Fail boot on invalid queue driver values</td><td class="px-4 py-2">false</td></tr>
       <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SQS_QUEUE_URL</code></td><td class="px-4 py-2">AWS SQS queue URL</td><td class="px-4 py-2">—</td></tr>
       <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">KAFKA_BROKERS</code></td><td class="px-4 py-2">Kafka brokers (comma-separated)</td><td class="px-4 py-2">—</td></tr>
     </tbody>
@@ -60,6 +61,7 @@ func RegisterQueueJobs() {
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Production checklist</h2>
 <ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
   <li><strong>Use durable drivers</strong> — prefer <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">redis</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database</code> in production</li>
+  <li><strong>Fail fast on config</strong> — set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_BOOT_STRICT=true</code> in production</li>
   <li><strong>Tune lease timeouts</strong> — set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_REDIS_VISIBILITY_TIMEOUT_SECONDS</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">QUEUE_DB_LEASE_SECONDS</code> to at least 2x your p95 job runtime</li>
   <li><strong>Keep jobs idempotent</strong> — retries and reclaims can re-run the same job</li>
   <li><strong>Bound retries per job</strong> — use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Retries(n)</code> and implement <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Failed()</code></li>
@@ -140,12 +142,17 @@ func (j *ResizeImage) Handle(ctx context.Context) error {
 }</code></pre>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Horizon (Queue Dashboard)</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Monitor your queues in real-time:</p>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/plugins/horizon"
+<p class="text-slate-600 dark:text-slate-400 mb-4">Install with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus plugin:install horizon</code>. Pass <code>RedisURL</code> for failed-job storage and <strong>live Redis queue depths</strong> on the Pending page (<code>queue.RedisAdapter</code> key layout). Optional <code>HORIZON_QUEUES</code> lists extra queue names to probe.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import (
+    "os"
+    "github.com/CodeSyncr/nimbus/plugins/horizon"
+)
 
-app.Use(horizon.New())
-// Dashboard at /horizon</code></pre>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Horizon shows active jobs, completed jobs, failed jobs, throughput (jobs/minute), and wait times.</p>
+app.Use(horizon.NewWithOptions(horizon.Options{
+    RedisURL: os.Getenv("REDIS_URL"),
+}))
+// Dashboard at /horizon (see HORIZON_PATH)</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">See <a href="/docs/horizon" class="text-amber-600 dark:text-amber-400 hover:underline">Horizon</a> for API routes, Prometheus metrics, and programmatic <code>queue.RedisQueueWorkloads</code>.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Best Practices</h2>
 <ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">

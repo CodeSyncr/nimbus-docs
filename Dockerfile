@@ -1,30 +1,41 @@
-# Nimbus Go app - multi-stage build
+# ============================================
+# Nimbus Forge — Multi-stage Dockerfile
+# ============================================
+
+# Stage 1: Build
 FROM golang:1.26-alpine AS builder
+RUN apk add --no-cache git ca-certificates tzdata
 WORKDIR /app
 
-# Install build deps (for cgo/sqlite if needed)
-RUN apk add --no-cache gcc musl-dev
-
-# Copy go mod and source (vendor included if present for replace directives)
+# Cache dependencies.
 COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source and build.
 COPY . .
-# Use vendor when present (deploy with replace => ../ fails remotely)
-RUN if [ -d vendor ]; then \
-    CGO_ENABLED=1 go build -mod=vendor -ldflags="-s -w" -o /app/server .; \
-  else \
-    go mod download && CGO_ENABLED=1 go build -ldflags="-s -w" -o /app/server .; \
-  fi
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o /app/server .
 
-# Minimal runtime image
+# Stage 2: Runtime
 FROM alpine:3.19
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates tzdata curl
 WORKDIR /app
-COPY --from=builder /app/server .
-COPY --from=builder /app/. .
-RUN rm -rf vendor go.mod go.sum
 
-# Nimbus uses PORT env (default 8080)
-ENV PORT=8080
-EXPOSE 8080
+# Copy binary and assets.
+COPY --from=builder /app/server /app/server
+COPY --from=builder /app/public ./public/
+COPY --from=builder /app/resources ./resources/
 
-CMD ["./server"]
+# Create non-root user.
+RUN addgroup -S nimbus && adduser -S nimbus -G nimbus
+RUN chown -R nimbus:nimbus /app
+USER nimbus
+
+EXPOSE 3000
+ENV PORT=3000
+ENV APP_ENV=production
+ENV NIMBUS_SERVE=1
+
+HEALTHCHECK --interval=15s --timeout=5s --retries=3 \
+  CMD curl -fs http://localhost:3000/health || exit 1
+
+ENTRYPOINT ["/app/server"]

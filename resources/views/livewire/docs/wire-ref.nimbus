@@ -1,0 +1,33 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:ref</h1>
+  <p class="page-lead">Attach string keys to DOM nodes, exposed on the component root for imperative scripts.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  After each bind pass, the client builds <code>root.__lwRefs</code> as a map of <code>refName → Element</code> for every descendant with <code>wire:ref="name"</code>.
+  This is client-only metadata—nothing is sent to the server automatically.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;div wire:id="cmp-1"&gt;
+  &lt;input wire:ref="email" type="email" wire:model="email" /&gt;
+&lt;/div&gt;</code></pre>
+<pre class="code-block"><code>const root = document.querySelector('[wire\\:id="cmp-1"]');
+root.__lwRefs.email.focus();</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Focus management after swap</h3>
+<p>In <code>livewire:navigated</code> or after your own hooks, read <code>__lwRefs</code> to move focus.</p>
+<h3>Measuring nodes</h3>
+<pre class="code-block"><code>&lt;div wire:ref="panel"&gt;...&lt;/div&gt;</code></pre>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> <code>wire:ref="uniqueKey"</code></p>
+<ul>
+  <li><strong>Storage:</strong> <code>HTMLElement.__lwRefs</code> on the Livewire root.</li>
+  <li><strong>Updates:</strong> refreshed whenever the component re-binds.</li>
+</ul>

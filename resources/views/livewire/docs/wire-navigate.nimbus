@@ -1,0 +1,35 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:navigate</h1>
+  <p class="page-lead">Fetch a same-origin page as HTML and swap <code>document.body</code> and <code>document.title</code> without a full navigation—SPA-style routing.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  Add the boolean attribute <code>wire:navigate</code> (and optional <code>wire:navigate.*</code> modifiers) to an <code>&lt;a href&gt;</code>.
+  The runtime intercepts clicks, dispatches cancelable <code>livewire:navigate</code>, shows a slim progress bar, prefetches on mousedown (and optional hover), then replaces the body from the fetched HTML.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;a href="/dashboard" wire:navigate&gt;Dashboard&lt;/a&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Prefetch on hover</h3>
+<pre class="code-block"><code>&lt;a href="/reports" wire:navigate wire:navigate.hover&gt;Reports&lt;/a&gt;</code></pre>
+<p>After ~60ms hover, the client prefetches HTML into a small cache.</p>
+<h3>Docs sidebar navigation</h3>
+<p>Use navigate links for in-app section changes where every page returns a full HTML document with the same script bundle.</p>
+<h3>Listening for lifecycle</h3>
+<pre class="code-block"><code>document.addEventListener('livewire:navigated', function () {
+  // re-run lightweight JS if needed
+});</code></pre>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> <code>wire:navigate</code> (presence) and <code>wire:navigate.hover</code> for prefetch.</p>
+<ul>
+  <li><strong>Same-origin only:</strong> external URLs fall back to normal navigation.</li>
+  <li><strong>Events:</strong> <code>livewire:navigate</code>, <code>livewire:navigating</code> (with <code>detail.onSwap</code>), <code>livewire:navigated</code>.</li>
+  <li><strong>History:</strong> <code>pushState</code> + <code>popstate</code> handling is built in.</li>
+</ul>

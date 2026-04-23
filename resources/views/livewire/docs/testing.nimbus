@@ -1,0 +1,95 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Testing</div>
+  <h1>Testing</h1>
+  <p class="page-lead">
+    Nimbus Livewire ships a Go fluent harness similar in spirit to
+    <a href="https://livewire.laravel.com/docs/4.x/testing" rel="noopener noreferrer" target="_blank">Laravel Livewire · Testing</a>
+    (<code>Livewire::test()</code>): <code>livewire.NewTest</code> builds a registered component, runs first-paint lifecycle, and lets you <code>Set</code> state, <code>Call</code> actions, and assert on HTML, state, validation, and server dispatches. It does not run a browser or PHP—use normal Go patterns for those.
+  </p>
+</div>
+
+<h2 id="overview">Overview</h2>
+<p>
+  Import the livewire package in a <code>_test.go</code> file (same module as your app or in the framework repo). The harness mirrors the POST update pipeline: apply current state as an incoming wire snapshot, <code>Hydrate</code> + <code>Boot</code>, <code>$set</code>-style magic actions, then <code>Call</code>, then capture <code>TakeLivewireEvents</code> and re-render like the HTTP handler.
+</p>
+
+<h2 id="quickstart">Quickstart</h2>
+<pre class="code-block"><code>func TestCounterInc(t *testing.T) {
+    livewire.NewTest(t, "counter").
+        AssertSee("Count").
+        Call("inc", nil).
+        AssertNoCallError().
+        AssertSet("count", 1).
+        AssertSee("1")
+}</code></pre>
+<p>
+  Options mirror embed helpers:
+</p>
+<ul>
+  <li><code>livewire.WithInitialState(map[string]any{…})</code> — same as <code>Render</code> props / <code>MountProps</code>.</li>
+  <li><code>livewire.WithRouteParams(map[string]string{…})</code> — calls <code>Mountable.MountRouteParams</code> when implemented.</li>
+  <li><code>livewire.WithWireID("lw-fixed-1")</code> — pin root <code>wire:id</code> for deterministic HTML.</li>
+</ul>
+
+<h2 id="api">API reference</h2>
+<table class="props-table">
+  <thead>
+    <tr><th>Method</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>NewTest(t, name, opts…)</code></td><td>Construct component, initial lifecycle, first render.</td></tr>
+    <tr><td><code>Set(key, value)</code></td><td>One key via <code>ApplyKeyChange</code> (updating/updated hooks).</td></tr>
+    <tr><td><code>SetMany(map)</code></td><td>Multiple <code>Set</code>-style updates.</td></tr>
+    <tr><td><code>FillIncoming(state)</code></td><td>Full snapshot via <code>ApplyIncomingWireState</code> (like JSON body <code>state</code>).</td></tr>
+    <tr><td><code>Call(action, params)</code></td><td>Normalized action + magic + <code>Component.Call</code>; empty action becomes <code>__sync</code>.</td></tr>
+    <tr><td><code>Refresh()</code></td><td>Re-render only (after <code>Set</code> without <code>Call</code>).</td></tr>
+    <tr><td><code>HTML()</code> / <code>Component()</code> / <code>CallError()</code> / <code>Dispatches()</code></td><td>Escape hatches for custom assertions.</td></tr>
+    <tr><td><code>AssertSee</code> / <code>AssertDontSee</code> / <code>AssertSeeHTML</code></td><td>Substring checks on last full root HTML.</td></tr>
+    <tr><td><code>AssertSet</code> / <code>AssertNotSet</code></td><td>State checks; numbers treat <code>int</code> and <code>float64</code> as equal when close (JSON friendliness).</td></tr>
+    <tr><td><code>AssertNoCallError</code></td><td>Last <code>Call</code> must not have errored.</td></tr>
+    <tr><td><code>AssertHasErrors</code> / <code>AssertHasNoErrors</code></td><td><code>livewire.FieldErrors</code> / <code>FieldErrors()</code> reporter.</td></tr>
+    <tr><td><code>AssertDispatched</code> / <code>AssertNotDispatched</code> / <code>AssertDispatchedDetail</code></td><td>Server event queue from <code>*Eventful</code> after <code>Call</code>.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="laravel-map">Laravel → Nimbus map</h2>
+<table class="props-table">
+  <thead>
+    <tr><th>Laravel / Pest</th><th>Nimbus</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Livewire::test('name')</code></td><td><code>livewire.NewTest(t, "name")</code></td></tr>
+    <tr><td><code>->set('title', 'x')</code></td><td><code>Set("title", "x")</code></td></tr>
+    <tr><td><code>->call('save')</code></td><td><code>Call("save", nil)</code> or <code>Call("delete", map[string]any{"0": id})</code></td></tr>
+    <tr><td><code>->assertSet</code></td><td><code>AssertSet</code></td></tr>
+    <tr><td><code>->assertSee</code></td><td><code>AssertSee</code></td></tr>
+    <tr><td><code>->assertHasErrors</code></td><td><code>AssertHasErrors("field")</code> with <code>FieldErrors{…}</code></td></tr>
+    <tr><td><code>->assertDispatched</code></td><td><code>AssertDispatched("event")</code></td></tr>
+    <tr><td><code>actingAs</code> / cookies / headers</td><td>Not built in—set up auth in your test before building state, or use HTTP tests.</td></tr>
+    <tr><td><code>assertRedirect</code></td><td>Redirects are usually set in your app response layer, not the livewire JSON payload—assert in HTTP handler tests.</td></tr>
+    <tr><td><code>assertViewHas</code></td><td>No separate view bag—inspect <code>Component()</code> fields or rendered <code>HTML()</code>.</td></tr>
+    <tr><td><code>assertJs</code></td><td>Not applicable server-side.</td></tr>
+    <tr><td><code>Livewire::visit</code> / Playwright</td><td>Use Playwright, chromedp, or similar against your running app.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="http">HTTP / JSON tests</h2>
+<p>
+  To assert the real <code>/livewire-…/update</code> contract, use <code>net/http/httptest</code> (or Nimbus’s HTTP testing helpers): POST JSON <code>{"id","name","state","action","params"}</code>, decode <code>updateResponse</code>-shaped JSON, and assert <code>html</code>, <code>state</code>, <code>errors</code>, <code>dispatch</code>. The fluent tester stays faster for component logic without spinning the router.
+</p>
+
+<h2 id="e2e">Browser / E2E</h2>
+<p>
+  For end-to-end confidence (real <code>wire:click</code>, <code>wire:model</code>, and JS), run your server and drive a browser. Pest’s browser plugin is PHP-specific; in Go, common choices are Playwright via Node, or <code>github.com/go-rod/rod</code>, etc.
+</p>
+
+<h2 id="run">Plugin tests</h2>
+<p>
+  Framework development runs:
+</p>
+<pre class="code-block"><code>go test ./plugins/livewire/...</code></pre>
+<p>
+  Source: <code>plugins/livewire/</code> — including <code>tester.go</code>, <code>server.go</code>, and <code>bundle.go</code>.
+</p>

@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Creating Commands</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">This guide covers creating custom commands using the Nimbus CLI, inspired by AdonisJS Ace. Commands use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">github.com/CodeSyncr/nimbus/command</code> — no direct Cobra dependency.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">This guide covers creating custom commands using the Nimbus CLI, inspired by Laravel Artisan-style command workflows. Commands use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">github.com/CodeSyncr/nimbus/command</code> — no direct Cobra dependency.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Creating your first command</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-4">Generate a new command using the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">make:command</code> Ace command. This creates a command in the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">commands/</code> directory with the standard structure.</p>

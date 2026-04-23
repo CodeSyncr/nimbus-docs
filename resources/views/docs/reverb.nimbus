@@ -1,0 +1,74 @@
+@layout('layout-docs')
+
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Plugin</span>
+    <span class="px-2.5 py-1 rounded-full bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400 text-xs font-semibold">Real-time</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Reverb — WebSocket broadcasting</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">Laravel <strong>Reverb</strong>–style <strong>channel subscriptions</strong> over WebSockets. Complements <a href="/docs/transmit" class="text-amber-600 dark:text-amber-400 hover:underline">Transmit (SSE)</a>: use SSE for simple server → client push; use Reverb when clients subscribe to named channels and you may need bidirectional JSON control messages.</p>
+
+  <h2 id="overview" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Features
+  </h2>
+  <ul class="list-disc list-inside space-y-2 text-slate-600 dark:text-slate-400 mb-6">
+    <li><code>GET</code> WebSocket endpoint (default <code>/reverb/ws</code>, override with <code>REVERB_PATH</code>).</li>
+    <li>JSON text frames: <code>subscribe</code>, <code>unsubscribe</code>, <code>ping</code>.</li>
+    <li><code>reverb.Broadcast(ctx, channel, data)</code> — with <code>REDIS_URL</code>, fan-out uses Redis Pub/Sub so every instance delivers to its local subscribers; without Redis, broadcasts are single-process only.</li>
+    <li><code>GET …/health</code> next to the WS path (e.g. <code>/reverb/health</code> when WS is <code>/reverb/ws</code>).</li>
+    <li>Optional <code>REVERB_ALLOWED_ORIGINS</code> (comma-separated) for the WebSocket <code>Origin</code> check.</li>
+  </ul>
+
+  <h2 id="install" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Installation
+  </h2>
+  <pre><code class="language-bash">$ nimbus plugin:install reverb</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">Registers <code>app.Use(reverb.New(nil))</code> and scaffolds <code>config/reverb.go</code> / <code>loadReverb()</code>.</p>
+
+  <h2 id="server" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Server-side broadcast
+  </h2>
+  <pre data-file="app/controllers/orders.go"><code class="language-go">import (
+    "context"
+    "github.com/CodeSyncr/nimbus/plugins/reverb"
+)
+
+func notifyOrderShipped(orderID string) {
+    _ = reverb.Broadcast(context.Background(), "orders."+orderID, map[string]any{
+        "event": "shipped",
+    })
+}</code></pre>
+
+  <h2 id="client" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Browser protocol
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Connect to <code>wss://your-host/reverb/ws</code> (or your <code>REVERB_PATH</code>). After <code>connected</code>, send:</p>
+  <pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto mb-4"><code>{"action":"subscribe","channel":"orders.42"}
+{"action":"unsubscribe","channel":"orders.42"}
+{"action":"ping"}</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Server events include <code>subscribed</code>, <code>message</code> (payload in <code>data</code>), and <code>pong</code>.</p>
+
+  <h2 id="env" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Environment
+  </h2>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Variable</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>REDIS_URL</code></td><td class="px-4 py-2">Multi-instance fan-out (default Pub/Sub channel <code>nimbus:reverb:fanout</code>)</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>REVERB_PATH</code></td><td class="px-4 py-2">WebSocket route (default <code>/reverb/ws</code>)</td></tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>REVERB_ALLOWED_ORIGINS</code></td><td class="px-4 py-2">Allowed <code>Origin</code> hosts, comma-separated</td></tr>
+        <tr><td class="px-4 py-2"><code>REVERB_REDIS_CHANNEL</code></td><td class="px-4 py-2">Override Redis channel name</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 mb-8">
+    <p class="text-slate-600 dark:text-slate-400 text-sm"><strong>Core vs plugin:</strong> Low-level hubs live in <code>github.com/CodeSyncr/nimbus/websocket</code>. Reverb adds channel routing, JSON protocol, and optional Redis — see <a href="/docs/websockets" class="text-amber-600 dark:text-amber-400 hover:underline">WebSockets</a>.</p>
+  </div>
+</div>

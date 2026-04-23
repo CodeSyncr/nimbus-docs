@@ -1,0 +1,32 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:dirty</h1>
+  <p class="page-lead">Show UI when client state diverges from the last server-synced snapshot.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  After each successful update, the runtime stores a clone of server state per component id.
+  <code>wire:dirty</code> compares current <code>wire:state</code> to that snapshot (entire state or a keyed path) and toggles element visibility.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;form wire:submit="save"&gt;
+  &lt;input wire:model="title" /&gt;
+  &lt;p wire:dirty&gt;You have unsaved changes.&lt;/p&gt;
+  &lt;button type="submit"&gt;Save&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Track a single field</h3>
+<pre class="code-block"><code>&lt;span wire:dirty="title"&gt;Title changed&lt;/span&gt;</code></pre>
+<p>If the attribute value is a dotted path, only that slice of state is compared against the last server snapshot.</p>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> <code>wire:dirty</code> (whole state) or <code>wire:dirty="path.in.state"</code></p>
+<ul>
+  <li><strong>Display:</strong> uses internal show/hide (<code>display</code> style).</li>
+  <li><strong>Updates:</strong> re-evaluated after input events and after successful server swaps.</li>
+</ul>

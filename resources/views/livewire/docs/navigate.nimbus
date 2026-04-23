@@ -1,0 +1,19 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Features</div>
+  <h1>Navigate</h1>
+  <p class="page-lead">Opt-in SPA navigations for same-origin links via <code>wire:navigate</code>.</p>
+</div>
+
+<h2 id="usage">Usage</h2>
+<p>
+  Add <code>wire:navigate</code> to anchors you want to load as full HTML swaps: the client fetches the page, replaces <code>document.body</code> and <code>document.title</code>, and updates history.
+</p>
+
+<h2 id="behavior">Behavior</h2>
+<ul>
+  <li>Prefetch on mousedown; <code>wire:navigate.hover</code> prefetches after a short delay.</li>
+  <li>Indeterminate progress UI after ~150ms while waiting.</li>
+  <li>Back/forward handled through <code>popstate</code>.</li>
+</ul>

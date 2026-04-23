@@ -1,0 +1,128 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Essentials</div>
+  <h1>Properties</h1>
+  <p class="page-lead">
+    Component state in Nimbus is whatever you expose through <code>State()</code> and apply in <code>SetState()</code>—usually struct fields mirrored into a JSON-friendly map for <code>wire:state</code>.
+    That matches Livewire’s idea of public, serialized properties; see
+    <a href="https://livewire.laravel.com/docs/4.x/properties" rel="noopener noreferrer" target="_blank">Laravel Livewire · Properties</a>.
+    This runtime is Go-first and not PHP-compatible.
+  </p>
+</div>
+
+<h2 id="initializing">Initializing properties</h2>
+<p>
+  Set zero values on your struct, then load data in <code>MountRouteParams</code> (full-page), <code>MountProps</code> (embedded props), or inside <code>SetState</code> when the client sends the first payload—similar to Livewire’s <code>mount()</code>.
+</p>
+<pre class="code-block"><code>func (c *Todos) MountRouteParams(params map[string]string) error {
+    c.Items = []string{"Buy groceries", "Walk the dog", "Write code"}
+    return nil
+}</code></pre>
+<p>
+  Capture a <strong>baseline</strong> for reset/pull (below) on the first line of mount logic, before you mutate fields, if you want “declaration default” semantics:
+</p>
+<pre class="code-block"><code>c.baseline = livewire.SnapshotState(c) // zero-value state snapshot</code></pre>
+
+<h2 id="fill">Bulk assignment (<code>fill</code>)</h2>
+<p>
+  Livewire’s <code>fill([...])</code> merges an associative array into properties. In Go, merge into the map you use for state (or assign fields yourself), using <code>Fill</code> / <code>MergeKeys</code>:
+</p>
+<pre class="code-block"><code>m := livewire.CloneMap(c.State())
+livewire.Fill(m, row) // shallow merge, like fill()
+c.SetState(m)</code></pre>
+<p id="only">
+  To take only some keys from a map (like <code>$post-&gt;only('title', 'description')</code>), use <code>PickKeys</code>:
+</p>
+<pre class="code-block"><code>patch := livewire.PickKeys(postMap, "title", "description")
+livewire.Fill(m, patch)</code></pre>
+
+<h2 id="binding">Data binding</h2>
+<p>
+  Use <code>wire:model="fieldName"</code> on inputs. The client mirrors values into <code>wire:state</code>; by default the server is updated on the next action, and <code>wire:model.live</code> adds debounced <code>__sync</code> roundtrips. Dotted paths use <code>setByPath</code>.
+  Modifiers are documented under <a href="/livewire/docs/forms">Forms</a> and <a href="/livewire/docs/wire-model">wire:model</a>.
+</p>
+
+<h2 id="reset">Resetting properties</h2>
+<p>
+  Livewire’s <code>reset('todo')</code> restores fields to their values <strong>before</strong> <code>mount()</code> (declaration defaults). In Nimbus, keep a baseline map and call <code>ResetStateFields</code>:
+</p>
+<pre class="code-block"><code>func (c *Todos) addTodo() error {
+    c.Items = append(c.Items, c.Draft)
+    livewire.ResetStateFields(c, c.baseline, "draft")
+    return nil
+}</code></pre>
+<p>
+  <strong>Mount caveat (same as Livewire):</strong> if you only initialized a field inside <code>MountRouteParams</code>, resetting to the baseline restores the <em>pre-mount</em> snapshot, not the post-mount value—re-assign manually if you need that.
+</p>
+<p>
+  Your <code>SetState</code> must apply the merged map so reset keys actually clear struct fields; if you only merge “present” keys, omitted keys might leave stale values.
+</p>
+
+<h2 id="pull">Pulling properties</h2>
+<p>
+  Livewire’s <code>pull('todo')</code> returns the current value and resets the property. Use <code>PullStateField</code> or <code>PullStateKeys</code>:
+</p>
+<pre class="code-block"><code>text, _ := livewire.PullStateField(c, c.baseline, "draft")
+c.Items = append(c.Items, text.(string))</code></pre>
+<pre class="code-block"><code>prior := livewire.PullStateKeys(c, c.baseline, "title", "content")</code></pre>
+
+<h2 id="types">Supported types</h2>
+<p>
+  Everything in <code>State()</code> must round-trip through <code>encoding/json</code> and appear in <code>wire:state</code>. Prefer strings, numbers, booleans, <code>null</code>, arrays, and plain JSON objects.
+  Go specifics: JSON numbers often decode as <code>float64</code>; handle that in <code>SetState</code>. Do not put funcs, channels, or non-JSON values in state.
+</p>
+<p>
+  <strong>Models and rich types:</strong> there is no Eloquent dehydrate/hydrate stack. Usually store an ID (or a small DTO map) in state and load the full row in <code>Render()</code>, <code>Call</code>, or mount—not a full ORM graph in <code>wire:state</code>.
+  Query constraints are not re-applied magically between requests; re-run queries or use request-local helpers instead of assuming serialized collections stay “live.”
+</p>
+
+<h2 id="wireables">Custom types (Wireables / synthesizers)</h2>
+<p>
+  Laravel’s <code>Wireable</code> / synthesizers customize serialization. Nimbus does not ship a synthesizer registry; keep state JSON-plain or encode custom blobs as strings you parse in Go.
+</p>
+
+<h2 id="javascript">Accessing properties from JavaScript</h2>
+<p>
+  Alpine’s magic <code>$wire</code> is a Livewire+Alpine integration. Nimbus exposes a small imperative API on the global <code>Livewire</code> object:
+</p>
+<ul>
+  <li><code>Livewire.find(elementOrSelector)</code> — pass a DOM node inside a component or a CSS selector; returns <code>null</code> if not found.</li>
+  <li><code>.get('path')</code> — read a property (dot paths for nested keys).</li>
+  <li><code>.set('path', value, sync)</code> — write into client state, refresh bound controls; if <code>sync</code> is not <code>false</code>, runs the <code>__sync</code> action (server roundtrip).</li>
+</ul>
+<pre class="code-block"><code>&lt;!-- Local-only clear until the next action --&gt;
+&lt;button type="button" onclick="Livewire.find(this).set('todo', '', false)"&gt;Clear&lt;/button&gt;</code></pre>
+<p>
+  With Alpine (if you bundle it), you can wrap the same calls in <code>x-on:click</code> or a short helper; there is no built-in <code>$wire</code> magic property yet.
+</p>
+
+<h2 id="security">Security</h2>
+<p>
+  Treat every key in <code>wire:state</code> as user-controlled, like request input. Validate and authorize in <code>Call</code> before persisting.
+</p>
+<p>
+  <strong>Don’t trust IDs in state for authorization alone.</strong> Prefer omitting immutable identifiers from the serialized map and keeping them in unexported fields set only on the server, or re-check ownership on every mutating action.
+</p>
+<p>
+  Laravel’s <code>#[Locked]</code> and model dehydration helpers are not built in. Patterns: keep sensitive data out of <code>State()</code>, or overwrite trusted fields at the start of <code>SetState</code> after applying the rest of the payload.
+</p>
+<p>
+  Serialized JSON can expose structure (field names, nested shapes). Avoid putting secrets in <code>State()</code>.
+</p>
+
+<h2 id="helpers">Package helpers</h2>
+<ul>
+  <li><code>CloneMap</code> — shallow copy of a state map</li>
+  <li><code>MergeKeys</code> / <code>Fill</code> — shallow merge into a map</li>
+  <li><code>PickKeys</code> — subset of keys for bulk assign</li>
+  <li><code>SnapshotState</code> — baseline for reset/pull</li>
+  <li><code>ResetStateFields</code>, <code>PullStateField</code>, <code>PullStateKeys</code> — Livewire-style reset/pull against a baseline map</li>
+</ul>
+
+<h2 id="see-also">See also</h2>
+<ul>
+  <li><a href="/livewire/docs/components">Components</a> — <code>State</code> / <code>SetState</code> contract</li>
+  <li><a href="/livewire/docs/forms">Forms</a> — validation and submissions</li>
+  <li><a href="/livewire/docs/actions">Actions</a> — <code>wire:click</code></li>
+</ul>

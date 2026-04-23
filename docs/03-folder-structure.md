@@ -6,7 +6,7 @@
 
 ## Overview
 
-Nimbus follows a **convention-over-configuration** directory structure inspired by Laravel and AdonisJS. Every file has a designated home, making it easy for teams to navigate projects they didn't write.
+Nimbus follows a **convention-over-configuration** directory structure inspired by Laravel. Every file has a designated home, making it easy for teams to navigate projects they didn't write.
 
 ```
 my-app/

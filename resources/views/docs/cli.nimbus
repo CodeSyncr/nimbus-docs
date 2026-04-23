@@ -78,6 +78,18 @@ nimbus --version</code></pre>
   </table>
 </div>
 
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Plugins</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Command</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus plugin:install &lt;name&gt;</code></td><td class="px-4 py-2">Add a framework plugin (reverb, horizon, telescope, …), patch <code>bin/server.go</code>, optional <code>config/</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-mono"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus plugin:list</code></td><td class="px-4 py-2">List installable plugin names</td></tr>
+    </tbody>
+  </table>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm mb-4">Since framework <strong>v1.0.0</strong>, the same commands are available as nested Cobra commands: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus plugin install &lt;name&gt;</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus plugin list</code>.</p>
+
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">AI Commands</h2>
 <div class="overflow-x-auto mb-4">
   <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">

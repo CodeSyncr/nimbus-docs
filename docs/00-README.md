@@ -1,6 +1,6 @@
 # Nimbus Framework Documentation
 
-> **The Go framework for humans** — Build full-stack web applications with the elegance of Laravel/AdonisJS and the performance of Go.
+> **The Go framework for humans** — Build full-stack web applications with Laravel-inspired elegance and the performance of Go.
 
 ---
 

@@ -1,0 +1,32 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:current</h1>
+  <p class="page-lead">Mark the active <code>wire:navigate</code> link using <code>data-current</code>; opt out with <code>wire:current.ignore</code>.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  Nimbus does not use a standalone <code>wire:current="…"</code> expression. Instead, when links participate in SPA navigation (<code>wire:navigate</code>),
+  the client compares <code>pathname + search</code> and sets <code>data-current</code> on matching anchors. Style active links with <code>a[data-current]</code> in CSS.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;a href="/livewire/docs/quickstart" wire:navigate&gt;Quickstart&lt;/a&gt;</code></pre>
+<p>When the location matches the resolved href, the element receives an empty <code>data-current</code> attribute.</p>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Active tab styling</h3>
+<pre class="code-block"><code>/* example */
+a[data-current] { color: var(--accent); font-weight: 600; }</code></pre>
+<h3>Skip auto-marking</h3>
+<pre class="code-block"><code>&lt;a href="/search?q=a" wire:navigate wire:current.ignore&gt;Ignore active&lt;/a&gt;</code></pre>
+<p>Use when multiple links normalize to the same path or when highlighting would be misleading.</p>
+
+<h2 id="reference">Reference</h2>
+<ul>
+  <li><strong>Detection:</strong> <code>location.pathname + location.search</code> vs anchor’s resolved URL.</li>
+  <li><strong>Opt-out attribute:</strong> <code>wire:current.ignore</code> on the <code>&lt;a&gt;</code>.</li>
+  <li><strong>Note:</strong> Only links with <code>wire:navigate</code> participate.</li>
+</ul>

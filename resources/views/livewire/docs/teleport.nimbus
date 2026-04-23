@@ -1,0 +1,56 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Features</div>
+  <h1 id="overview">Teleport</h1>
+  <p class="page-lead">
+    Teleport lets you render a piece of a Livewire component somewhere else in the DOM (for example at the end of <code>&lt;body&gt;</code>),
+    which is useful for nested modals and overlays.
+  </p>
+</div>
+
+<h2 id="basic">Basic usage</h2>
+<p>
+  Laravel Livewire uses <code>@teleport('body')</code> powered by Alpine’s <code>x-teleport</code>.
+  Nimbus Livewire is Go-template based, so teleport is implemented as an HTML attribute:
+  <code>wire:teleport="body"</code>.
+</p>
+
+<pre class="code-block"><code>&lt;div&gt;
+  &lt;div x-data="{ open: false }"&gt;
+    &lt;button type="button" @click="open = !open"&gt;Toggle Modal&lt;/button&gt;
+
+    &lt;div wire:teleport="body"&gt;
+      &lt;div x-show="open"&gt;
+        Modal contents...
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+<p>
+  When the component is bound in the browser, Nimbus Livewire moves the element with <code>wire:teleport</code>
+  to the target selector using <code>document.querySelector()</code>.
+</p>
+
+<h2 id="rules">Rules</h2>
+<ul>
+  <li><strong>Teleport outside the component</strong>: the target selector must resolve to an element outside the component root.</li>
+  <li><strong>Single root</strong>: the element with <code>wire:teleport</code> is treated as the single root teleported node.</li>
+  <li><strong>Use <code>wire:key</code> when repeating</strong>: if multiple teleports exist, add <code>wire:key</code> for stable updates.</li>
+</ul>
+
+<h2 id="notes">Notes / limitations</h2>
+<ul>
+  <li>
+    This is a best-effort implementation: teleported nodes are updated on subsequent renders by morphing the existing teleported node.
+  </li>
+  <li>
+    Component-scoped styles may not apply after teleporting, because the teleported node is no longer inside the component root selector.
+    If you rely on scoped styles, consider using <code>&lt;style global&gt;</code> for teleported UI.
+  </li>
+  <li>
+    Teleport is client-side only; the initial HTML is rendered in place and moved after the runtime initializes.
+  </li>
+</ul>
+

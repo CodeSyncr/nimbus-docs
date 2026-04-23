@@ -1,0 +1,87 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Features</div>
+  <h1>Validation</h1>
+  <p class="page-lead">
+    Livewire-style validation in Nimbus: return validation errors from actions, run real-time validation on <code>wire:model.live</code>, and access errors from JavaScript via <code>$wire.$errors</code>.
+  </p>
+</div>
+
+<h2 id="overview">Overview</h2>
+<p>
+  Nimbus Livewire is Go-first, so there is no <code>$this-&gt;validate()</code> method like Laravel.
+  Instead, validation integrates at two layers:
+</p>
+<ul>
+  <li><strong>Action validation</strong>: return validation errors from <code>Call()</code> to trigger a 422 response and show messages in the UI.</li>
+  <li><strong>Real-time validation</strong>: opt into auto-validation during <code>__sync</code> updates (triggered by <code>wire:model.live</code>).</li>
+</ul>
+
+<h2 id="basic">Basic validation (on submit)</h2>
+<p>
+  Return <code>livewire.FieldErrors</code> (first error per field) from your action:
+</p>
+<pre class="code-block"><code>func (c *CreatePost) Call(action string, params map[string]any) error {
+  if action != "save" { return nil }
+
+  st := c.State()
+  title, _ := st["title"].(string)
+  content, _ := st["content"].(string)
+
+  errs := livewire.FieldErrors{}
+  if strings.TrimSpace(title) == "" { errs["title"] = "required" }
+  if len(strings.TrimSpace(content)) &lt; 3 { errs["content"] = "min:3" }
+  if len(errs) &gt; 0 { return errs }
+
+  // persist...
+  return nil
+}</code></pre>
+
+<p>In your template, render per-field errors using <code>wire:error</code>:</p>
+<pre class="code-block"><code>&lt;form wire:submit="save"&gt;
+  &lt;input wire:model="title" /&gt;
+  &lt;div wire:error="title"&gt;&lt;/div&gt;
+
+  &lt;textarea wire:model="content"&gt;&lt;/textarea&gt;
+  &lt;div wire:error="content"&gt;&lt;/div&gt;
+&lt;/form&gt;</code></pre>
+
+<h2 id="realtime">Real-time validation (wire:model.live)</h2>
+<p>
+  Implement <code>livewire.ValidationRulesProvider</code> and opt in to <code>ValidationOnUpdate()</code>.
+  When the client runs <code>__sync</code> for a <code>wire:model.live</code> field, Nimbus validates only the changed field(s)
+  and returns a 422 response with an error bag (best-effort Livewire parity).
+</p>
+<pre class="code-block"><code>func (c *CreatePost) ValidationRules() map[string]string {
+  return map[string]string{
+    "title": "required|min:3",
+    "content": "required|min:3",
+  }
+}
+
+func (c *CreatePost) ValidationOnUpdate() bool { return true }</code></pre>
+
+<h2 id="js">Accessing errors in JavaScript</h2>
+<p>
+  The runtime stores the full error bag client-side and exposes it as <code>$wire.$errors</code>:
+</p>
+<pre class="code-block"><code>&lt;div x-data&gt;
+  &lt;div x-show="$wire.$errors.has('email')"&gt;
+    &lt;span x-text="$wire.$errors.first('email')"&gt;&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+<p>
+  You can also use Nimbus directives:
+</p>
+<pre class="code-block"><code>&lt;div wire:show="$errors.has('email')"&gt;
+  &lt;span wire:text="$errors.first('email')"&gt;&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+
+<h2 id="notes">Notes / limitations</h2>
+<ul>
+  <li><strong>Rule support</strong>: Nimbus currently supports a small Laravel-like subset: <code>required</code>, <code>min:n</code>, <code>max:n</code>, <code>email</code> (more can be added).</li>
+  <li><strong>Nested keys</strong>: rules are currently top-level keys only (no <code>todos.*</code> expansion yet).</li>
+  <li><strong>Message localization</strong>: not implemented; rule messages are simple English strings.</li>
+</ul>
+

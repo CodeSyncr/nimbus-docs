@@ -1,0 +1,35 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:submit</h1>
+  <p class="page-lead">Intercept form submission and dispatch a server action instead of a full document POST.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  Place <code>wire:submit</code> on a <code>&lt;form&gt;</code> inside a Livewire component. The runtime calls <code>preventDefault</code>, collects state from <code>wire:model</code>/<code>wire:bind</code> fields, and runs the given action.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;form wire:submit="save"&gt;
+  &lt;input type="text" wire:model="title" name="title" /&gt;
+  &lt;button type="submit"&gt;Save&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Login-style form</h3>
+<pre class="code-block"><code>&lt;form wire:submit="authenticate" wire:confirm="Sign in now?"&gt;
+  &lt;input type="email" wire:model="email" /&gt;
+  &lt;input type="password" wire:model="password" /&gt;
+  &lt;button type="submit"&gt;Continue&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<h3>Multi-field create</h3>
+<p>Use multiple <code>wire:model</code> fields and validate in <code>Call()</code>; return 422 with field errors for inline display.</p>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> <code>wire:submit="actionName"</code></p>
+<ul>
+  <li><strong>Element:</strong> <code>&lt;form&gt;</code> only.</li>
+  <li><strong>Confirmation:</strong> optional <code>wire:confirm</code> on the form.</li>
+</ul>

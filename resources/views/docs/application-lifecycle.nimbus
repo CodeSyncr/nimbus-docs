@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 mb-4">Application Lifecycle</h1>
-<p class="text-slate-600 mb-6">Nimbus follows an AdonisJS-style boot sequence. Understanding the lifecycle helps you know where to put configuration, middleware, routes, and plugin setup.</p>
+<p class="text-slate-600 mb-6">Nimbus follows a Laravel-inspired boot sequence. Understanding the lifecycle helps you know where to put configuration, middleware, routes, and plugin setup.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Entry point: main.go</h2>
 <p class="text-slate-600 mb-2"><code class="bg-slate-100 px-1 rounded">main.go</code> is the minimal bootstrap. It delegates everything to <code class="bg-slate-100 px-1 rounded">bin/server.go</code>:</p>

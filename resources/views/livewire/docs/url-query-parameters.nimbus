@@ -1,0 +1,125 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Features</div>
+  <h1 id="overview">URL Query Parameters</h1>
+  <p class="page-lead">
+    Store component state in the browser URL query string (shareable + refresh-safe), similar to Laravel Livewire’s <code>#[Url]</code>.
+  </p>
+</div>
+
+<h2 id="basic">Basic usage</h2>
+<p>
+  Nimbus Livewire is Go-first, so there is no PHP attribute like <code>#[Url]</code>. Instead, a component can opt in by implementing
+  <code>livewire.URLQueryProvider</code> (or <code>livewire.QueryStringProvider</code>) and returning a map of state keys to options.
+</p>
+
+<pre class="code-block"><code>type ShowUsers struct{}
+
+func (c *ShowUsers) State() map[string]any {
+  return map[string]any{
+    "search": "",
+  }
+}
+
+func (c *ShowUsers) URLQuery() map[string]livewire.URLQueryOption {
+  return map[string]livewire.URLQueryOption{
+    "search": {}, // ?search=bob
+  }
+}</code></pre>
+
+<p>
+  Now, when <code>search</code> changes (for example via <code>wire:model.live</code>), Nimbus Livewire will update the URL.
+  When the page loads with <code>?search=bob</code>, the initial state will be set from the URL.
+</p>
+
+<h2 id="init">Initializing properties from the URL</h2>
+<p>
+  For full-page Livewire routes (<code>livewire.Route</code>), Nimbus applies query params on the server during the initial GET
+  so the first paint matches the URL.
+  For embedded components rendered via <code>{{ livewire "..." }}</code>, Nimbus applies URL initialization client-side (best-effort).
+</p>
+
+<h2 id="nullable">Nullable values</h2>
+<p>
+  If you want <code>?search=</code> to be treated as <code>null</code> instead of the empty string, set <code>Nullable: true</code>.
+</p>
+
+<pre class="code-block"><code>func (c *ShowUsers) State() map[string]any {
+  return map[string]any{
+    "search": nil, // nullable baseline
+  }
+}
+
+func (c *ShowUsers) URLQuery() map[string]livewire.URLQueryOption {
+  return map[string]livewire.URLQueryOption{
+    "search": { Nullable: true },
+  }
+}</code></pre>
+
+<h2 id="alias">Using an alias</h2>
+<p>
+  Use <code>As</code> to store a key under a different query-string name (for example <code>q</code> instead of <code>search</code>).
+</p>
+
+<pre class="code-block"><code>func (c *ShowUsers) URLQuery() map[string]livewire.URLQueryOption {
+  return map[string]livewire.URLQueryOption{
+    "search": { As: "q" }, // ?q=bob
+  }
+}</code></pre>
+
+<h2 id="except">Excluding certain values</h2>
+<p>
+  By default, Nimbus excludes a key when it equals the component’s initial state value (best-effort parity).
+  If you want explicit control, set <code>Except</code>.
+</p>
+
+<pre class="code-block"><code>func (c *ShowUsers) URLQuery() map[string]livewire.URLQueryOption {
+  return map[string]livewire.URLQueryOption{
+    "search": { Except: "" }, // only exclude when empty string
+  }
+}</code></pre>
+
+<h2 id="keep">Display on page load (keep)</h2>
+<p>
+  Set <code>Keep: true</code> to ensure the key is present in the URL even when empty.
+</p>
+
+<pre class="code-block"><code>func (c *ShowUsers) URLQuery() map[string]livewire.URLQueryOption {
+  return map[string]livewire.URLQueryOption{
+    "search": { Keep: true }, // ?search=
+  }
+}</code></pre>
+
+<h2 id="history">Storing in history</h2>
+<p>
+  By default, Nimbus uses <code>history.replaceState()</code> so the back button goes to the previous page.
+  Set <code>History: true</code> to use <code>history.pushState()</code> for that key, so back/forward walks through prior values.
+</p>
+
+<pre class="code-block"><code>func (c *ShowUsers) URLQuery() map[string]livewire.URLQueryOption {
+  return map[string]livewire.URLQueryOption{
+    "search": { History: true },
+  }
+}</code></pre>
+
+<h2 id="method">Using the QueryString() method</h2>
+<p>
+  If you prefer Laravel’s <code>queryString()</code> naming style, implement <code>QueryString() map[string]livewire.URLQueryOption</code>
+  instead of <code>URLQuery()</code>.
+</p>
+
+<h2 id="notes">Notes / limitations</h2>
+<ul>
+  <li>
+    This is a best-effort parity implementation. Nested keys (like <code>filters.status</code>) aren’t expanded yet.
+  </li>
+  <li>
+    Embedded components initialize from URL on the client, which may cause a brief “first paint then update” when the URL contains values.
+    Full-page components rendered via <code>livewire.Route</code> apply URL params server-side (no flicker).
+  </li>
+  <li>
+    Pagination URL syncing is now handled by the same URL query system when you opt into it (or via the built-in pagination helpers).
+  </li>
+</ul>
+

@@ -1,0 +1,50 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Features</div>
+  <h1>Lazy loading</h1>
+  <p class="page-lead">
+    Delay expensive components so they don’t block the initial page render. Nimbus supports <strong>lazy</strong> (load on viewport) and <strong>defer</strong> (load after page ready).
+  </p>
+</div>
+
+<h2 id="overview">Overview</h2>
+<p>
+  In Laravel Livewire v4, you can write <code>&lt;livewire:revenue lazy /&gt;</code>.
+  In Nimbus templates, use <code>{{ livewireLazy \"revenue\" }}</code> or <code>{{ livewireDefer \"revenue\" }}</code>.
+  The initial HTML render outputs a placeholder wrapped in a Livewire root. The first lazy/defer request then runs <code>Mount()</code> once and renders the full component.
+</p>
+
+<h2 id="lazy-vs-defer">Lazy vs Defer</h2>
+<ul>
+  <li><strong>Lazy</strong>: loads when the component root enters the viewport (IntersectionObserver).</li>
+  <li><strong>Defer</strong>: loads right after the page is ready (a <code>setTimeout(..., 0)</code> on boot).</li>
+</ul>
+
+<h2 id="basic">Basic example</h2>
+<pre class="code-block"><code>{{ livewireLazy "revenue" }}</code></pre>
+<pre class="code-block"><code>{{ livewireDefer "revenue" }}</code></pre>
+
+<h2 id="placeholder">Placeholder HTML</h2>
+<p>
+  Implement <code>livewire.Placeholderer</code> on your component to customize what is shown before it loads.
+</p>
+<pre class="code-block"><code>type Revenue struct{ /* ... */ }
+
+func (r *Revenue) Placeholder() (template.HTML, error) {
+  return template.HTML(`&lt;div class="skeleton"&gt;Loading…&lt;/div&gt;`), nil
+}</code></pre>
+
+<h2 id="props">Passing props</h2>
+<p>
+  Props passed into <code>livewireLazy</code>/<code>livewireDefer</code> are stored in <code>wire:state</code> and applied before the first <code>Mount()</code>.
+</p>
+<pre class="code-block"><code>{{ livewireLazy "revenue" (dict "start" .start "end" .end) }}</code></pre>
+
+<h2 id="notes">Notes</h2>
+<ul>
+  <li><strong>Parallel loading</strong>: each lazy/defer component loads independently (multiple POST requests).</li>
+  <li><strong>Testing</strong>: when testing component logic, prefer the Go test harness; for end-to-end lazy behavior, use browser tests.</li>
+  <li><strong>Best-effort parity</strong>: this matches Livewire’s user-facing behavior, but the internal APIs differ (Go vs PHP).</li>
+</ul>
+

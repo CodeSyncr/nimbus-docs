@@ -1,0 +1,86 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Essentials</div>
+  <h1>Lifecycle hooks</h1>
+  <p class="page-lead">
+    Nimbus Livewire exposes optional interfaces on your component type so you can run code at fixed points in the server lifecycle—modeled on
+    <a href="https://livewire.laravel.com/docs/4.x/lifecycle-hooks" rel="noopener noreferrer" target="_blank">Laravel Livewire · Lifecycle hooks</a>.
+    There is no PHP container injection; hooks are plain Go methods. Initial props still use <code>MountProps</code> / <code>SetState</code>; URL params use <code>MountRouteParams</code> on <code>Mountable</code> (see Pages).
+  </p>
+</div>
+
+<h2 id="overview">Hook map</h2>
+<table class="props-table">
+  <thead>
+    <tr><th>Livewire (PHP)</th><th>Nimbus (Go interface)</th><th>When it runs</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>mount()</code></td><td><code>LifecycleMount</code> → <code>Mount() error</code></td><td>Once on first server render (<code>Render</code>, full page), after route params + initial props/state.</td></tr>
+    <tr><td><code>boot()</code></td><td><code>LifecycleBoot</code> → <code>Boot() error</code></td><td>Start of every request: first paint and each POST update.</td></tr>
+    <tr><td><code>hydrate()</code></td><td><code>LifecycleHydrate</code> → <code>Hydrate() error</code></td><td>POST updates only, after incoming <code>wire</code> state is merged (see order below).</td></tr>
+    <tr><td><code>dehydrate()</code></td><td><code>LifecycleDehydrate</code> → <code>Dehydrate() error</code></td><td>After <code>Render</code> (and <code>Rendered</code>), before the response <code>State</code> snapshot.</td></tr>
+    <tr><td><code>rendering()</code></td><td><code>LifecycleRendering</code> → <code>Rendering() error</code></td><td>Immediately before <code>Render()</code>.</td></tr>
+    <tr><td><code>rendered()</code></td><td><code>LifecycleRendered</code> → <code>Rendered(inner template.HTML) error</code></td><td>After <code>Render()</code>; <code>inner</code> is the fragment inside the wire root, not the wrapper div.</td></tr>
+    <tr><td><code>updating($prop, $value)</code></td><td><code>LifecycleUpdatingProperty</code> → <code>UpdatingProperty(property string, value any, key *string) error</code></td><td>Before a top-level state key changes (full snapshot or <code>$set</code> / <code>$toggle</code>). Return an error to abort (HTTP 500 <code>property_update_rejected</code>).</td></tr>
+    <tr><td><code>updated($prop)</code> / <code>updatedFoo()</code></td><td><code>LifecycleUpdatedProperty</code> and/or a method named <code>Updated</code> + capitalized key (e.g. <code>UpdatedTitle</code> for <code>title</code>)</td><td>After the new value is stored. Reflected methods may take <code>(oldValue any)</code> or <code>(oldValue any, key *string)</code>; optional single <code>error</code> return is propagated.</td></tr>
+    <tr><td><code>exception($e, …)</code></td><td><code>ExceptionHandler</code> → <code>HandleLivewireException(err error) bool</code></td><td>Non-validation errors from <code>Call</code>. If it returns <code>true</code>, the handler re-renders and returns <strong>200</strong> JSON instead of 500.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="request-order">Request order</h2>
+<h3 id="first-render">First render (<code>Render</code> / full page)</h3>
+<ol>
+  <li>Factory builds the component.</li>
+  <li><code>MountRouteParams</code> (if <code>Mountable</code> and params exist).</li>
+  <li><code>MountProps</code> or <code>SetState(initial)</code> via <code>applyInitialState</code> — <strong>no</strong> <code>UpdatingProperty</code> hooks (use <code>Mount</code> for one-time setup).</li>
+  <li><code>Mount()</code> then <code>Boot()</code>.</li>
+  <li><code>Rendering()</code> → <code>Render()</code> → <code>Rendered()</code> → <code>Dehydrate()</code>.</li>
+</ol>
+
+<h3 id="post-update">POST update</h3>
+<ol>
+  <li>Factory builds a new component instance.</li>
+  <li>Incoming JSON state merged with <code>ApplyIncomingWireState</code> (<code>UpdatingProperty</code> → <code>SetState</code> → <code>UpdatedProperty</code> + optional <code>UpdatedFoo</code> methods per changed key).</li>
+  <li><code>Hydrate()</code> then <code>Boot()</code>.</li>
+  <li>Magic actions (<code>$set</code>, <code>$toggle</code>, …) or <code>Call</code>.</li>
+  <li>On success (or validation 422, or handled exception): <code>Rendering()</code> → <code>Render()</code> → <code>Rendered()</code> → <code>Dehydrate()</code>.</li>
+  <li><code>ErrSkipRender</code>: only <code>Dehydrate()</code> (no render hooks).</li>
+</ol>
+
+<h2 id="mount-boot">Mount vs boot</h2>
+<p>
+  Use <code>Mount</code> for one-time initialization after props/route data are applied (like loading defaults from the database once). Use <code>Boot</code> for logic that must run on every round-trip—e.g. re-deriving non-serialized fields from public state (similar to loading an Eloquent model from an ID each request). Prefer keeping sensitive IDs server-trusted: validate or treat them as read-only in <code>SetState</code>.
+</p>
+
+<h2 id="hydrate-dehydrate">Hydrate and dehydrate</h2>
+<p>
+  <code>Hydrate</code> runs only on POST updates, after the wire snapshot is applied as JSON-friendly values. Rebuild structs or DTOs from maps there. <code>Dehydrate</code> runs after render so you can convert rich types back to maps/slices before <code>State()</code> is serialized into <code>wire:state</code>. For new code, consider keeping state JSON-safe without hooks; hooks exist for parity with Livewire and gradual migration.
+</p>
+
+<h2 id="property-hooks">Property update hooks</h2>
+<p>
+  Hooks run for <strong>top-level</strong> keys in the state map only. Nested paths (e.g. <code>user.name</code> as a single key) are not split: the whole value under one key is compared with <code>reflect.DeepEqual</code>. Array element changes are not expressed as <code>key *string</code> today unless you implement custom logic inside <code>SetState</code>.
+</p>
+<p>
+  <code>$set</code> and <code>$toggle</code> use the same pipeline as a full snapshot for that key via <code>ApplyKeyChange</code>.
+</p>
+
+<h2 id="exception-hook">Exception handler</h2>
+<p>
+  Validation errors that implement <code>FieldErrors()</code> still return 422. <code>ErrSkipRender</code> is unchanged. For any other error from <code>Call</code>, if the component implements <code>ExceptionHandler</code> and <code>HandleLivewireException</code> returns <code>true</code>, the runtime runs the normal render pipeline and responds with 200 and fresh HTML/state—useful for soft “not found” UX without a generic 500 page.
+</p>
+
+<h2 id="traits-forms">Traits and form objects</h2>
+<p>
+  Laravel’s prefixed trait hooks (<code>bootHasPostForm</code>) and form-object <code>updating</code> / <code>updated</code> are not built in. In Go, use struct embedding and small helper types, or call shared functions from your <code>Call</code> / <code>SetState</code> / hook methods.
+</p>
+
+<h2 id="directives">Client directives</h2>
+<p>
+  These are browser-side and complement server hooks:
+</p>
+<ul>
+  <li><code>wire:cloak</code> — hides content until the runtime attaches.</li>
+  <li><code>wire:init</code> — runs an action once per component id after bind.</li>
+</ul>

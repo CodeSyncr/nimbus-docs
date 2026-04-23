@@ -1,0 +1,169 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Features</div>
+  <h1 id="overview">Pagination</h1>
+  <p class="page-lead">
+    Nimbus Livewire supports “Livewire-style” pagination: users can move between pages without a full browser visit,
+    and the URL query string is kept in sync (best-effort parity).
+  </p>
+</div>
+
+  <section class="doc-section" id="basic">
+    <h2>Basic usage</h2>
+    <p>
+      Nimbus uses the Lucid paginator (`database.Paginator`). In your component, store the current page in state
+      (default key: <code>page</code>) and pass it to your query’s <code>Paginate</code>.
+    </p>
+
+    <pre class="code-block"><code>package components
+
+import (
+  "github.com/CodeSyncr/nimbus/database"
+  "github.com/CodeSyncr/nimbus/plugins/livewire"
+  "github.com/your/app/models"
+)
+
+type ShowPosts struct{}
+
+func (c *ShowPosts) State() map[string]any {
+  return map[string]any{
+    "page": 1,
+  }
+}
+
+func (c *ShowPosts) Render() (string, error) {
+  page, _ := c.State()["page"].(int)
+  if page &lt; 1 { page = 1 }
+
+  var posts []models.Post
+  p, err := models.PostQuery().Paginate(&posts, page, 10)
+  if err != nil { return "", err }
+
+  // `p.Data` will contain `posts` (Lucid paginator shape).
+  // Render links using `livewirePaginationLinks(p)`.
+  return livewire.RenderView("components/show-posts", map[string]any{
+    "posts": posts,
+    "p":     p,
+  })
+}</code></pre>
+
+    <p>In your view, render the links:</p>
+
+    <pre class="code-block"><code>&lt;div&gt;
+  {{ range $i, $post := .posts }}
+    &lt;div&gt;{{ $post.Title }}&lt;/div&gt;
+  {{ end }}
+
+  {{ livewirePaginationLinks .p }}
+&lt;/div&gt;</code></pre>
+
+    <p>
+      The generated UI uses <code>wire:click</code> actions like <code>setPage(2)</code>,
+      <code>nextPage()</code>, and <code>previousPage()</code>.
+    </p>
+  </section>
+
+  <section class="doc-section" id="url">
+    <h2>URL query string tracking</h2>
+    <p>
+      When a pagination action runs, Nimbus Livewire updates the browser URL using
+      <code>history.replaceState</code> so it reflects the current page (default: <code>?page=2</code>).
+    </p>
+    <p>
+      Named paginators use their page name as the query-string key (ex. <code>?page=2&amp;invoices-page=2</code>).
+    </p>
+  </section>
+
+  <section class="doc-section" id="reset">
+    <h2>Resetting the page</h2>
+    <p>
+      In Laravel Livewire, you call <code>$this-&gt;resetPage()</code>. In Nimbus Livewire, page navigation is implemented
+      as built-in actions:
+    </p>
+    <ul>
+      <li><code>resetPage()</code></li>
+      <li><code>setPage(1)</code></li>
+    </ul>
+    <p>
+      Typical pattern: when search/sort inputs change, call <code>resetPage()</code> (or set <code>page</code> back to 1).
+    </p>
+  </section>
+
+  <section class="doc-section" id="methods">
+    <h2>Page navigation methods</h2>
+    <p>These actions are available out of the box:</p>
+    <ul>
+      <li><code>setPage(page)</code></li>
+      <li><code>resetPage()</code></li>
+      <li><code>nextPage()</code></li>
+      <li><code>previousPage()</code></li>
+    </ul>
+  </section>
+
+  <section class="doc-section" id="multiple">
+    <h2>Multiple paginators</h2>
+    <p>
+      If you have multiple paginators on a page, you must give each one its own page name.
+      In Nimbus Livewire, this is simply a different state key + passing the name into the pagination actions.
+    </p>
+
+    <pre class="code-block"><code>&lt;div&gt;
+  &lt;!-- Default paginator uses "page" --&gt;
+  {{ livewirePaginationLinks .postsPaginator }}
+
+  &lt;!-- Named paginator uses "invoices-page" --&gt;
+  {{ livewirePaginationLinks .invoicesPaginator "invoices-page" }}
+&lt;/div&gt;</code></pre>
+
+    <p>
+      In your component state, store the second paginator’s page under the same key:
+      <code>state["invoices-page"]</code>.
+    </p>
+  </section>
+
+  <section class="doc-section" id="hooks">
+    <h2>Hooking into page updates</h2>
+    <p>
+      Nimbus Livewire calls hooks (when present) during pagination actions:
+    </p>
+    <ul>
+      <li><code>UpdatingPage(page int)</code> / <code>UpdatedPage(page int)</code> for the default paginator</li>
+      <li><code>UpdatingInvoicesPage(page int)</code> / <code>UpdatedInvoicesPage(page int)</code> for a page name like <code>invoices-page</code></li>
+      <li><code>UpdatingPaginators(page int, pageName string)</code> / <code>UpdatedPaginators(page int, pageName string)</code> as generic hooks</li>
+    </ul>
+  </section>
+
+  <section class="doc-section" id="themes">
+    <h2>Themes &amp; custom views</h2>
+    <p>
+      Laravel Livewire ships themeable pagination Blade views (Tailwind/Bootstrap). Nimbus Livewire currently provides
+      a simple built-in helper <code>livewirePaginationLinks(p)</code> that renders unopinionated buttons wired with
+      <code>wire:click</code>.
+    </p>
+    <p>
+      If you want full control, render your own pagination markup and use
+      <code>wire:click="setPage(…)"</code>/<code>nextPage()</code>/<code>previousPage()</code>.
+      Combine with loading styles using the automatic <code>data-loading</code> attribute.
+    </p>
+  </section>
+
+  <section class="doc-section" id="notes">
+    <h2>Notes / limitations</h2>
+    <ul>
+      <li>
+        This implementation updates the URL when users paginate, but it does not yet hydrate initial paginator state
+        from the URL on the first server render (full parity work is part of “URL Query Parameters”).
+      </li>
+      <li>
+        Scroll behavior customization (<code>scrollTo</code>) isn’t implemented yet; you can implement your own by calling
+        <code>window.scrollTo(0,0)</code> in Alpine after click if desired.
+      </li>
+      <li>
+        Cursor/simple pagination are available at the Lucid layer, but Livewire-specific link helpers for those styles
+        are not provided yet.
+      </li>
+    </ul>
+  </section>
+</div>
+

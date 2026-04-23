@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 mb-4">Introduction</h1>
-<p class="text-slate-600 mb-4">Nimbus is a convention-over-configuration web framework for Go, inspired by <a href="https://adonisjs.com" class="text-indigo-600 hover:text-indigo-700">AdonisJS</a>. It brings the productivity and structure of full-featured Node.js frameworks to the Go ecosystem, while keeping the performance and type safety that Go developers expect.</p>
+<p class="text-slate-600 mb-4">Nimbus is a convention-over-configuration web framework for Go, heavily inspired by Laravel. It brings the productivity and structure of full-featured frameworks to the Go ecosystem, while keeping the performance and type safety that Go developers expect.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Why Nimbus?</h2>
 <p class="text-slate-600 mb-4">Most Go web frameworks are minimalist routers that leave application structure entirely up to you. Nimbus takes a different approach: it provides an opinionated project layout, a rich standard library, and familiar patterns so you can focus on building features instead of wiring things together.</p>
@@ -40,15 +40,15 @@
 <ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
   <li><strong>vs Gin / Echo / Chi</strong> — These are excellent routers, but they leave project structure, ORM, views, and auth up to you. Nimbus includes all of that.</li>
   <li><strong>vs Fiber</strong> — Fiber provides more built-in features than a bare router, but still does not enforce conventions. Nimbus adds an opinionated structure plus a CLI.</li>
-  <li><strong>vs Buffalo</strong> — Buffalo was the closest Go equivalent to Rails. Nimbus inherits the same spirit but is actively maintained and modeled after AdonisJS.</li>
-  <li><strong>vs AdonisJS (Node.js)</strong> — Nimbus mirrors AdonisJS concepts (controllers, middleware, service providers, views, ORM) in Go, offering the same developer experience with Go performance.</li>
+  <li><strong>vs Buffalo</strong> — Buffalo was the closest Go equivalent to Rails. Nimbus inherits that spirit with stronger Laravel-style conventions and modern maintenance.</li>
+  <li><strong>vs Laravel (PHP)</strong> — Nimbus mirrors Laravel concepts (controllers, middleware, service providers, views, ORM) in Go, offering familiar DX with Go performance.</li>
 </ul>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Under the Hood</h2>
 <p class="text-slate-600 mb-4">Nimbus builds on battle-tested Go libraries:</p>
 <ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
   <li><code class="bg-slate-100 px-1 rounded">go-chi/chi</code> — HTTP router (net/http compatible, fast, composable).</li>
-  <li><code class="bg-slate-100 px-1 rounded">gorm.io/gorm</code> — ORM for database operations, migrations, and model relationships.</li>
+  <li><code class="bg-slate-100 px-1 rounded">github.com/CodeSyncr/nimbus/lucid</code> — Nimbus ORM surface for database operations, migrations, and model relationships.</li>
   <li><code class="bg-slate-100 px-1 rounded">godotenv</code> — Environment variable loading from <code class="bg-slate-100 px-1 rounded">.env</code> files.</li>
 </ul>
 <p class="text-slate-600 mb-4">Ready to get started? Head over to the <a href="/docs/installation" class="text-indigo-600 hover:text-indigo-700">Installation</a> guide.</p>

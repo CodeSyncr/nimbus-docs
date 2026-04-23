@@ -1,0 +1,25 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:stream</h1>
+  <p class="page-lead">Progressive / streaming UI updates over HTTP as Livewire emits chunks.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  <strong>Not implemented.</strong> The Nimbus runtime speaks a single JSON POST/response cycle per action. There is no chunked streaming channel or SSE bridge in the stock plugin.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<p><em>Not available.</em> For long-running jobs, poll with <code>wire:poll</code>, use a WebSocket solution outside this plugin, or push status through a separate API.</p>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>LLM tokens</h3>
+<p>Buffer output server-side and flush partial results by storing ciphertext or deltas in state, then sync with <code>wire:poll</code>—or integrate Transmit/another realtime layer.</p>
+
+<h2 id="reference">Reference</h2>
+<ul>
+  <li><strong>Status:</strong> not implemented.</li>
+  <li><strong>Reason:</strong> response model today is one JSON payload with HTML + state.</li>
+</ul>

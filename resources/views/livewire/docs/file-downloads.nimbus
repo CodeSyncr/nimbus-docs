@@ -1,0 +1,61 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Features</div>
+  <h1 id="overview">File Downloads</h1>
+  <p class="page-lead">
+    Nimbus Livewire supports Livewire-style downloads: the server base64-encodes the file contents into the update response,
+    and the browser decodes it and triggers a download.
+  </p>
+</div>
+
+<h2 id="basic">Basic usage</h2>
+<p>
+  In Laravel Livewire, you typically return <code>response()-&gt;download(...)</code>.
+  In Nimbus Livewire, return <code>livewire.DownloadFile(...)</code> or <code>livewire.DownloadBytes(...)</code> from <code>Call()</code>.
+</p>
+
+<pre class="code-block"><code>func (c *ShowInvoice) Call(action string, params map[string]any) error {
+  if action != "download" { return nil }
+
+  // example: download a PDF from disk
+  return livewire.DownloadFile(c.State()["filePath"].(string), "invoice.pdf", "application/pdf")
+}</code></pre>
+
+<h2 id="streaming">Streaming downloads</h2>
+<p>
+  Like Laravel Livewire, “streaming” downloads aren’t truly streamed. Nimbus collects the output and then triggers the download.
+</p>
+
+<pre class="code-block"><code>return livewire.StreamDownload("report.csv", "text/csv", func(w io.Writer) error {
+  _, _ = w.Write([]byte("id,name\n"))
+  _, _ = w.Write([]byte("1,Alice\n"))
+  return nil
+})</code></pre>
+
+<h2 id="testing">Testing file downloads</h2>
+<p>
+  Nimbus Livewire’s component tester supports download assertions:
+</p>
+
+<pre class="code-block"><code>livewire.NewTest(t, "show-invoice").
+  Call("download", nil).
+  AssertFileDownloaded("invoice.pdf")</code></pre>
+
+<pre class="code-block"><code>livewire.NewTest(t, "show-invoice").
+  Call("download", nil).
+  AssertNoFileDownloaded()</code></pre>
+
+<h2 id="notes">Notes / limitations</h2>
+<ul>
+  <li>
+    Large files are expensive: downloads are base64-encoded inside JSON, so avoid huge payloads (prefer normal HTTP endpoints for big files).
+  </li>
+  <li>
+    This implementation triggers downloads by creating a Blob and clicking a temporary <code>&lt;a download&gt;</code> element.
+  </li>
+  <li>
+    If you need authorization, enforce it in your component action before returning the download response.
+  </li>
+</ul>
+

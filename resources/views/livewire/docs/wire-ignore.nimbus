@@ -1,0 +1,31 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:ignore</h1>
+  <p class="page-lead">Preserve marked subtrees across server-driven <code>outerHTML</code> swaps.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  When a component root is replaced, the runtime copies previous <code>outerHTML</code> for each ignored node (by DOM order) into the new tree before insertion.
+  This is best-effort: structure changes that shift the number or order of ignored nodes may misalign.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;div wire:ignore&gt;
+  &lt;!-- third-party widget or player --&gt;
+&lt;/div&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Embed iframes or maps</h3>
+<pre class="code-block"><code>&lt;div wire:ignore class="map-shell"&gt;...&lt;/div&gt;</code></pre>
+<h3>Heavy client-only charts</h3>
+<p>Avoid re-instantiating chart libs on every Livewire response by isolating them under <code>wire:ignore</code>.</p>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> boolean <code>wire:ignore</code></p>
+<ul>
+  <li><strong>Scope:</strong> descendants are part of the preserved subtree.</li>
+  <li><strong>Limitation:</strong> positional mapping; keep ignored regions stable across renders.</li>
+</ul>

@@ -1,0 +1,30 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:init</h1>
+  <p class="page-lead">Run a server action once per component instance after the client boots.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  The runtime tracks completion per <code>wire:id</code>. The first time a component binds, every element with <code>wire:init</code> queues an action (default <code>__sync</code>) sequentially.
+  Useful for lazy hydration or ensuring the first POST happens without user input.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;div wire:init="loadStats"&gt;&lt;/div&gt;</code></pre>
+<p>If the attribute is empty, the client calls <code>__sync</code>.</p>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Warm caches on mount</h3>
+<pre class="code-block"><code>&lt;section wire:init="refreshCounters"&gt;...&lt;/section&gt;</code></pre>
+<h3>Hidden sentinel</h3>
+<pre class="code-block"><code>&lt;span wire:init style="display:none" aria-hidden="true"&gt;&lt;/span&gt;</code></pre>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> <code>wire:init="actionName"</code> or empty for <code>__sync</code></p>
+<ul>
+  <li><strong>Frequency:</strong> once per component id until the DOM node is replaced.</li>
+  <li><strong>Ordering:</strong> multiple <code>wire:init</code> nodes run in document order, awaited sequentially.</li>
+</ul>

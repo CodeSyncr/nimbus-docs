@@ -1,0 +1,31 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:transition</h1>
+  <p class="page-lead">Apply a CSS class while the runtime is busy with updates or navigations.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  Whenever the internal busy flag flips, elements with <code>wire:transition</code> toggle the class <code>lw-transition-busy</code> on themselves.
+  Define that class (opacity, pointer-events, etc.) in your stylesheet.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;style&gt;
+  .lw-transition-busy { opacity: 0.6; pointer-events: none; }
+&lt;/style&gt;
+&lt;form wire:transition wire:submit="save"&gt;...&lt;/form&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Dim primary layout</h3>
+<pre class="code-block"><code>&lt;main wire:transition&gt;...&lt;/main&gt;</code></pre>
+<h3>Combine with wire:loading</h3>
+<p>Use loading for explicit copy and transition for subtle disabled styling on the same page.</p>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> boolean <code>wire:transition</code></p>
+<ul>
+  <li><strong>Class added:</strong> <code>lw-transition-busy</code> while busy.</li>
+</ul>

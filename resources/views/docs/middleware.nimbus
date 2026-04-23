@@ -1,6 +1,6 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 mb-4">Middleware</h1>
-<p class="text-slate-600 mb-6">Middleware in Nimbus is registered in <code class="bg-slate-100 px-1 rounded">start/kernel.go</code>, just like AdonisJS's <code class="bg-slate-100 px-1 rounded">start/kernel.ts</code>. The kernel organises middleware into three layers: server, router, and named.</p>
+<p class="text-slate-600 mb-6">Middleware in Nimbus is registered in <code class="bg-slate-100 px-1 rounded">start/kernel.go</code>, following Laravel-style middleware layering. The kernel organises middleware into three layers: server, router, and named.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">The HTTP Kernel</h2>
 <p class="text-slate-600 mb-2"><code class="bg-slate-100 px-1 rounded">start/kernel.go</code> is the single place where all middleware is configured:</p>

@@ -14,7 +14,7 @@ Middleware functions sit between the incoming request and your route handler. Th
 - **Modify** the response (CORS headers, compression)
 - **Short-circuit** the pipeline (return 401/403/429 without hitting the handler)
 
-Nimbus uses a three-layer middleware architecture inspired by AdonisJS:
+Nimbus uses a three-layer middleware architecture inspired by Laravel patterns:
 
 ```
 Request → [Server Middleware] → [Router Middleware] → [Named Middleware] → Handler → Response

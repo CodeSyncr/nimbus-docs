@@ -1,0 +1,58 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Features</div>
+  <h1>Loading states</h1>
+  <p class="page-lead">
+    Nimbus Livewire mirrors Laravel Livewire’s preferred loading-state approach:
+    the element that triggers a network request receives a <code>data-loading</code> attribute while the request is in flight.
+  </p>
+</div>
+
+<h2 id="overview">Overview</h2>
+<p>
+  While <code>wire:loading</code> is available for show/hide, the most composable approach is to style <code>[data-loading]</code>.
+  This works naturally with utility CSS (Tailwind v4 variants) and with plain CSS selectors.
+</p>
+
+<h2 id="basic">Basic usage</h2>
+<pre class="code-block"><code>&lt;button wire:click="save" class="data-loading:opacity-50"&gt;
+  Save Changes
+&lt;/button&gt;</code></pre>
+<p>
+  When clicked, the button will have <code>data-loading</code> until the POST update resolves.
+</p>
+
+<h2 id="how">How it works</h2>
+<p><code>data-loading</code> is applied to elements that trigger network requests, including:</p>
+<ul>
+  <li><strong>Actions</strong>: <code>wire:click="save"</code>, <code>wire:submit="create"</code></li>
+  <li><strong>Property sync</strong>: <code>wire:model.live="search"</code> (the input gets <code>data-loading</code> during the sync request)</li>
+  <li><strong>Event dispatch</strong>: <code>wire:click="$dispatch('refresh-stats')"</code> (the dispatching element gets <code>data-loading</code> while the receiving component(s) run)</li>
+</ul>
+
+<h2 id="tailwind">Tailwind patterns</h2>
+<p>Examples assume Tailwind v4+ variants:</p>
+<pre class="code-block"><code>&lt;button wire:click="save" class="data-loading:opacity-50"&gt;Save&lt;/button&gt;
+
+&lt;span class="not-data-loading:hidden"&gt;Saving...&lt;/span&gt;
+
+&lt;button wire:click="save"&gt;
+  &lt;span class="in-data-loading:hidden"&gt;Save&lt;/span&gt;
+  &lt;span class="not-in-data-loading:hidden"&gt;Saving...&lt;/span&gt;
+&lt;/button&gt;
+
+&lt;div class="has-data-loading:opacity-50"&gt;
+  &lt;button wire:click="save"&gt;Save&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+
+<h2 id="css">Plain CSS</h2>
+<pre class="code-block"><code>[data-loading] { opacity: .55; }
+button[data-loading] { cursor: progress; }</code></pre>
+
+<h2 id="wire-loading">wire:loading vs data-loading</h2>
+<p>
+  Use <code>wire:loading</code> when you specifically want to toggle an element’s visibility.
+  Prefer <code>data-loading</code> for styling because it is naturally scoped to the element that triggered the request and composes better.
+</p>
+

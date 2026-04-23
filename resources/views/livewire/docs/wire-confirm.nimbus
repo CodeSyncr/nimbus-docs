@@ -1,0 +1,28 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:confirm</h1>
+  <p class="page-lead">Gate <code>wire:click</code> and <code>wire:submit</code> handlers behind <code>window.confirm</code>.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  Provide a non-empty message string. Before the action POST runs, the user must accept the browser confirm dialog.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;button type="button" wire:confirm="Really reset?" wire:click="reset"&gt;Reset&lt;/button&gt;</code></pre>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Form submit guard</h3>
+<pre class="code-block"><code>&lt;form wire:submit="publish" wire:confirm="Publish to production?"&gt;...&lt;/form&gt;</code></pre>
+<h3>Deletion</h3>
+<pre class="code-block"><code>&lt;button wire:confirm="Delete forever?" wire:click="destroy"&gt;Delete&lt;/button&gt;</code></pre>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> <code>wire:confirm="message"</code></p>
+<ul>
+  <li>Combined only with supported action attributes in this runtime.</li>
+  <li>Uses synchronous <code>window.confirm</code>; no custom modal.</li>
+</ul>

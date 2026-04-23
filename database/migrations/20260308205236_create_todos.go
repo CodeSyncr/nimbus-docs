@@ -5,7 +5,7 @@ import (
 	"github.com/CodeSyncr/nimbus/database/schema"
 )
 
-// CreateTodos migration — AdonisJS Lucid-style schema.
+// CreateTodos migration — Laravel-inspired schema style.
 type CreateTodos struct {
 	schema.BaseSchema
 }

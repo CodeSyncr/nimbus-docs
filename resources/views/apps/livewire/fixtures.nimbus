@@ -1,0 +1,64 @@
+@layout('layout-demos')
+
+<div class="hero ruled fi">
+  <div class="corners" aria-hidden="true"><b class="tl"></b><b class="tr"></b><b class="bl"></b><b class="br"></b></div>
+  <div class="wrap">
+    <a href="/demos" class="back-link fi d1">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg>
+      All demos
+    </a>
+    <div class="eyebrow fi d2"><hr>Livewire v4 parity fixtures<hr></div>
+    <h1 class="hero-h1 fi d3">Livewire <span class="grad">Fixtures.</span></h1>
+    <p class="hero-sub fi d4">
+      A manual verification page used while building 1:1-ish Laravel Livewire v4 behavior in Nimbus.
+      As we implement morphing, entangle, targets, and uploads, this page gets expanded with real components.
+    </p>
+  </div>
+</div>
+
+<section class="demos-section ruled">
+  <div class="corners" aria-hidden="true"><b class="bl"></b><b class="br"></b></div>
+  <div class="wrap" style="padding-top:22px">
+    <div class="demo-card" style="padding:18px 18px 16px">
+      <div class="card-title" style="margin-bottom:6px">What this page is for</div>
+      <div class="card-desc" style="max-width: 78ch">
+        This is intentionally not pretty (yet). It’s a checklist playground:
+        each section will contain a small Livewire component designed to expose edge-cases (focus retention,
+        Alpine state preservation, keyed list morphing, ignored regions, targeted loading, and uploads).
+      </div>
+      <div class="tags" style="margin-top:12px">
+        <span class="tag">morph</span>
+        <span class="tag">$wire.entangle</span>
+        <span class="tag">wire:target</span>
+        <span class="tag">uploads</span>
+        <span class="tag">navigate</span>
+      </div>
+    </div>
+
+    <div class="demo-card" style="margin-top:14px;padding:18px">
+      <div class="card-title" style="margin-bottom:10px">Quick links</div>
+      <div class="card-desc">
+        <a href="/livewire/docs/parity">Parity matrix</a>
+        &nbsp;·&nbsp;
+        <a href="/livewire/docs/directives">Directives</a>
+        &nbsp;·&nbsp;
+        <a href="/livewire/docs/alpine">Alpine</a>
+        &nbsp;·&nbsp;
+        <a href="/livewire/docs/testing">Testing</a>
+      </div>
+    </div>
+
+    <div class="demo-card" style="margin-top:14px;padding:18px">
+      <div class="card-title" style="margin-bottom:10px">Coming next</div>
+      <ul style="margin-left: 18px;color: rgba(255,255,255,.78)">
+        <li>Keyed list morphing demo (<code>wire:key</code>)</li>
+        <li>Ignored region demo (<code>wire:ignore</code>, <code>wire:ignore.self</code>)</li>
+        <li>Alpine state demo (collapse/expand + Livewire re-render)</li>
+        <li><code>$wire.entangle('prop')</code> demo (deferred + <code>.live</code>)</li>
+        <li>Targeted loading demo (<code>wire:loading</code> + <code>wire:target</code>)</li>
+        <li>Upload demo (<code>wire:model</code> on file input + progress)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+

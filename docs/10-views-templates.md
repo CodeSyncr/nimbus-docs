@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Nimbus includes a custom template engine inspired by AdonisJS's **Edge** template engine. It uses `.nimbus` files with a clean, expressive syntax that's easy to read and write:
+Nimbus includes a custom template engine inspired by Laravel-style server-rendered workflows. It uses `.nimbus` files with a clean, expressive syntax that's easy to read and write:
 
 - **Layouts** — Define page shells with `@layout('name')`
 - **Components** — Reusable UI pieces with slots: `@card()...@end`

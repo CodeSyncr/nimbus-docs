@@ -1,0 +1,33 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:click</h1>
+  <p class="page-lead">Run a named server action when the element is clicked; the response replaces the component root HTML.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  <code>wire:click</code> attaches a capturing-safe click handler, prevents the default action, resolves the parent Livewire root, and posts an update with <code>{ action, state }</code>.
+  Works with <code>wire:confirm</code> on the same element.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<pre class="code-block"><code>&lt;button type="button" wire:click="increment"&gt;+1&lt;/button&gt;</code></pre>
+<p>Your Go component must implement <code>Call(ctx, "increment", params)</code> (or equivalent) and return refreshed HTML.</p>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<h3>Primary action button</h3>
+<pre class="code-block"><code>&lt;button type="button" class="btn" wire:click="save"&gt;Save&lt;/button&gt;</code></pre>
+<h3>Confirm destructive action</h3>
+<pre class="code-block"><code>&lt;button type="button" wire:confirm="Delete this item?" wire:click="delete"&gt;Delete&lt;/button&gt;</code></pre>
+<h3>Icon / text control</h3>
+<pre class="code-block"><code>&lt;span role="button" tabindex="0" wire:click="refresh"&gt;↻ Refresh&lt;/span&gt;</code></pre>
+
+<h2 id="reference">Reference</h2>
+<p><strong>Syntax:</strong> <code>wire:click="actionName"</code></p>
+<ul>
+  <li><strong>Element:</strong> any clickable element with a component ancestor carrying <code>wire:id</code>.</li>
+  <li><strong>Parameters:</strong> Nimbus uses a simple action string; structured params are not parsed from the attribute in the stock client.</li>
+  <li><strong>Modifiers:</strong> none built-in; combine with <code>wire:confirm</code>.</li>
+</ul>

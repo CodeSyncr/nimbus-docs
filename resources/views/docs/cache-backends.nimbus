@@ -26,7 +26,7 @@ val, _ := store.Get(ctx, "user:1")</code></pre>
 <p class="text-slate-600 dark:text-slate-400 mb-2">Distributed, shared across instances. Supports prefix-based invalidation and namespaces.</p>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>CACHE_DRIVER=redis
 REDIS_URL=redis://localhost:6379</code></pre>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/redis/go-redis/v9"
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/redis"
 
 rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 store := cache.NewRedisStore(rdb)

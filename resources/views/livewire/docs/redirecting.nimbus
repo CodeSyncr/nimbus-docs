@@ -1,0 +1,51 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Essentials</div>
+  <h1 id="overview">Redirecting</h1>
+  <p class="page-lead">
+    Livewire requests are JSON updates, so redirects must be triggered client-side. Nimbus Livewire supports redirects by returning
+    a redirect response from your component action.
+  </p>
+</div>
+
+<h2 id="basic">Basic usage</h2>
+<p>
+  In Laravel Livewire you call <code>$this-&gt;redirect('/posts')</code>.
+  In Nimbus Livewire, return <code>livewire.Redirect("/posts")</code> from <code>Call()</code>.
+</p>
+
+<pre class="code-block"><code>func (c *CreatePost) Call(action string, params map[string]any) error {
+  if action != "save" { return nil }
+
+  // ... create post ...
+
+  return livewire.Redirect("/posts")
+}</code></pre>
+
+<h2 id="navigate">Redirect using wire:navigate</h2>
+<p>
+  If you want a SPA-like redirect (same semantics as <code>wire:navigate</code>), use:
+</p>
+
+<pre class="code-block"><code>return livewire.RedirectNavigate("/posts")</code></pre>
+
+<h2 id="intended">Redirect intended</h2>
+<p>
+  Laravel’s <code>redirectIntended()</code> redirects back to the previous page. Nimbus provides a best-effort helper that uses the HTTP Referer:
+</p>
+
+<pre class="code-block"><code>return livewire.RedirectIntended("/fallback")</code></pre>
+
+<h2 id="flash">Flash messages</h2>
+<p>
+  Flash data is handled by your app/session layer. You can set flash state before redirecting, and render it on the destination page.
+</p>
+
+<h2 id="notes">Notes / limitations</h2>
+<ul>
+  <li><strong>redirectRoute / redirectAction</strong>: not implemented yet (Nimbus has named routes, but Livewire redirect helpers aren’t wired to the app router in this plugin).</li>
+  <li><strong>Intended</strong> uses the Referer header; if missing, the fallback URL is used.</li>
+  <li><strong>Navigate</strong> only works if the destination URL is same-origin and your app uses <code>wire:navigate</code> runtime on that page.</li>
+</ul>
+

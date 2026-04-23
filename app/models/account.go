@@ -18,7 +18,7 @@ type Client struct {
 	Accounts []Account
 }
 
-// Account demonstrates belongsTo relationships, matching the AdonisJS example:
+// Account demonstrates belongsTo relationships, matching Laravel-style examples:
 //
 //	export default class Account extends Base {
 //	    @column()

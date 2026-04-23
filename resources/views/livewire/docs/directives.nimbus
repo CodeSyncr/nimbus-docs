@@ -1,0 +1,143 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Reference</div>
+  <h1>HTML directives</h1>
+  <p class="page-lead">
+    Attributes recognized by the Nimbus Livewire client runtime. Each directive has its own page with introduction, usage, common patterns, and syntax reference.
+    Behavior matches Laravel Livewire only where noted; when it differs, the directive page calls that out.
+  </p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  Directives are parsed in the browser after the server renders component HTML. They wire DOM events and state to the update endpoint, drive SPA navigation, and toggle UI from client-side state between round-trips.
+</p>
+<p>
+  Open any row below for full documentation, examples, and Nimbus-specific caveats.
+</p>
+
+<h2 id="overview">All directives</h2>
+<div style="overflow-x: auto;">
+  <table class="props-table">
+    <thead>
+      <tr>
+        <th>Directive</th>
+        <th>Doc</th>
+        <th>Status in Nimbus</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>wire:bind</code></td>
+        <td><a href="/livewire/docs/wire-bind">wire:bind</a></td>
+        <td>Form control alias for <code>wire:model</code> (not attribute <code>wire:bind:*</code>).</td>
+      </tr>
+      <tr>
+        <td><code>wire:click</code></td>
+        <td><a href="/livewire/docs/wire-click">wire:click</a></td>
+        <td>Supported</td>
+      </tr>
+      <tr>
+        <td><code>wire:submit</code></td>
+        <td><a href="/livewire/docs/wire-submit">wire:submit</a></td>
+        <td>On <code>&lt;form&gt;</code></td>
+      </tr>
+      <tr>
+        <td><code>wire:model</code></td>
+        <td><a href="/livewire/docs/wire-model">wire:model</a></td>
+        <td>Supported (debounced sync)</td>
+      </tr>
+      <tr>
+        <td><code>wire:navigate</code></td>
+        <td><a href="/livewire/docs/wire-navigate">wire:navigate</a></td>
+        <td>Supported</td>
+      </tr>
+      <tr>
+        <td><code>wire:current</code> / <code>wire:current.ignore</code></td>
+        <td><a href="/livewire/docs/wire-current">wire:current</a></td>
+        <td><code>data-current</code> on navigate links</td>
+      </tr>
+      <tr>
+        <td><code>wire:cloak</code></td>
+        <td><a href="/livewire/docs/wire-cloak">wire:cloak</a></td>
+        <td>Supported</td>
+      </tr>
+      <tr>
+        <td><code>wire:dirty</code></td>
+        <td><a href="/livewire/docs/wire-dirty">wire:dirty</a></td>
+        <td>Supported</td>
+      </tr>
+      <tr>
+        <td><code>wire:confirm</code></td>
+        <td><a href="/livewire/docs/wire-confirm">wire:confirm</a></td>
+        <td><code>window.confirm</code></td>
+      </tr>
+      <tr>
+        <td><code>wire:loading</code></td>
+        <td><a href="/livewire/docs/wire-loading">wire:loading</a></td>
+        <td>Supported (global busy)</td>
+      </tr>
+      <tr>
+        <td><code>wire:transition</code></td>
+        <td><a href="/livewire/docs/wire-transition">wire:transition</a></td>
+        <td>Busy class toggle</td>
+      </tr>
+      <tr>
+        <td><code>wire:init</code></td>
+        <td><a href="/livewire/docs/wire-init">wire:init</a></td>
+        <td>Once per component id</td>
+      </tr>
+      <tr>
+        <td><code>wire:intersect</code></td>
+        <td><a href="/livewire/docs/wire-intersect">wire:intersect</a></td>
+        <td>Supported</td>
+      </tr>
+      <tr>
+        <td><code>wire:poll</code></td>
+        <td><a href="/livewire/docs/wire-poll">wire:poll</a></td>
+        <td>Interval attributes</td>
+      </tr>
+      <tr>
+        <td><code>wire:offline</code></td>
+        <td><a href="/livewire/docs/wire-offline">wire:offline</a></td>
+        <td>Supported</td>
+      </tr>
+      <tr>
+        <td><code>wire:ignore</code></td>
+        <td><a href="/livewire/docs/wire-ignore">wire:ignore</a></td>
+        <td>Best-effort preserve on swap</td>
+      </tr>
+      <tr>
+        <td><code>wire:ref</code></td>
+        <td><a href="/livewire/docs/wire-ref">wire:ref</a></td>
+        <td>Client refs map</td>
+      </tr>
+      <tr>
+        <td><code>wire:show</code></td>
+        <td><a href="/livewire/docs/wire-show">wire:show</a></td>
+        <td>Supported</td>
+      </tr>
+      <tr>
+        <td><code>wire:text</code></td>
+        <td><a href="/livewire/docs/wire-text">wire:text</a></td>
+        <td>Supported</td>
+      </tr>
+      <tr>
+        <td><code>wire:replace</code></td>
+        <td><a href="/livewire/docs/wire-replace">wire:replace</a></td>
+        <td>Not implemented</td>
+      </tr>
+      <tr>
+        <td><code>wire:sort</code></td>
+        <td><a href="/livewire/docs/wire-sort">wire:sort</a></td>
+        <td>Not implemented</td>
+      </tr>
+      <tr>
+        <td><code>wire:stream</code></td>
+        <td><a href="/livewire/docs/wire-stream">wire:stream</a></td>
+        <td>Not implemented</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

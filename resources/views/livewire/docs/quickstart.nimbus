@@ -1,0 +1,30 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Getting started</div>
+  <h1>Quickstart</h1>
+  <p class="page-lead">
+    Get the Nimbus <code>livewire</code> plugin running: register components, mount a full page, and include the client script in your layout.
+    This runtime is Nimbus-first and not PHP Livewire–compatible.
+  </p>
+</div>
+
+<h2 id="install">Install</h2>
+<pre class="code-block"><code>nimbus plugin install livewire</code></pre>
+
+<h2 id="register">Register components</h2>
+<p>Register a factory for each component name your views reference:</p>
+<pre class="code-block"><code>livewire.Register("counter", func() livewire.Component {
+    return &amp;Counter{}
+})</code></pre>
+
+<h2 id="mount-route">Full-page route</h2>
+<p>Mount a component as a full page (route params are available on the first render via <code>Mountable</code>):</p>
+<pre class="code-block"><code>livewire.Route(app.Router, "/demo/:id", "pages::demo.show", livewire.PageOptions{
+    Layout: "layouts/app",
+    Title:  "Demo",
+})</code></pre>
+
+<h2 id="layout-script">Layout script</h2>
+<p>Near the end of your layout <code>&lt;body&gt;</code>, output the injected Livewire scripts (or use the plugin’s default injection when the HTML contains <code>wire:</code> attributes):</p>
+<pre class="code-block"><code>{{ livewireScripts }}</code></pre>

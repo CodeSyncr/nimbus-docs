@@ -42,8 +42,8 @@ app.Use(unpoly.New())</code></pre>
 import "github.com/CodeSyncr/nimbus/plugins/unpoly"
 
 var Unpoly = unpoly.Config{
-    // Unpoly version to load from CDN (default: "3.10.0")
-    Version: "3.10.0",
+    // Unpoly version to load from CDN (default: "3.12.0")
+    Version: "3.12.0",
 
     // Custom CDN URLs (optional — auto-generated from version)
     CSSURL: "https://cdn.example.com/unpoly.min.css",

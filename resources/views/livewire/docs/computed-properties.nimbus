@@ -1,0 +1,91 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Features</div>
+  <h1 id="overview">Computed Properties</h1>
+  <p class="page-lead">
+    Computed properties let you build “derived” values and memoize them for the duration of a single Livewire request.
+    Nimbus implements this as a Go-first API with optional caching using Nimbus’s <code>cache</code> package.
+  </p>
+</div>
+
+<h2 id="basic">Basic usage</h2>
+<p>
+  Laravel Livewire uses <code>#[Computed]</code> and lets you access values in Blade via <code>$this-&gt;user</code>.
+  In Nimbus Livewire, you embed <code>livewire.ComputedScope</code> and call <code>Computed()</code> from your component methods.
+</p>
+
+<pre class="code-block"><code>type ShowUser struct {
+  livewire.ComputedScope
+}
+
+func (c *ShowUser) State() map[string]any {
+  return map[string]any{"userId": 1}
+}
+
+func (c *ShowUser) User() (*models.User, error) {
+  v, err := c.Computed(&amp;(*c), "user", livewire.ComputedOption{}, func() (any, error) {
+    id, _ := c.State()["userId"].(int)
+    return models.UserFind(id)
+  })
+  if err != nil { return nil, err }
+  u, _ := v.(*models.User)
+  return u, nil
+}</code></pre>
+
+<p>
+  In practice, you’ll usually compute the value inside <code>Render()</code> and pass it into your view data,
+  or call your computed helper from actions.
+</p>
+
+<h2 id="performance">Performance (memoization)</h2>
+<p>
+  Computed values are memoized for a <strong>single request</strong> (initial render or one POST update).
+  Nimbus clears computed memo automatically at the start of each request lifecycle.
+</p>
+
+<h2 id="clearing">Clearing the memo</h2>
+<p>
+  To “bust” a computed value (like <code>unset($this-&gt;posts)</code> in Laravel), call:
+</p>
+
+<pre class="code-block"><code>c.UnsetComputed(c, "posts", livewire.ComputedOption{})</code></pre>
+
+<h2 id="persist">Caching between requests (persist)</h2>
+<p>
+  Laravel Livewire’s <code>persist: true</code> keeps a computed value cached for a component instance.
+  Nimbus supports this using the global Nimbus cache store.
+</p>
+
+<pre class="code-block"><code>v, err := c.Computed(c, "user",
+  livewire.ComputedOption{Persist: true, Seconds: 3600},
+  func() (any, error) {
+    // expensive query...
+    return models.UserFind(id)
+  },
+)</code></pre>
+
+<h2 id="cache">Caching across components (cache)</h2>
+<p>
+  For a cache shared across all component instances, use <code>Cache: true</code> and optionally provide a stable key:
+</p>
+
+<pre class="code-block"><code>v, err := c.Computed(c, "posts",
+  livewire.ComputedOption{Cache: true, Key: "homepage-posts", Seconds: 3600},
+  func() (any, error) {
+    return models.PostAll()
+  },
+)</code></pre>
+
+<h2 id="notes">Notes / limitations</h2>
+<ul>
+  <li>
+    Nimbus does not have Blade’s <code>$this-&gt;prop</code> property access in templates. Use normal Go patterns:
+    compute in <code>Render()</code>, pass values to templates, or call computed helpers from component methods.
+  </li>
+  <li>
+    Persisted computed caching requires a stable instance key to avoid collisions; you can provide your own via a method
+    <code>LivewireInstanceKey() string</code> on the component.
+  </li>
+</ul>
+

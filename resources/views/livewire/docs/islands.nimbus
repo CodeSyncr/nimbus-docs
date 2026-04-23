@@ -1,0 +1,77 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Features</div>
+  <h1>Islands</h1>
+  <p class="page-lead">
+    Islands let you update isolated regions inside a Livewire component. When an action is scoped to an island, Nimbus patches only that island’s DOM instead of re-rendering the whole component.
+  </p>
+</div>
+
+<h2 id="overview">Overview</h2>
+<p>
+  Laravel Livewire v4 implements islands via Blade directives (<code>@island</code>). Nimbus is Go-first and uses HTML attributes instead.
+  The server still returns a normal full component render; the client selectively morphs only the island nodes.
+</p>
+
+<h2 id="basic">Basic usage</h2>
+<p>
+  Mark an island region with <code>wire:island="name"</code>:
+</p>
+<pre class="code-block"><code>&lt;div&gt;
+  &lt;div wire:island="revenue"&gt;
+    Revenue: &lt;span wire:text="revenue"&gt;&lt;/span&gt;
+    &lt;button type="button" wire:click="$refresh" wire:island="revenue"&gt;Refresh&lt;/button&gt;
+  &lt;/div&gt;
+
+  &lt;div&gt;Other content...&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+<p>
+  Clicking the button will still trigger a normal server round-trip, but only the matching island region(s) will be morphed in the DOM.
+</p>
+
+<h2 id="lazy">Lazy / defer</h2>
+<p>
+  Dedicated <code>@island(lazy: true)</code> semantics aren’t implemented yet. For now you can approximate lazy loading with:
+  <code>wire:intersect</code> (load on visibility) or <code>wire:init</code> (load after page init) and conditional rendering.
+</p>
+
+<h2 id="placeholder">Placeholders</h2>
+<p>
+  Dedicated <code>@placeholder</code> blocks aren’t implemented. Use normal conditional state and render a placeholder until the island has loaded its data.
+</p>
+
+<h2 id="trigger">Triggering islands</h2>
+<p>
+  Scope an action to an island by adding <code>wire:island="name"</code> to the same element as your action directive (button/form/etc.).
+</p>
+
+<h2 id="modes">Append / prepend</h2>
+<p>
+  Use <code>wire:island.append="name"</code> or <code>wire:island.prepend="name"</code> on the action element to append or prepend the island’s rendered children (best-effort).
+</p>
+<pre class="code-block"><code>&lt;button type="button" wire:click="loadMore" wire:island.append="feed"&gt;
+  Load more
+&lt;/button&gt;</code></pre>
+
+<h2 id="js">JavaScript / Alpine</h2>
+<p>
+  From Alpine/JS, use <code>$wire.$island('name')</code> to scope subsequent calls:
+</p>
+<pre class="code-block"><code>&lt;button type="button" x-on:click="$wire.$island('feed', { mode: 'append' }).loadMore()"&gt;
+  Load more
+&lt;/button&gt;
+
+&lt;button type="button" x-on:click="$wire.$island('revenue').$refresh()"&gt;
+  Refresh revenue
+&lt;/button&gt;</code></pre>
+
+<h2 id="limits">Limitations</h2>
+<ul>
+  <li><strong>Best-effort parity</strong>: this is client-side selective DOM morphing, not server-side partial renders.</li>
+  <li><strong>Append/prepend</strong> dedupes by <code>wire:key</code> (best-effort), but it doesn’t yet support full keyed reordering semantics.</li>
+  <li><strong>Nested islands</strong> are supported (inner islands are skipped when an outer island patches by default), however <strong>always</strong> / <strong>skip initial</strong> semantics are not implemented yet.</li>
+  <li><strong>Parallel requests</strong>: like Livewire, last response wins for shared state.</li>
+  <li><strong>Loops/conditionals</strong>: no Blade directives here; put any conditionals inside the island region you mark up.</li>
+ </ul>
+

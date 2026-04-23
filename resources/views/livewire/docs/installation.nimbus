@@ -1,0 +1,27 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Getting started</div>
+  <h1>Installation</h1>
+  <p class="page-lead">
+    How the plugin exposes the JavaScript runtime, the POST update endpoint, and when the middleware injects assets.
+  </p>
+</div>
+
+<h2 id="overview">Overview</h2>
+<p>
+  The plugin serves a client runtime URL and a POST endpoint for component updates. It can auto-inject the script on HTML responses that include <code>wire:</code> attributes.
+</p>
+
+<h2 id="endpoints">Script &amp; update endpoint</h2>
+<ul>
+  <li>Runtime script (Vite-first): <code>/build/assets/livewire.js</code> when present; otherwise <code>/livewire-&lt;hash&gt;/livewire.js</code></li>
+  <li>Override: env <code>LIVEWIRE_VITE_CLIENT_SRC</code></li>
+  <li>Update URL: <code>/livewire-&lt;hash&gt;/update</code></li>
+  <li>Upload URL: <code>/livewire-&lt;hash&gt;/upload</code> (temporary upload tokens for <code>wire:model</code> on file inputs)</li>
+  <li>Injection: middleware adds the script when the response body contains <code>wire:</code></li>
+</ul>
+
+<h2 id="payload">Update payload</h2>
+<p>POST body shape the client sends:</p>
+<p><code>{ id, name, state, action, params }</code></p>

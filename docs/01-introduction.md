@@ -1,12 +1,12 @@
 # Introduction to Nimbus
 
-> **The Laravel/AdonisJS-style web framework for Go** — bringing developer joy, convention-over-configuration, and batteries-included architecture to the Go ecosystem.
+> **The Laravel-inspired web framework for Go** — bringing developer joy, convention-over-configuration, and batteries-included architecture to the Go ecosystem.
 
 ---
 
 ## What is Nimbus?
 
-Nimbus is a **full-stack web framework for Go** that brings the developer experience of frameworks like Laravel (PHP), AdonisJS (Node.js), and Ruby on Rails to the Go ecosystem. It provides an opinionated, batteries-included foundation for building modern web applications, APIs, and microservices — without sacrificing Go's performance, type safety, or simplicity.
+Nimbus is a **full-stack web framework for Go** that brings the developer experience of frameworks like Laravel (PHP) and Ruby on Rails to the Go ecosystem. It provides an opinionated, batteries-included foundation for building modern web applications, APIs, and microservices — without sacrificing Go's performance, type safety, or simplicity.
 
 Unlike minimalist Go frameworks that leave you assembling middleware stacks, ORM wrappers, and CLI scaffolding from scratch, Nimbus gives you **everything out of the box**:
 
@@ -144,22 +144,22 @@ app.Router.Get("/ws", websocket.Handler(func(conn *websocket.Conn) {
 
 ## Framework Comparison
 
-| Feature | Nimbus (Go) | Laravel (PHP) | AdonisJS (Node) | Gin (Go) | Fiber (Go) |
-|---------|------------|---------------|-----------------|----------|------------|
-| Full MVC | ✅ | ✅ | ✅ | ❌ | ❌ |
-| ORM | ✅ (GORM) | ✅ (Eloquent) | ✅ (Lucid) | ❌ | ❌ |
-| Migrations | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Validation | ✅ (VineJS-style) | ✅ | ✅ (VineJS) | ❌ | ❌ |
-| Auth Guards | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Queue System | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Task Scheduler | ✅ | ✅ | ❌ | ❌ | ❌ |
-| CLI Generator | ✅ | ✅ (Artisan) | ✅ (Ace) | ❌ | ❌ |
-| Template Engine | ✅ (.nimbus) | ✅ (Blade) | ✅ (Edge) | ✅ | ✅ |
-| Plugin System | ✅ | ✅ (Packages) | ✅ | ❌ | ❌ |
-| AI SDK | ✅ | ❌ | ❌ | ❌ | ❌ |
-| MCP Support | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Admin Panel | ✅ (Studio) | ✅ (Nova) | ❌ | ❌ | ❌ |
-| Performance | 🔥 Go-speed | 🐢 | ⚡ | 🔥 | 🔥 |
+| Feature | Nimbus (Go) | Laravel (PHP) | Gin (Go) | Fiber (Go) |
+|---------|-------------|---------------|----------|------------|
+| Full MVC | ✅ | ✅ | ❌ | ❌ |
+| ORM | ✅ (GORM) | ✅ (Eloquent) | ❌ | ❌ |
+| Migrations | ✅ | ✅ | ❌ | ❌ |
+| Validation | ✅ (Laravel-style fluent API) | ✅ | ⚠️ Manual | ⚠️ Manual |
+| Auth Guards | ✅ | ✅ | ⚠️ Add-ons | ⚠️ Add-ons |
+| Queue System | ✅ | ✅ | ❌ | ❌ |
+| Task Scheduler | ✅ | ✅ | ❌ | ❌ |
+| CLI Generator | ✅ | ✅ (Artisan) | ⚠️ Limited | ⚠️ Limited |
+| Template Engine | ✅ (.nimbus) | ✅ (Blade) | ⚠️ Add-ons | ⚠️ Add-ons |
+| Plugin System | ✅ | ✅ (Packages) | ⚠️ Community | ⚠️ Community |
+| AI SDK | ✅ | ❌ | ❌ | ❌ |
+| MCP Support | ✅ | ❌ | ❌ | ❌ |
+| Admin Panel | ✅ (Studio) | ✅ (Nova) | ❌ | ❌ |
+| Performance | 🔥 Go-speed | 🐢 PHP runtime | 🔥 Fast | 🔥 Fast |
 
 ---
 

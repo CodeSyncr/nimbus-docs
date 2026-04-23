@@ -203,6 +203,10 @@
     <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Transmit</h3>
     <p class="text-sm text-slate-600 dark:text-slate-400">SSE for real-time server-to-client push.</p>
   </a>
+  <a href="/docs/reverb" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Reverb</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">WebSocket channels with optional Redis fan-out.</p>
+  </a>
   <a href="/docs/events" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
     <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Events</h3>
     <p class="text-sm text-slate-600 dark:text-slate-400">Event bus, listen and dispatch.</p>

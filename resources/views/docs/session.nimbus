@@ -44,7 +44,7 @@ store.EnsureTable() // CREATE TABLE IF NOT EXISTS sessions (id, payload, expires
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Redis Store</h2>
 <p class="text-slate-600 dark:text-slate-400 mb-2">Fast, distributed sessions using Redis with automatic TTL expiration:</p>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/redis/go-redis/v9"
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/redis"
 
 rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 

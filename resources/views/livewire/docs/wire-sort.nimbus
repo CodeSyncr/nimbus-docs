@@ -1,0 +1,26 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:sort</h1>
+  <p class="page-lead">Drag-and-drop list reordering integrated with Livewire state.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  <strong>Not implemented in Nimbus.</strong> Sortable lists need gesture handling, placeholder DOM, and a well-defined serialization story for collections in JSON state.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<p><em>Not available.</em> Implement ordering via buttons or standalone JS that calls your API, then refresh component state through a normal action.</p>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<p>
+  Typical UX is “move up / move down” actions that mutate a slice on the server and re-render, or a dedicated JS widget outside Livewire’s swap path (<code>wire:ignore</code>).
+</p>
+
+<h2 id="reference">Reference</h2>
+<ul>
+  <li><strong>Status:</strong> not implemented.</li>
+  <li><strong>Roadmap:</strong> requires a richer client protocol than hash + outerHTML swap.</li>
+</ul>

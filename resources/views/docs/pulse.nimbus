@@ -54,7 +54,7 @@
   <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">Or add manually:</p>
   <pre data-file="bin/server.go"><code class="language-go">import "github.com/CodeSyncr/nimbus/plugins/pulse"
 
-app.Use(pulse.New())</code></pre>
+app.Use(pulse.NewPlugin())</code></pre>
   <p class="text-slate-600 dark:text-slate-400 mt-4 mb-4">Access the dashboard at <code>http://localhost:3000/pulse</code>.</p>
 
   <!-- ── Configuration ── -->

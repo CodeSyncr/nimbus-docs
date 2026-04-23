@@ -1,0 +1,27 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">HTML directive</div>
+  <h1>wire:replace</h1>
+  <p class="page-lead">Planned Livewire directive for targeted DOM replacement without swapping the full component root.</p>
+</div>
+
+<h2 id="intro">Introduction</h2>
+<p>
+  <strong>Nimbus Livewire does not implement <code>wire:replace</code>.</strong> Updates always replace the outer HTML of the component root returned by the server.
+  Finer-grained morphing would require a stable keyed diff layer similar to Livewire’s morph plugins.
+</p>
+
+<h2 id="basic-usage">Basic usage</h2>
+<p><em>Not available.</em> Use smaller components, <code>wire:ignore</code> for isolated subtrees, or accept full-root swaps.</p>
+
+<h2 id="common-use-cases">Common use cases</h2>
+<p>
+  In upstream Livewire, <code>wire:replace</code> is discussed for partial templates—watch the Nimbus changelog if this runtime adds morph-based updates later.
+</p>
+
+<h2 id="reference">Reference</h2>
+<ul>
+  <li><strong>Status:</strong> not implemented (<code>plugins/livewire</code> uses <code>outerHTML</code> replacement).</li>
+  <li><strong>Workaround:</strong> split UI into multiple components or hydrate heavy islands under <code>wire:ignore</code>.</li>
+</ul>

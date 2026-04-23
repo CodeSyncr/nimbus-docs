@@ -8,6 +8,12 @@
 	},
 	{
 		"path": "../../cineforge-ai"
+	},
+	{
+		"path": "../../livewire"
+	},
+	{
+		"path": "../../nimbus-livewire"
 	}
 ],
   "settings": {}

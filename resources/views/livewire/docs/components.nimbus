@@ -1,0 +1,114 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Essentials</div>
+  <h1>Components</h1>
+  <p class="page-lead">
+    Components are Go types that implement <code>livewire.Component</code>: they own JSON-safe state, expose actions for <code>wire:click</code> / <code>wire:submit</code>, and render HTML. You register each one under a string key (like Laravel Livewire’s component name) and embed or route to it.
+    Nimbus mirrors the mental model of
+    <a href="https://livewire.laravel.com/docs/4.x/components" rel="noopener noreferrer" target="_blank">Laravel Livewire’s Components</a>
+    but the implementation is Go and this runtime is not wire-compatible with PHP Livewire.
+  </p>
+</div>
+
+<h2 id="contract">Component contract</h2>
+<p>Every component must satisfy:</p>
+<ul>
+  <li><code>Name() string</code> — must return the <strong>same</strong> string used when registering (for example <code>"counter"</code> or <code>"pages::post.create"</code>). The client sends this on every update; a mismatch breaks hydration.</li>
+  <li><code>State() map[string]any</code> — current state; must be JSON-serializable. It is embedded in <code>wire:state</code> on the root element and round-tripped on POST updates.</li>
+  <li><code>SetState(map[string]any)</code> — apply a full or partial state map from the client (and from the runtime when you do not use <code>PropsMount</code> for initial props).</li>
+  <li><code>Call(action string, params map[string]any) error</code> — run named actions from directives; return errors for validation or failures.</li>
+  <li><code>Render() (template.HTML, error)</code> — inner HTML only; the runtime wraps it in a single root <code>&lt;div wire:id … wire:component … wire:state …&gt;</code>.</li>
+</ul>
+<p>
+  Optional interfaces layer on behavior: <code>Mountable</code> for full-page route params (see <a href="/livewire/docs/pages">Pages</a>),
+  <code>LayoutPicker</code> / <code>TitlePicker</code> for page metadata,
+  <code>PropsMount</code> for embedded initial props (below),
+  and <code>WireIDRender</code> when you nest child components that need stable <code>wire:id</code> values (see <a href="/livewire/docs/nesting">Nesting</a>).
+</p>
+
+<h2 id="register">Registering components</h2>
+<p>Registration happens once at startup (typically in <code>init()</code> next to your routes). The runtime stores a <em>factory</em> so each request gets a fresh instance.</p>
+<pre class="code-block"><code>livewire.Register("counter", func() livewire.Component {
+    return &amp;Counter{}
+})</code></pre>
+<p id="namespaced"><strong>Namespaced names</strong> follow the same convention as page components: <code>namespace::dotted.name</code> maps to logical paths like <code>pages/post/create</code> in views.</p>
+<pre class="code-block"><code>livewire.RegisterNamespaced("pages", "post.create", func() livewire.Component {
+    return &amp;PostCreate{}
+})
+// equivalent to: Register("pages::post.create", …)</code></pre>
+<p><strong>Introspection</strong> (tools, health checks, admin UIs):</p>
+<pre class="code-block"><code>names := livewire.RegisteredComponents() // sorted
+ok := livewire.ComponentRegistered("counter")</code></pre>
+
+<h2 id="embed-template">Embedding in Nimbus views</h2>
+<p>
+  Blade uses <code>&lt;livewire:post.create /&gt;</code>. In Nimbus templates the plugin registers a <code>livewire</code> function (after the Livewire plugin loads):
+</p>
+<pre class="code-block"><code>{{ livewire "counter" }}</code></pre>
+<p>Pass initial props as a map (often built with <code>dict</code>):</p>
+<pre class="code-block"><code>{{ livewire "widgets.table" (dict "userId" .User.ID) }}</code></pre>
+<p>
+  The helper calls <code>livewire.Render(name, props)</code>. Each embedded component gets its own <code>wire:id</code> and root. To nest a child <em>inside</em> a parent’s template and keep child ids stable when the parent re-renders, use <code>livewire.RenderNested</code> and <code>RenderForWireID</code> as described in <a href="/livewire/docs/nesting">Nesting components</a>.
+</p>
+
+<h2 id="embed-controller">Embedding from Go</h2>
+<p>When you build HTML in a handler instead of a view, use <code>Render</code>:</p>
+<pre class="code-block"><code>html, err := livewire.Render("counter", map[string]any{"count": 3})
+if err != nil { … }
+data["Widget"] = html</code></pre>
+<p>Pass <code>nil</code> for props when the component’s default state is enough.</p>
+
+<h2 id="props-mount">Initial props: PropsMount vs SetState</h2>
+<p>
+  When you embed a component with a non-empty props map (template <code>livewire</code>, <code>Render</code>, or full-page flow with an initial map), the runtime applies them before <code>Render()</code>:
+</p>
+<ul>
+  <li>If the type implements <code>PropsMount</code> with <code>MountProps(map[string]any) error</code>, that method runs with a <strong>shallow clone</strong> of the map. Use it to validate, rename keys, or map props onto fields—similar to Livewire’s <code>mount()</code> receiving attributes.</li>
+  <li>Otherwise the runtime calls <code>SetState(initial)</code> with a clone of the map (Livewire-style “fill public properties from props” is yours to implement inside <code>SetState</code>).</li>
+</ul>
+<p>
+  Errors from <code>MountProps</code> propagate from <code>Render</code> (and from full-page rendering that supplies initial state), so you can fail closed on bad input.
+</p>
+<p>
+  <strong>Note.</strong>
+  Props are applied on that render only. They are not automatically “reactive” if the parent template re-renders with different data, unless your controller or view passes new props again—same caveat as
+  <a href="https://livewire.laravel.com/docs/4.x/components" rel="noopener noreferrer" target="_blank">Livewire’s non-reactive props</a>
+  unless you add your own pattern.
+</p>
+
+<h2 id="pages-vs-embed">Full pages vs embedded components</h2>
+<ul>
+  <li><strong>Full page:</strong> <code>livewire.Route</code> renders one registered component inside a layout. Route parameters go to <code>Mountable.MountRouteParams</code> on the first GET. See <a href="/livewire/docs/pages">Pages</a>.</li>
+  <li><strong>Embedded:</strong> <code>{{ livewire … }}</code> or <code>Render</code> in any view or response. Use <code>PropsMount</code> or <code>SetState</code> for props; there are no route params unless you put them in the map yourself.</li>
+</ul>
+
+<h2 id="state">State and serialization</h2>
+<p>
+  Treat <code>State()</code> as the contract with the browser: only JSON-friendly values, stable keys, and types that round-trip (numbers often arrive as <code>float64</code> after JSON). The client stores state on the root element and posts it back with each action.
+</p>
+<p>
+  Keep secrets and heavy objects out of public state—use ordinary Go fields the template does not expose, or load data inside <code>Render()</code> / actions without serializing it.
+</p>
+
+<h2 id="scaffold">Scaffolding</h2>
+<p>
+  The Nimbus CLI can generate a Go type and a Nimbus view stub (see <code>nimbus make:livewire</code> in the main framework docs). You still call <code>livewire.Register</code> (or <code>RegisterNamespaced</code>) yourself with the chosen name.
+</p>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+  <li><strong>Component not found / update 404:</strong> the <code>name</code> in the POST body must match a registered key. Check typos and that registration runs before requests.</li>
+  <li><strong>Updates target the wrong instance:</strong> <code>Name()</code> on the instance must equal the registered name (including <code>pages::…</code>).</li>
+  <li><strong>Blank or broken UI:</strong> ensure <code>Render()</code> returns valid inner HTML; the runtime requires a single logical component root (the outer wrapper is added for you).</li>
+  <li><strong>Script not loading:</strong> include <code>{{ livewireScripts }}</code> in the layout or rely on middleware injection when the response contains <code>wire:</code> attributes.</li>
+</ul>
+
+<h2 id="see-also">See also</h2>
+<ul>
+  <li><a href="/livewire/docs/pages">Pages</a> — full-page routing and <code>Mountable</code></li>
+  <li><a href="/livewire/docs/nesting">Nesting</a> — <code>RenderNested</code>, <code>NestedWireID</code>, <code>WireIDRender</code></li>
+  <li><a href="/livewire/docs/properties">Properties</a> — <code>CloneMap</code>, <code>MergeKeys</code></li>
+  <li><a href="/livewire/docs/actions">Actions</a> — <code>wire:click</code> and server dispatch</li>
+  <li><a href="/livewire/docs/directives">HTML directives</a> — attribute reference</li>
+</ul>

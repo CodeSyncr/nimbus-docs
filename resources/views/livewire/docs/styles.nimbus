@@ -1,0 +1,62 @@
+@layout('livewire/layout')
+
+<div class="page-hero">
+  <div class="page-tag">Features</div>
+  <h1>Styles</h1>
+  <p class="page-lead">
+    Livewire-style component CSS: place <code>&lt;style&gt;</code> tags inside your component HTML and Nimbus will scope and dedupe them automatically.
+  </p>
+</div>
+
+<h2 id="overview">Overview</h2>
+<p>
+  When a component renders HTML that contains <code>&lt;style&gt;</code> tags, the Livewire client extracts them, injects them into <code>&lt;head&gt;</code>,
+  and scopes the CSS to the component name so styles don’t leak across components.
+</p>
+
+<h2 id="scoped">Scoped styles</h2>
+<p>
+  Any <code>&lt;style&gt;</code> without the <code>global</code> attribute is scoped to the component by wrapping it using CSS nesting:
+</p>
+<pre class="code-block"><code>&lt;div&gt;
+  &lt;h1 class="title"&gt;Hello&lt;/h1&gt;
+&lt;/div&gt;
+
+&lt;style&gt;
+.title { color: dodgerblue; }
+&lt;/style&gt;</code></pre>
+<p>Becomes (conceptually):</p>
+<pre class="code-block"><code>[wire:component="your.component"] {
+  .title { color: dodgerblue; }
+}</code></pre>
+
+<h2 id="root">Targeting the root</h2>
+<p>
+  In Laravel Livewire you can use <code>&amp;</code> to target the component root. In Nimbus, the simplest equivalent is to target the component selector directly:
+</p>
+<pre class="code-block"><code>&lt;style&gt;
+[wire\\:component="your.component"] {
+  border: 1px solid rgba(255,255,255,.15);
+  padding: 12px;
+  border-radius: 10px;
+}
+&lt;/style&gt;</code></pre>
+
+<h2 id="global">Global styles</h2>
+<p>
+  Add <code>global</code> to opt-out of scoping:
+</p>
+<pre class="code-block"><code>&lt;style global&gt;
+body { font-family: system-ui, sans-serif; }
+&lt;/style&gt;</code></pre>
+
+<h2 id="dedupe">Deduplication</h2>
+<p>
+  Styles are deduplicated by component name + CSS content hash. Rendering the same component multiple times won’t duplicate its styles.
+</p>
+
+<h2 id="browser">Browser support</h2>
+<p>
+  Scoped styles rely on CSS nesting support (modern browsers). If you need legacy support, precompile styles (or use <code>&lt;style global&gt;</code>).
+</p>
+
