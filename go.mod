@@ -3,7 +3,7 @@ module nimbus-starter
 go 1.26
 
 require (
-	github.com/CodeSyncr/nimbus v0.1.8
+	github.com/CodeSyncr/nimbus v0.1.9
 	github.com/mark3labs/mcp-go v0.45.0
 	gorm.io/gorm v1.31.1
 )
