@@ -64,6 +64,9 @@
 | 27 | [Search](27-search.md) | Full-text search integrations |
 | 28 | [Notification](28-notification.md) | Multi-channel notifications (email, sms, slack) |
 | 29 | [WebSocket](29-websocket.md) | Core WebSocket handling |
+| 30 | [NoSQL](30-nosql.md) | MongoDB and Redis integration |
+| 31 | [CORS](31-cors.md) | CORS and security headers |
+| 32 | [Best Practices](32-best-practices.md) | Development guidelines and structure |
 
 ---
 
