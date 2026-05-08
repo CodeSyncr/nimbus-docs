@@ -55,7 +55,15 @@
 
 | # | Topic | Description |
 |---|-------|-------------|
-| 21 | [Advanced Features](21-advanced-features.md) | OpenAPI, Studio, Workflows, Feature Flags, Multi-tenancy, WebSockets, Events, Storage, Sessions, Logging, Metrics |
+| 21 | [Advanced Features](21-advanced-features.md) | OpenAPI, Studio, Workflows, Feature Flags, Multi-tenancy, Events, Storage, Sessions, Logging, Metrics |
+| 22 | [Drive Plugin](22-drive-plugin.md) | File storage abstraction for S3, R2, GCS, Supabase, and Local |
+| 23 | [Transmit Plugin](23-transmit-plugin.md) | Server-Sent Events (SSE) real-time pushing |
+| 24 | [Horizon Plugin](24-horizon-plugin.md) | Queue and background job dashboard |
+| 25 | [Inertia Plugin](25-inertia-plugin.md) | SPA adapter for Vue, React, Svelte |
+| 26 | [Reverb Plugin](26-reverb-plugin.md) | WebSocket broadcasting server |
+| 27 | [Search](27-search.md) | Full-text search integrations |
+| 28 | [Notification](28-notification.md) | Multi-channel notifications (email, sms, slack) |
+| 29 | [WebSocket](29-websocket.md) | Core WebSocket handling |
 
 ---
 
