@@ -1,0 +1,44 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Usage & Best Practices</h1>
+<p class="text-slate-600 mb-6">To build high-quality applications with Nimbus, follow these best practices and development patterns.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Project Structure</h2>
+<ul class="list-disc pl-5 text-slate-600 mb-4 space-y-1">
+  <li><strong>controllers:</strong> Keep your controllers thin. Move complex business logic to service or action classes.</li>
+  <li><strong>models:</strong> Use <code class="bg-slate-100 px-1 rounded">database.Model</code> or <code class="bg-slate-100 px-1 rounded">nosql.Model</code> for consistency. Define clear relations and use GORM tags for validation.</li>
+  <li><strong>middleware:</strong> Use middleware for cross-cutting concerns like authentication, logging, and CORS.</li>
+</ul>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Development Workflow</h2>
+<ol class="list-decimal pl-5 text-slate-600 mb-4 space-y-1">
+  <li><strong>Use the CLI:</strong> Leverage <code class="bg-slate-100 px-1 rounded">nimbus make:controller</code>, <code class="bg-slate-100 px-1 rounded">nimbus make:model</code>, and <code class="bg-slate-100 px-1 rounded">nimbus make:migration</code> to scaffold your application.</li>
+  <li><strong>Hot Reload:</strong> Run your application with <code class="bg-slate-100 px-1 rounded">nimbus serve</code> to benefit from automatic restarts on code changes.</li>
+  <li><strong>Validation:</strong> Always validate incoming request data using the <code class="bg-slate-100 px-1 rounded">validation</code> package and struct tags.</li>
+  <li><strong>Error Handling:</strong> Use the <code class="bg-slate-100 px-1 rounded">errors</code> package for consistent error reporting and custom HTTP status codes.</li>
+</ol>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">AI Integration</h2>
+<ol class="list-decimal pl-5 text-slate-600 mb-4 space-y-1">
+  <li><strong>Agent Specialization:</strong> Create specialized agents for specific tasks (e.g., "Code Reviewer", "Support Assistant") rather than one large, general agent.</li>
+  <li><strong>Tool Safety:</strong> Implement strict validation and authorization in your AI tool handlers.</li>
+  <li><strong>Prompt Versioning:</strong> Maintain your prompt templates in a central location or uses the <code class="bg-slate-100 px-1 rounded">ai.Template</code> system for versioning within your application.</li>
+  <li><strong>Memory Scoping:</strong> Use session-based or user-based keys for agent memory to ensure data privacy and contextual accuracy.</li>
+</ol>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Performance & Scalability</h2>
+<ol class="list-decimal pl-5 text-slate-600 mb-4 space-y-1">
+  <li><strong>Database Connection Pooling:</strong> Configure <code class="bg-slate-100 px-1 rounded">MaxOpenConns</code> and <code class="bg-slate-100 px-1 rounded">MaxIdleConns</code> in your database config for production environments.</li>
+  <li><strong>Rate Limiting:</strong> Apply rate limiting to all public and AI-intensive endpoints.</li>
+  <li><strong>Caching:</strong> Use the <code class="bg-slate-100 px-1 rounded">cache</code> package to store frequently accessed data and reduce database load.</li>
+  <li><strong>Background Jobs:</strong> Offload long-running tasks (e.g., email sending, data processing) to the <code class="bg-slate-100 px-1 rounded">queue</code> package.</li>
+</ol>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Security & Authentication</h2>
+<ol class="list-decimal pl-5 text-slate-600 mb-4 space-y-1">
+  <li><strong>JWT vs. PASETO:</strong> Use PASETO for new projects as it is more secure by default and avoids common JWT pitfalls like the "alg: none" attack.</li>
+  <li><strong>Stateless when possible:</strong> Use stateless tokens (JWT/PASETO) for mobile apps and distributed services to avoid database lookups on every request.</li>
+  <li><strong>Rotate Secrets:</strong> Always rotate your <code class="bg-slate-100 px-1 rounded">AUTH_TOKEN_SECRET</code> regularly and store it in a secure environment variable, never in the code.</li>
+  <li><strong>Environment Variables:</strong> Never hardcode sensitive information. Use <code class="bg-slate-100 px-1 rounded">.env</code> files and the <code class="bg-slate-100 px-1 rounded">config</code> package.</li>
+  <li><strong>CSRF/XSS Protection:</strong> Enable the <code class="bg-slate-100 px-1 rounded">CSRF</code> middleware and use the <code class="bg-slate-100 px-1 rounded">.nimbus</code> template engine for automatic HTML escaping.</li>
+  <li><strong>Policy-Based Authorization:</strong> Use the <code class="bg-slate-100 px-1 rounded">auth</code> policy system for all sensitive operations.</li>
+</ol>

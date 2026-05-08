@@ -1,0 +1,52 @@
+@layout('layout-docs')
+<h1 class="text-3xl font-bold text-slate-900 mb-4">Full-Text Search</h1>
+<p class="text-slate-600 mb-6">Nimbus provides a unified full-text search abstraction supporting multiple backends.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Supported Drivers</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
+    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Driver</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2 font-medium"><code class="bg-slate-100 px-1 rounded">meilisearch</code></td><td class="px-4 py-2">Meilisearch search engine</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2 font-medium"><code class="bg-slate-100 px-1 rounded">typesense</code></td><td class="px-4 py-2">Typesense search engine</td></tr>
+      <tr class="border-t border-slate-200"><td class="px-4 py-2 font-medium"><code class="bg-slate-100 px-1 rounded">postgresql</code></td><td class="px-4 py-2">PostgreSQL <code class="bg-slate-100 px-1 rounded">tsvector</code> full-text search</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Configuration</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>search.Config{
+    Driver: "meilisearch",
+    Meilisearch: search.MeilisearchConfig{
+        Host:   "http://localhost:7700",
+        APIKey: "masterKey",
+    },
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Indexing & Searching</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Index a document
+search.Index("products", product.ID, map[string]any{
+    "name":        product.Name,
+    "description": product.Description,
+    "price":       product.Price,
+})
+
+// Search
+results, err := search.Search("products", "wireless headphones", search.Options{
+    Limit:  20,
+    Offset: 0,
+    Filter: "price < 100",
+    Sort:   []string{"price:asc"},
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Model Integration</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Product struct {
+    database.Model
+    Name        string
+    Description string
+}
+
+func (p *Product) SearchableAs() string { return "products" }
+func (p *Product) ToSearchableMap() map[string]any {
+    return map[string]any{"name": p.Name, "description": p.Description}
+}</code></pre>

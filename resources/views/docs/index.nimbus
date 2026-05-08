@@ -143,6 +143,10 @@
     <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Seeders</h3>
     <p class="text-sm text-slate-600 dark:text-slate-400">Populate data for dev/testing.</p>
   </a>
+  <a href="/docs/nosql" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">NoSQL Integrations</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">MongoDB and Redis usage.</p>
+  </a>
 </div>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Auth &amp; Security</h2>
@@ -251,6 +255,10 @@
     <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Container Services</h3>
     <p class="text-sm text-slate-600 dark:text-slate-400">Built-in services and custom bindings.</p>
   </a>
+  <a href="/docs/best-practices" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Best Practices</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Development guidelines and architecture.</p>
+  </a>
 </div>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-2 mb-4">Command Line &amp; Testing</h2>
@@ -310,5 +318,9 @@
   <a href="/docs/metrics" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
     <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Runtime Metrics</h3>
     <p class="text-sm text-slate-600 dark:text-slate-400">Goroutines, heap, GC monitoring.</p>
+  </a>
+  <a href="/docs/search" class="block p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 hover:border-amber-500/40 dark:hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all duration-200">
+    <h3 class="font-semibold text-slate-900 dark:text-white mb-1">Full-Text Search</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Search with Meilisearch, Typesense.</p>
   </a>
 </div>
