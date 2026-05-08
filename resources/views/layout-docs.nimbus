@@ -479,6 +479,7 @@
             <a href="/docs/service-providers" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Service Providers</a>
             <a href="/docs/plugins" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Plugins</a>
             <a href="/docs/container-services" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Container Services</a>
+            <a href="/docs/best-practices" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Best Practices</a>
           </div>
         </details>
 
@@ -538,6 +539,7 @@
             <a href="/docs/studio" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Nimbus Studio</a>
             <a href="/docs/edge-functions" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Edge Functions</a>
             <a href="/docs/metrics" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Metrics &amp; Monitoring</a>
+            <a href="/docs/search" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Full-Text Search</a>
           </div>
         </details>
 

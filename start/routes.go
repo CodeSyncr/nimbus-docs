@@ -72,6 +72,10 @@ func RegisterRoutes(app *nimbus.App) {
 	app.Router.Get("/docs/*", docsPageHandler)
 	app.Router.Get("/api/docs/index", docsIndexAPIHandler)
 	app.Router.Post("/api/docs/chat", docsChatAPIHandler)
+
+	// ── Packages ───────────────────────────────────────────
+	app.Router.Get("/packages", packagesIndexHandler)
+	app.Router.Get("/packages/:package", packagesShowHandler)
 }
 
 // ── Handlers ─────────────────────────────────────────────────
@@ -144,6 +148,17 @@ func queueDemoHandler(c *http.Context) error {
 		})
 	}
 	return c.JSON(http.StatusAccepted, map[string]string{"status": "queued"})
+}
+
+// ── Packages ─────────────────────────────────────────────────
+
+func packagesIndexHandler(c *http.Context) error {
+	return c.View("packages/index", map[string]any{"title": "Packages & Plugins"})
+}
+
+func packagesShowHandler(c *http.Context) error {
+	pkg := c.Param("package")
+	return c.View("packages/show", map[string]any{"title": pkg + " Package", "package": pkg})
 }
 
 // ── Documentation ────────────────────────────────────────────

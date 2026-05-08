@@ -339,7 +339,7 @@
     </a>
     <div class="nav-mid">
       <a href="#" class="nav-link">Framework</a>
-      <a href="#" class="nav-link">Packages</a>
+      <a href="/packages" class="nav-link">Packages</a>
       <a href="#" class="nav-link">Resources</a>
       <a href="/demos" class="nav-link">Demos</a>
       <a href="/docs" class="nav-link">Docs</a>

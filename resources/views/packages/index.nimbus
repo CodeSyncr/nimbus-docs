@@ -1,0 +1,85 @@
+@layout('layout')
+
+<div class="hero">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="hero-in">
+    <div class="eyebrow"><hr> Packages &amp; Plugins</div>
+    <h1 class="hero-h1">Extend <span class="grad">Nimbus</span></h1>
+    <p class="hero-sub">Explore the official ecosystem of packages and plugins to supercharge your Go applications.</p>
+  </div>
+</div>
+
+<section class="bg-soft">
+  <div class="wrap">
+    <div class="sec-center" style="margin-bottom: 48px;">
+      <h2 class="sec-title">Official Packages</h2>
+      <p class="sec-sub">Everything you need to build robust applications, officially maintained by the Nimbus team.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; margin-top: 32px;">
+      
+      <!-- Core Packages -->
+      <a href="/packages/drive" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--bg-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border); font-size: 1.5rem;">💾</div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">Drive</h3>
+        <p style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.6;">Powerful file storage abstraction supporting local disks, S3, and MinIO with a unified API.</p>
+      </a>
+
+      <a href="/packages/transmit" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--bg-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border); font-size: 1.5rem;">⚡</div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">Transmit</h3>
+        <p style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.6;">Server-Sent Events (SSE) made simple. Broadcast state changes to the client in real-time.</p>
+      </a>
+
+      <a href="/packages/horizon" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--bg-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border); font-size: 1.5rem;">🌅</div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">Horizon</h3>
+        <p style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.6;">Beautiful dashboard and code-driven configuration for your Redis queues.</p>
+      </a>
+
+      <a href="/packages/telescope" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--bg-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border); font-size: 1.5rem;">🔭</div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">Telescope</h3>
+        <p style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.6;">An elegant debug assistant. View incoming requests, exceptions, logs, queries, and more.</p>
+      </a>
+
+      <a href="/packages/pulse" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--bg-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border); font-size: 1.5rem;">💓</div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">Pulse</h3>
+        <p style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.6;">At-a-glance insights into your application's performance and usage statistics.</p>
+      </a>
+
+      <a href="/packages/reverb" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--bg-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border); font-size: 1.5rem;">🔊</div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">Reverb</h3>
+        <p style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.6;">Blazing-fast and scalable WebSockets server for real-time applications.</p>
+      </a>
+
+      <a href="/packages/socialite" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--bg-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border); font-size: 1.5rem;">👥</div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">Socialite</h3>
+        <p style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.6;">Fluent interface for OAuth authentication with Facebook, GitHub, Google, and more.</p>
+      </a>
+
+      <a href="/packages/unpoly" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--bg-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border); font-size: 1.5rem;">🔗</div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">Unpoly</h3>
+        <p style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.6;">Unobtrusive JavaScript framework for building SPAs without leaving the backend.</p>
+      </a>
+
+      <a href="/packages/search" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--bg-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border); font-size: 1.5rem;">🔍</div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">Scout (Search)</h3>
+        <p style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.6;">Driver-based full-text search for your models with support for Meilisearch and Typesense.</p>
+      </a>
+
+      <a href="/packages/ai" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--bg-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border); font-size: 1.5rem;">🤖</div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">AI SDK</h3>
+        <p style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.6;">Unified AI framework for Google Gemini and OpenAI to easily add intelligence.</p>
+      </a>
+
+    </div>
+  </div>
+</section>
