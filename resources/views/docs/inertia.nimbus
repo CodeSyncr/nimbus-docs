@@ -1,22 +1,16 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Inertia.js</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Inertia lets you build single-page apps using <strong>Vue</strong>, <strong>React</strong>, or <strong>Svelte</strong> without building an API. Your Go backend renders pages and passes props; the frontend handles routing and UI. Use Inertia when you want a modern SPA with server-driven routing. Use Unpoly for server-rendered HTML with progressive enhancement.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Build modern SPAs with <strong>Vue</strong>, <strong>React</strong>, or <strong>Svelte</strong> without building a separate API. Inertia lets your Go backend render pages and pass props; the frontend handles routing and UI. Powered by <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">github.com/petaki/inertia-go</code>.</p>
 
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Installation</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Install the official Nimbus Inertia plugin:</p>
-<pre data-file="Terminal"><code>nimbus plugin install inertia</code></pre>
-<p class="text-slate-600 dark:text-slate-400 mb-4">You can also use the legacy alias: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus plugin:install inertia</code>.</p>
-
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Create an Inertia app</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">--kit</code> flag when creating a new app:</p>
-<pre data-file="Terminal"><code>nimbus create my-app --kit=react
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>nimbus plugin install inertia</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Or scaffold a full Inertia app with a frontend kit:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>nimbus create my-app --kit=react
 nimbus create my-app --kit=vue
 nimbus create my-app --kit=svelte</code></pre>
-<p class="text-slate-600 dark:text-slate-400 mb-4">This scaffolds the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/</code> folder at the project root with Vite, the root template, and example pages.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Register the plugin</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">In <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bin/server.go</code>, register the Inertia plugin before routes:</p>
-<pre data-file="bin/server.go"><code>import "github.com/CodeSyncr/nimbus/plugins/inertia"
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Register the Plugin</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="bin/server.go"><code>import "github.com/CodeSyncr/nimbus/plugins/inertia"
 
 app.Use(inertia.New(inertia.Config{
     URL:          "http://localhost:3333",
@@ -24,52 +18,172 @@ app.Use(inertia.New(inertia.Config{
     Version:      "1",
 }))</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Root template</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">The root template (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">resources/views/inertia_layout.nimbus</code>) must include a div with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">data-page="{{ marshal .page }}"</code> and a script tag loading your frontend entry (e.g. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/app.tsx</code>).</p>
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Config Options</h3>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Field</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>URL</code></td><td class="px-4 py-2">Application URL (used in root template for redirects)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>RootTemplate</code></td><td class="px-4 py-2">Path to root HTML template</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Version</code></td><td class="px-4 py-2">Asset version string for cache busting</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>SSRURL</code></td><td class="px-4 py-2">Node.js SSR server URL (optional, e.g. <code>http://localhost:13714</code>)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>TemplateFS</code></td><td class="px-4 py-2">Custom <code>fs.FS</code> for the root template (optional)</td></tr>
+    </tbody>
+  </table>
+</div>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Rendering pages</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia.Render</code> in handlers to return Inertia pages:</p>
-<pre data-file="bin/server.go"><code>import "github.com/CodeSyncr/nimbus/plugins/inertia"
-
-func homeHandler(c *http.Context) error {
-    return inertia.Render(c, "home/index", map[string]any{
-        "title":   "Welcome",
-        "appName": "Nimbus",
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Rendering Pages</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia.Render()</code> in handlers. When the browser makes a standard request, it returns full HTML. When the Inertia client sends an XHR (with <code>X-Inertia</code> header), it returns JSON page data:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func ShowDashboard(c *http.Context) error {
+    return inertia.Render(c, "Dashboard/Index", map[string]any{
+        "stats": loadDashboardStats(),
+        "user":  auth.UserFromContext(c.Ctx()),
     })
 }</code></pre>
-<p class="text-slate-600 dark:text-slate-400 mb-4">The component name (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">home/index</code>) maps to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/pages/home/index.tsx</code> (or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.vue</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.svelte</code>).</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The component name (<code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Dashboard/Index</code>) maps to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/pages/Dashboard/Index.tsx</code> (or <code>.vue</code> / <code>.svelte</code>).</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Running the app (single server)</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Like Laravel Inertia, everything runs on one server. No need for <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">npm run dev</code>. Build the frontend and start Nimbus:</p>
-<pre data-file="Terminal"><code>npm install
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Shared Data</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Global Sharing</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Share data available to every Inertia response. <strong>Only for static data</strong> that never changes per-request:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>inertia.Share("appName", "My App")
+inertia.Share("version", "2.1.0")</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Request-Scoped Sharing (ShareProp)</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ShareProp()</code> shares data for the current request only — safe for concurrent requests. Use this for user-specific data:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// In auth middleware
+func AuthMiddleware(next router.HandlerFunc) router.HandlerFunc {
+    return func(c *http.Context) error {
+        user := auth.UserFromContext(c.Ctx())
+
+        inertia.ShareProp(c, "auth", map[string]any{
+            "user": user,
+        })
+
+        // Share flash messages
+        if c.Session != nil {
+            inertia.ShareProp(c, "flash", map[string]any{
+                "success": c.Session.GetFlash("success"),
+                "error":   c.Session.GetFlash("error"),
+            })
+        }
+
+        return next(c)
+    }
+}</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Shared props merge into every <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia.Render()</code> call automatically. Props passed directly to <code>Render()</code> take precedence over shared props with the same key.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Root Template</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The root template wraps your SPA. It must include a <code>data-page</code> div and load your frontend entry:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    {{ if .viteDev }}
+    &lt;script type="module" src="http://localhost:5173/@vite/client"&gt;&lt;/script&gt;
+    &lt;script type="module" src="http://localhost:5173/src/main.js"&gt;&lt;/script&gt;
+    {{ else }}
+    &lt;link rel="stylesheet" href="/build/assets/app.css"&gt;
+    {{ end }}
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div id="app" data-page="{{ marshal .page }}"&gt;&lt;/div&gt;
+    {{ if not .viteDev }}
+    &lt;script src="/build/assets/app.js"&gt;&lt;/script&gt;
+    {{ end }}
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">When <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">VITE_DEV=1</code> (set automatically by <code>nimbus serve</code> for Inertia apps), the template loads from the Vite dev server for HMR. In production, it loads built assets from <code>/build/</code>. If no template file exists, an embedded default is used.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Frontend Setup</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">React + Vite</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// inertia/app.tsx
+import { createInertiaApp } from '@inertiajs/react'
+import { createRoot } from 'react-dom/client'
+
+createInertiaApp({
+    resolve: name => {
+        const pages = import.meta.glob('./pages/**/*.tsx', { eager: true })
+        return pages[`./pages/${name}.tsx`]
+    },
+    setup({ el, App, props }) {
+        createRoot(el).render(&lt;App {...props} /&gt;)
+    },
+})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Vue 3 + Vite</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// inertia/app.js
+import { createApp, h } from 'vue'
+import { createInertiaApp } from '@inertiajs/vue3'
+
+createInertiaApp({
+    resolve: name => {
+        const pages = import.meta.glob('./pages/**/*.vue', { eager: true })
+        return pages[`./pages/${name}.vue`]
+    },
+    setup({ el, App, props, plugin }) {
+        createApp({ render: () => h(App, props) })
+            .use(plugin)
+            .mount(el)
+    },
+})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Svelte + Vite</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// inertia/app.js
+import { createInertiaApp } from '@inertiajs/svelte'
+
+createInertiaApp({
+    resolve: name => {
+        const pages = import.meta.glob('./pages/**/*.svelte', { eager: true })
+        return pages[`./pages/${name}.svelte`]
+    },
+    setup({ el, App, props }) {
+        new App({ target: el, props })
+    },
+})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Server-Side Rendering (SSR)</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Enable SSR by setting the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SSRURL</code> config to your Node.js SSR server:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>app.Use(inertia.New(inertia.Config{
+    URL:          "http://localhost:3333",
+    RootTemplate: "resources/views/inertia_layout.nimbus",
+    Version:      "1",
+    SSRURL:       "http://localhost:13714",
+}))</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Set up a Node.js SSR server using <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@inertiajs/vue3/server</code> (or the React/Svelte equivalent) that calls <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">createServer()</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">renderToString()</code>.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Running the App</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>npm install
 nimbus serve</code></pre>
-<p class="text-slate-600 dark:text-slate-400 mb-4">The root template loads <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/build/assets/app.js</code> from the Nimbus server. Vite outputs to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">public/build/</code>, which Nimbus serves at <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/build/*</code>.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Everything runs on one server. Vite dev server starts automatically in the background with HMR. Edit <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/</code> files and see changes instantly.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">HMR (Hot Module Replacement)</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">When you run <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus serve</code>, the Vite dev server starts automatically in the background. Edit files in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">inertia/</code> and see changes instantly with React Fast Refresh—no manual reload.</p>
-<p class="text-slate-600 dark:text-slate-400 mb-4">The layout conditionally loads from the Vite dev server (localhost:5173) in development and from built assets in production. <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">VITE_DEV=1</code> is set automatically for Inertia apps. Vite logs are hidden to keep the terminal clean.</p>
-
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Root template (viteDev)</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">The layout uses <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">&#123;&#123; if .viteDev &#125;&#125;</code> to switch between dev (Vite) and prod (built assets). In dev, it loads the React preamble (required when HTML is from Nimbus), <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@vite/client</code>, and the app entry. In prod, it loads <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/build/assets/app.css</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/build/assets/app.js</code>.</p>
-
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Project structure</h2>
-<pre data-file="Project structure"><code>project/
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Project Structure</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>project/
 ├── inertia/              # Frontend (React/Vue/Svelte)
 │   ├── app.tsx           # Entry point
-│   ├── layouts/
-│   └── pages/
-├── resources/
-│   └── views/
-│       └── inertia_layout.nimbus
+│   ├── layouts/          # Shared layouts
+│   └── pages/            # Page components
+│       ├── Dashboard/
+│       │   └── Index.tsx
+│       └── Users/
+│           ├── Index.tsx
+│           └── Create.tsx
+├── resources/views/
+│   └── inertia_layout.nimbus  # Root HTML template
+├── public/build/              # Vite output (production)
 └── ...</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
-<table class="w-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 mb-4">
-  <thead><tr class="bg-slate-100 dark:bg-slate-800"><th class="text-left p-2">Option</th><th class="text-left p-2">Description</th></tr></thead>
-  <tbody>
-    <tr class="border-t border-slate-200 dark:border-slate-700"><td class="p-2">URL</td><td class="p-2">Application URL for redirects</td></tr>
-    <tr class="border-t border-slate-200 dark:border-slate-700"><td class="p-2">RootTemplate</td><td class="p-2">Path to root HTML template</td></tr>
-    <tr class="border-t border-slate-200 dark:border-slate-700"><td class="p-2">Version</td><td class="p-2">Asset version for cache busting</td></tr>
-    <tr class="border-t border-slate-200 dark:border-slate-700"><td class="p-2">SSRURL</td><td class="p-2">Node SSR server URL (optional)</td></tr>
-  </tbody>
-</table>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Plugin Capabilities</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Capability</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>HasMiddleware</code></td><td class="px-4 py-2">Inertia protocol (version negotiation, XHR detection)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>HasConfig</code></td><td class="px-4 py-2">Default configuration values</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>HasViews</code></td><td class="px-4 py-2">Embedded fallback root template</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>HasBindings</code></td><td class="px-4 py-2">Registers the Inertia manager in the IoC container</td></tr>
+    </tbody>
+  </table>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm">See also: <a href="/docs/inertia-setup" class="text-amber-600 dark:text-amber-400 hover:underline">Inertia Setup Guide</a>, <a href="/docs/inertia-hmr" class="text-amber-600 dark:text-amber-400 hover:underline">HMR Configuration</a>, <a href="/docs/unpoly" class="text-amber-600 dark:text-amber-400 hover:underline">Unpoly</a> (server-rendered alternative).</p>

@@ -145,6 +145,87 @@ func (u *User) NotifiableKey() string {
     return nil
 }</code></pre>
 
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Slack Channel</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Send notifications to Slack via incoming webhooks. Implement <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SlackNotification</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type DeployCompleted struct {
+    Environment string
+    Version     string
+    Duration    time.Duration
+}
+
+func (n *DeployCompleted) ToMail() *mail.Message { return nil }
+func (n *DeployCompleted) ToBroadcast() (string, any) { return "", nil }
+
+func (n *DeployCompleted) ToSlack() *notification.SlackMessage {
+    return &notification.SlackMessage{
+        Channel:   "#deployments",
+        Text:      fmt.Sprintf("Deployed %s to %s", n.Version, n.Environment),
+        Username:  "Deploy Bot",
+        IconEmoji: ":rocket:",
+        Attachments: []notification.SlackAttachment{{
+            Color: "good",
+            Fields: []notification.SlackField{
+                {Title: "Version", Value: n.Version, Short: true},
+                {Title: "Environment", Value: n.Environment, Short: true},
+                {Title: "Duration", Value: n.Duration.String(), Short: true},
+            },
+        }},
+    }
+}
+
+// Setup
+slackChannel := notification.NewSlackChannel(os.Getenv("SLACK_WEBHOOK_URL"))
+err := slackChannel.Send(&DeployCompleted{...})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Discord Channel</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Send notifications to Discord via webhooks. Implement <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">DiscordNotification</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type AlertTriggered struct {
+    Service  string
+    Message  string
+    Severity string
+}
+
+func (n *AlertTriggered) ToMail() *mail.Message { return nil }
+func (n *AlertTriggered) ToBroadcast() (string, any) { return "", nil }
+
+func (n *AlertTriggered) ToDiscord() *notification.DiscordMessage {
+    color := 0x00FF00 // green
+    if n.Severity == "critical" {
+        color = 0xFF0000 // red
+    }
+    return &notification.DiscordMessage{
+        Username: "Alert Bot",
+        Embeds: []notification.DiscordEmbed{{
+            Title:       fmt.Sprintf("Alert: %s", n.Service),
+            Description: n.Message,
+            Color:       color,
+            Fields: []notification.DiscordEmbedField{
+                {Name: "Service", Value: n.Service, Inline: true},
+                {Name: "Severity", Value: n.Severity, Inline: true},
+            },
+            Timestamp: time.Now().Format(time.RFC3339),
+        }},
+    }
+}
+
+// Setup
+discordChannel := notification.NewDiscordChannel(os.Getenv("DISCORD_WEBHOOK_URL"))
+err := discordChannel.Send(&AlertTriggered{...})</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Channel Summary</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Channel</th><th class="px-4 py-2 text-left font-semibold">Transport</th><th class="px-4 py-2 text-left font-semibold">Setup</th><th class="px-4 py-2 text-left font-semibold">Use Case</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium">Mail</td><td class="px-4 py-2">SMTP/provider</td><td class="px-4 py-2"><code class="text-xs">mail</code> package config</td><td class="px-4 py-2">User-facing email alerts</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium">Broadcast</td><td class="px-4 py-2">SSE (Transmit)</td><td class="px-4 py-2">Transmit plugin</td><td class="px-4 py-2">Real-time in-app push</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium">Database</td><td class="px-4 py-2">SQL table</td><td class="px-4 py-2"><code class="text-xs">NewNotificationStore(db)</code></td><td class="px-4 py-2">In-app notification center</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium">Slack</td><td class="px-4 py-2">Webhook HTTP</td><td class="px-4 py-2"><code class="text-xs">NewSlackChannel(url)</code></td><td class="px-4 py-2">Team alerts, deploys</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium">Discord</td><td class="px-4 py-2">Webhook HTTP</td><td class="px-4 py-2"><code class="text-xs">NewDiscordChannel(url)</code></td><td class="px-4 py-2">Community alerts, monitoring</td></tr>
+    </tbody>
+  </table>
+</div>
+
 <h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">API Endpoint Example</h2>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// GET /api/notifications
 func ListNotifications(c *http.Context) error {

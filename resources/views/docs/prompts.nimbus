@@ -1,15 +1,117 @@
 @layout('layout-docs')
 <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Prompts</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Interactive prompts for collecting user input in commands. Nimbus does not yet provide built-in prompts; use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">bufio.Scanner</code> or a package like <a href="https://github.com/AlecAivazis/survey" target="_blank" rel="noopener" class="text-amber-600 dark:text-amber-400 hover:underline">survey</a> for interactive input.</p>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Interactive prompts for collecting user input in CLI commands. Nimbus provides five built-in prompt types via the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">cli/ui</code> package, accessible through <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.UI</code> in any command.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Simple text input</h2>
-<pre data-file="commands/setup.go"><code>reader := bufio.NewReader(os.Stdin)
-fmt.Print("Enter model name: ")
-name, _ := reader.ReadString('\n')
-name = strings.TrimSpace(name)</code></pre>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Text Input</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Prompt for a single line of text with an optional default value:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func SetupCommand(ctx *cli.Context) error {
+    name, err := ctx.UI.AskInput("Model name:", "User")
+    if err != nil {
+        return err
+    }
+    ctx.UI.Successf("Creating model: %s", name)
+    return nil
+}</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using survey (optional)</h2>
-<pre data-file="commands/setup.go"><code>import "github.com/AlecAivazis/survey/v2"
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Password Input</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Prompt for sensitive input — characters are hidden as the user types:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>secret, err := ctx.UI.AskPassword("Database password:")
+if err != nil {
+    return err
+}
+// secret contains the password, never echoed to terminal</code></pre>
 
-var name string
-survey.AskOne(&survey.Input{Message: "Model name:"}, &name)</code></pre>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Confirmation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Ask a yes/no question with a default value:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>confirmed, err := ctx.UI.AskConfirm("Run migrations?", true)
+if err != nil {
+    return err
+}
+if confirmed {
+    // run migrations
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Single Select</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Present a list and let the user pick one option with arrow keys:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>driver, err := ctx.UI.AskSelect("Database driver:", []string{
+    "postgres",
+    "mysql",
+    "sqlite",
+}, "postgres")
+if err != nil {
+    return err
+}
+ctx.UI.Infof("Selected: %s", driver)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Multi Select</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Checkbox-style selection — the user can pick multiple options with space, then confirm with enter:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>plugins, err := ctx.UI.AskMultiSelect("Enable plugins:", []string{
+    "auth",
+    "inertia",
+    "transmit",
+    "pulse",
+    "horizon",
+}, []string{"auth"}) // "auth" pre-selected
+if err != nil {
+    return err
+}
+for _, p := range plugins {
+    ctx.UI.Successf("Enabled: %s", p)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Prompt Reference</h2>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Method</th><th class="px-4 py-2 text-left font-semibold">Signature</th><th class="px-4 py-2 text-left font-semibold">Returns</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>AskInput</code></td><td class="px-4 py-2"><code class="text-xs">AskInput(label, default string)</code></td><td class="px-4 py-2"><code class="text-xs">(string, error)</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>AskPassword</code></td><td class="px-4 py-2"><code class="text-xs">AskPassword(label string)</code></td><td class="px-4 py-2"><code class="text-xs">(string, error)</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>AskConfirm</code></td><td class="px-4 py-2"><code class="text-xs">AskConfirm(label string, def bool)</code></td><td class="px-4 py-2"><code class="text-xs">(bool, error)</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>AskSelect</code></td><td class="px-4 py-2"><code class="text-xs">AskSelect(label string, options []string, def string)</code></td><td class="px-4 py-2"><code class="text-xs">(string, error)</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>AskMultiSelect</code></td><td class="px-4 py-2"><code class="text-xs">AskMultiSelect(label string, options, defaults []string)</code></td><td class="px-4 py-2"><code class="text-xs">([]string, error)</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Styled Output</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The same <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ctx.UI</code> object provides styled output helpers powered by <a href="https://github.com/charmbracelet/lipgloss" target="_blank" rel="noopener" class="text-amber-600 dark:text-amber-400 hover:underline">lipgloss</a>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>ctx.UI.Successf("Created %s successfully", name)  // green ✓
+ctx.UI.Warnf("SSL expires in %d days", 30)          // yellow ⚠
+ctx.UI.Errorf("Migration failed: %v", err)           // red ✖
+ctx.UI.Infof("Using driver: %s", driver)             // blue ℹ
+
+// Boxed panel
+ctx.UI.Panel("Server Started", "Local: http://localhost:3333\nNetwork: http://192.168.1.5:3333")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Complete Command Example</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4" data-file="cli/commands/setup.go"><code>package commands
+
+import (
+    "github.com/CodeSyncr/nimbus/cli"
+    "github.com/spf13/cobra"
+)
+
+func SetupCmd() *cobra.Command {
+    return &cobra.Command{
+        Use:   "setup",
+        Short: "Interactive project setup",
+        RunE: func(cmd *cobra.Command, args []string) error {
+            ctx := cli.NewContext(cmd, args)
+
+            name, _ := ctx.UI.AskInput("Project name:", "my-app")
+            driver, _ := ctx.UI.AskSelect("Database:", []string{
+                "postgres", "mysql", "sqlite", "mongodb",
+            }, "postgres")
+            plugins, _ := ctx.UI.AskMultiSelect("Plugins:", []string{
+                "auth", "inertia", "transmit", "pulse",
+            }, []string{"auth"})
+            confirmed, _ := ctx.UI.AskConfirm("Generate scaffolding?", true)
+
+            if confirmed {
+                ctx.UI.Successf("Creating %s with %s and %v", name, driver, plugins)
+            }
+            return nil
+        },
+    }
+}</code></pre>
+<p class="text-slate-600 dark:text-slate-400 text-sm">See also: <a href="/docs/terminal-ui" class="text-amber-600 dark:text-amber-400 hover:underline">Terminal UI</a> (tables, stickers, colors), <a href="/docs/creating-commands" class="text-amber-600 dark:text-amber-400 hover:underline">Creating Commands</a>.</p>

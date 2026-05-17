@@ -1,44 +1,232 @@
 @layout('layout-docs')
-<h1 class="text-3xl font-bold text-slate-900 mb-4">Usage & Best Practices</h1>
-<p class="text-slate-600 mb-6">To build high-quality applications with Nimbus, follow these best practices and development patterns.</p>
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Best Practices</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Patterns and guidelines for building production-quality Nimbus applications — project structure, error handling, performance, security, AI integration, and deployment.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Project Structure</h2>
-<ul class="list-disc pl-5 text-slate-600 mb-4 space-y-1">
-  <li><strong>controllers:</strong> Keep your controllers thin. Move complex business logic to service or action classes.</li>
-  <li><strong>models:</strong> Use <code class="bg-slate-100 px-1 rounded">database.Model</code> or <code class="bg-slate-100 px-1 rounded">nosql.Model</code> for consistency. Define clear relations and use GORM tags for validation.</li>
-  <li><strong>middleware:</strong> Use middleware for cross-cutting concerns like authentication, logging, and CORS.</li>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Project Structure</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Keep Controllers Thin</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Controllers validate input, delegate to services, and return responses. Business logic belongs in service packages:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Controller — thin
+func CreateOrder(c *http.Context) error {
+    var input CreateOrderInput
+    if err := c.Bind(&input); err != nil {
+        return c.JSON(400, map[string]string{"error": "Invalid input"})
+    }
+    order, err := orderService.Create(c.Ctx(), input)
+    if err != nil {
+        return err
+    }
+    return c.JSON(201, order)
+}
+
+// Service — business logic lives here
+func (s *OrderService) Create(ctx context.Context, input CreateOrderInput) (*Order, error) {
+    order := &Order{UserID: input.UserID, Items: input.Items}
+    if err := s.repo.Save(ctx, order); err != nil {
+        return nil, err
+    }
+    notification.Send(&OrderCreated{Order: order})
+    return order, nil
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Models</h3>
+<ul class="list-disc pl-5 text-slate-600 dark:text-slate-400 mb-4 space-y-1">
+  <li>Embed <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">database.Model</code> (SQL) or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nosql.Model</code> (MongoDB) for consistent ID and timestamp fields</li>
+  <li>Define relationships and validation via struct tags</li>
+  <li>Keep model files focused on data structure and simple computed properties</li>
 </ul>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Development Workflow</h2>
-<ol class="list-decimal pl-5 text-slate-600 mb-4 space-y-1">
-  <li><strong>Use the CLI:</strong> Leverage <code class="bg-slate-100 px-1 rounded">nimbus make:controller</code>, <code class="bg-slate-100 px-1 rounded">nimbus make:model</code>, and <code class="bg-slate-100 px-1 rounded">nimbus make:migration</code> to scaffold your application.</li>
-  <li><strong>Hot Reload:</strong> Run your application with <code class="bg-slate-100 px-1 rounded">nimbus serve</code> to benefit from automatic restarts on code changes.</li>
-  <li><strong>Validation:</strong> Always validate incoming request data using the <code class="bg-slate-100 px-1 rounded">validation</code> package and struct tags.</li>
-  <li><strong>Error Handling:</strong> Use the <code class="bg-slate-100 px-1 rounded">errors</code> package for consistent error reporting and custom HTTP status codes.</li>
-</ol>
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Middleware</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use middleware for cross-cutting concerns:</p>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Concern</th><th class="px-4 py-2 text-left font-semibold">Middleware</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Authentication</td><td class="px-4 py-2"><code>auth.Middleware()</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Logging</td><td class="px-4 py-2"><code>middleware.Logger()</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">CORS</td><td class="px-4 py-2"><code>middleware.CORS(origin)</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Rate limiting</td><td class="px-4 py-2"><code>middleware.RateLimit(...)</code></td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2">Security headers</td><td class="px-4 py-2"><code>middleware.SecureHeaders(...)</code></td></tr>
+    </tbody>
+  </table>
+</div>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">AI Integration</h2>
-<ol class="list-decimal pl-5 text-slate-600 mb-4 space-y-1">
-  <li><strong>Agent Specialization:</strong> Create specialized agents for specific tasks (e.g., "Code Reviewer", "Support Assistant") rather than one large, general agent.</li>
-  <li><strong>Tool Safety:</strong> Implement strict validation and authorization in your AI tool handlers.</li>
-  <li><strong>Prompt Versioning:</strong> Maintain your prompt templates in a central location or uses the <code class="bg-slate-100 px-1 rounded">ai.Template</code> system for versioning within your application.</li>
-  <li><strong>Memory Scoping:</strong> Use session-based or user-based keys for agent memory to ensure data privacy and contextual accuracy.</li>
-</ol>
+<hr class="my-8 border-slate-200 dark:border-slate-700" />
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Performance & Scalability</h2>
-<ol class="list-decimal pl-5 text-slate-600 mb-4 space-y-1">
-  <li><strong>Database Connection Pooling:</strong> Configure <code class="bg-slate-100 px-1 rounded">MaxOpenConns</code> and <code class="bg-slate-100 px-1 rounded">MaxIdleConns</code> in your database config for production environments.</li>
-  <li><strong>Rate Limiting:</strong> Apply rate limiting to all public and AI-intensive endpoints.</li>
-  <li><strong>Caching:</strong> Use the <code class="bg-slate-100 px-1 rounded">cache</code> package to store frequently accessed data and reduce database load.</li>
-  <li><strong>Background Jobs:</strong> Offload long-running tasks (e.g., email sending, data processing) to the <code class="bg-slate-100 px-1 rounded">queue</code> package.</li>
-</ol>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Error Handling</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Return typed errors for consistent HTTP responses:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/errors"
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Security & Authentication</h2>
-<ol class="list-decimal pl-5 text-slate-600 mb-4 space-y-1">
-  <li><strong>JWT vs. PASETO:</strong> Use PASETO for new projects as it is more secure by default and avoids common JWT pitfalls like the "alg: none" attack.</li>
-  <li><strong>Stateless when possible:</strong> Use stateless tokens (JWT/PASETO) for mobile apps and distributed services to avoid database lookups on every request.</li>
-  <li><strong>Rotate Secrets:</strong> Always rotate your <code class="bg-slate-100 px-1 rounded">AUTH_TOKEN_SECRET</code> regularly and store it in a secure environment variable, never in the code.</li>
-  <li><strong>Environment Variables:</strong> Never hardcode sensitive information. Use <code class="bg-slate-100 px-1 rounded">.env</code> files and the <code class="bg-slate-100 px-1 rounded">config</code> package.</li>
-  <li><strong>CSRF/XSS Protection:</strong> Enable the <code class="bg-slate-100 px-1 rounded">CSRF</code> middleware and use the <code class="bg-slate-100 px-1 rounded">.nimbus</code> template engine for automatic HTML escaping.</li>
-  <li><strong>Policy-Based Authorization:</strong> Use the <code class="bg-slate-100 px-1 rounded">auth</code> policy system for all sensitive operations.</li>
-</ol>
+func GetUser(c *http.Context) error {
+    user, err := userRepo.FindByID(c.Ctx(), c.Param("id"))
+    if err != nil {
+        return errors.NotFound("User not found")
+    }
+    return c.JSON(200, user)
+}
+
+// Other error helpers
+errors.BadRequest("Invalid date format")
+errors.Forbidden("Insufficient permissions")
+errors.New(422, "Email already registered")</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Install <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">errors.Handler()</code> middleware for automatic conversion to consistent JSON responses. Reserve <code>panic</code> for truly unrecoverable situations — <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">middleware.Recover()</code> is a safety net, not a control flow mechanism.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Validation</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Always validate incoming data at the boundary:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/validation"
+
+type CreateUserInput struct {
+    Name  string `json:"name"  validate:"required,min=2,max=100"`
+    Email string `json:"email" validate:"required,email"`
+    Age   int    `json:"age"   validate:"required,min=13,max=150"`
+}
+
+func CreateUser(c *http.Context) error {
+    var input CreateUserInput
+    if err := c.Bind(&input); err != nil {
+        return c.JSON(400, map[string]string{"error": "Invalid JSON"})
+    }
+    if errs := validation.Validate(input); errs != nil {
+        return c.JSON(422, errs.ToMap())
+    }
+    // input is safe to use
+}</code></pre>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700" />
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Development Workflow</h2>
+<ul class="list-disc pl-5 text-slate-600 dark:text-slate-400 mb-4 space-y-2">
+  <li><strong>Scaffold with the CLI:</strong> <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:controller</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:model</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus make:migration</code></li>
+  <li><strong>Hot Reload:</strong> <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">nimbus serve</code> watches for changes, rebuilds, and restarts automatically</li>
+  <li><strong>Environment config:</strong> Store secrets in <code>.env</code>, never in code. Provide <code>.env.example</code> with all required keys</li>
+</ul>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700" />
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">AI Integration</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Agent Specialization</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Create focused agents rather than one general-purpose agent:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>reviewer := ai.NewAgent(ai.AgentConfig{
+    Name:   "code-reviewer",
+    System: "You are a senior Go engineer. Review for bugs and security.",
+    Model:  "claude-sonnet-4-6",
+})
+
+support := ai.NewAgent(ai.AgentConfig{
+    Name:   "support-assistant",
+    System: "Help users with account and billing questions. Be concise.",
+    Model:  "claude-haiku-4-5-20251001",
+})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Tool Safety</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Validate and authorize all AI tool calls:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>tool := ai.Tool{
+    Name: "delete_user",
+    Handler: func(ctx context.Context, params map[string]any) (any, error) {
+        user := auth.UserFromContext(ctx)
+        if user == nil || !user.HasRole("admin") {
+            return nil, errors.Forbidden("Not authorized")
+        }
+        userID, ok := params["user_id"].(string)
+        if !ok || userID == "" {
+            return nil, errors.BadRequest("user_id is required")
+        }
+        return deleteUser(ctx, userID)
+    },
+}</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Rate Limit AI Endpoints</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>aiRoutes := app.Router.Group("/ai")
+aiRoutes.Use(middleware.RateLimit(10, time.Minute, func(r *http.Request) string {
+    return auth.UserFromRequest(r).GetID()
+}))</code></pre>
+
+<ul class="list-disc pl-5 text-slate-600 dark:text-slate-400 mb-4 space-y-1">
+  <li><strong>Memory Scoping:</strong> Use session-based or user-based keys for agent memory to prevent data leakage</li>
+  <li><strong>Prompt Versioning:</strong> Use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">ai.Template</code> system to version prompts centrally</li>
+</ul>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700" />
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Performance</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Database Connection Pooling</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// SQL
+db.SetMaxOpenConns(25)
+db.SetMaxIdleConns(10)
+db.SetConnMaxLifetime(5 * time.Minute)
+
+// MongoDB
+nosql.ConnectMongo(ctx, nosql.MongoConfig{
+    MaxPoolSize: 100,
+    MinPoolSize: 10,
+})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Caching</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/cache"
+
+user, err := cache.Remember("user:"+id, 5*time.Minute, func() (any, error) {
+    return userRepo.FindByID(ctx, id)
+})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Background Jobs</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Don't send email synchronously in handlers
+queue.Dispatch(&SendWelcomeEmail{UserID: user.ID})
+
+// Don't process uploads synchronously
+queue.Dispatch(&ProcessImage{Path: path, Sizes: []string{"thumb", "large"}})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">GC Tuning & Profiling</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code># Fewer GC cycles, more throughput
+NIMBUS_GOGC=200
+
+# Enable pprof for production debugging
+NIMBUS_PPROF=127.0.0.1:6060</code></pre>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700" />
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Security</h2>
+<ul class="list-disc pl-5 text-slate-600 dark:text-slate-400 mb-4 space-y-2">
+  <li><strong>PASETO over JWT:</strong> Avoids <code>alg: none</code> and key-confusion vulnerabilities. Use stateless tokens for mobile/distributed, sessions for server-rendered apps.</li>
+  <li><strong>Rotate secrets:</strong> Change <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">AUTH_TOKEN_SECRET</code> regularly. Store in environment variables, never in code.</li>
+  <li><strong>Security headers:</strong> Always enable <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">middleware.SecureHeaders(middleware.DefaultSecureHeadersConfig())</code> in production.</li>
+  <li><strong>Input security:</strong> The <code>.nimbus</code> template engine auto-escapes HTML. GORM uses parameterized queries by default.</li>
+  <li><strong>CSRF:</strong> Enable <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">middleware.CSRF()</code> for form-based applications.</li>
+  <li><strong>Authorization:</strong> Use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">auth</code> policy system: <code>auth.Can(user, "update", post)</code>.</li>
+</ul>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700" />
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Deployment</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Health Checks</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Nimbus registers health endpoints automatically:</p>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Endpoint</th><th class="px-4 py-2 text-left font-semibold">Purpose</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/livez</code></td><td class="px-4 py-2">Liveness — process is running</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/readyz</code></td><td class="px-4 py-2">Readiness — dependencies healthy</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>/health</code></td><td class="px-4 py-2">Legacy readiness-compatible</td></tr>
+    </tbody>
+  </table>
+</div>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Register custom health checks
+app.Health.Add("database", func(ctx context.Context) error {
+    return db.PingContext(ctx)
+})
+app.Health.Add("redis", func(ctx context.Context) error {
+    return rdb.Ping(ctx).Err()
+})</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Graceful Shutdown</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Nimbus handles <code>SIGINT</code>/<code>SIGTERM</code> automatically: stops accepting connections, runs shutdown hooks (in reverse registration order), waits up to 10 seconds for in-flight requests, then exits cleanly.</p>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Monitoring</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Use the <a href="/docs/pulse" class="text-amber-600 dark:text-amber-400 hover:underline">Pulse plugin</a> for application-level monitoring:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>app.Use(pulse.New(pulse.Config{
+    SlowQueryThreshold:   100 * time.Millisecond,
+    SlowRequestThreshold: 500 * time.Millisecond,
+}))</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Access the dashboard at <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">/pulse</code> for request stats, slow queries, exceptions, cache hit rates, and queue metrics.</p>

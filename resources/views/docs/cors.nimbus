@@ -1,40 +1,38 @@
 @layout('layout-docs')
-<h1 class="text-3xl font-bold text-slate-900 mb-4">CORS Middleware</h1>
-<p class="text-slate-600 mb-4">Cross-Origin Resource Sharing (CORS) controls which domains can make requests to your server from a browser. Without proper CORS headers, browsers block cross-origin AJAX requests. Nimbus includes <code class="bg-slate-100 px-1 rounded">middleware.CORS()</code> to configure these headers.</p>
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">CORS, Security & Rate Limiting</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Production-grade HTTP security middleware — CORS, CSRF protection, secure headers, request body limits, gzip compression, and in-memory or Redis-backed rate limiting.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">What is CORS?</h2>
-<p class="text-slate-600 mb-4">When a web page at <code class="bg-slate-100 px-1 rounded">https://app.example.com</code> makes a fetch request to <code class="bg-slate-100 px-1 rounded">https://api.example.com</code>, the browser enforces the Same-Origin Policy. The server must respond with <code class="bg-slate-100 px-1 rounded">Access-Control-Allow-Origin</code> headers to permit the request. CORS defines the handshake between browser and server.</p>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">CORS Middleware</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Controls which origins can make cross-domain requests to your server:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/CodeSyncr/nimbus/middleware"
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Basic usage</h2>
-<p class="text-slate-600 mb-4">Pass the allowed origin string to <code class="bg-slate-100 px-1 rounded">middleware.CORS()</code>. Use <code class="bg-slate-100 px-1 rounded">"*"</code> to allow all origins:</p>
-<pre><code>app.Router.Use(middleware.CORS("*"))</code></pre>
+// Allow a single origin
+app.Router.Use(middleware.CORS("https://app.example.com"))
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Restricting to a specific origin</h2>
-<p class="text-slate-600 mb-4">For production, restrict to your frontend domain:</p>
-<pre><code>app.Router.Use(middleware.CORS("https://app.example.com"))</code></pre>
+// Allow all origins (development only)
+app.Router.Use(middleware.CORS("*"))</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Headers set by the middleware</h2>
-<p class="text-slate-600 mb-4">The CORS middleware automatically sets these response headers on every request:</p>
-<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
-  <li><code class="bg-slate-100 px-1 rounded">Access-Control-Allow-Origin</code> — Set to the origin you specify.</li>
-  <li><code class="bg-slate-100 px-1 rounded">Access-Control-Allow-Methods</code> — GET, POST, PUT, PATCH, DELETE, OPTIONS.</li>
-  <li><code class="bg-slate-100 px-1 rounded">Access-Control-Allow-Headers</code> — Content-Type, Authorization.</li>
-</ul>
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Headers Set</h3>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Header</th><th class="px-4 py-2 text-left font-semibold">Value</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Access-Control-Allow-Origin</code></td><td class="px-4 py-2">The configured origin</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Access-Control-Allow-Methods</code></td><td class="px-4 py-2">GET, POST, PUT, PATCH, DELETE, OPTIONS</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Access-Control-Allow-Headers</code></td><td class="px-4 py-2">Content-Type, Authorization</td></tr>
+    </tbody>
+  </table>
+</div>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Preflight <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">OPTIONS</code> requests are automatically handled with <code>204 No Content</code>.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Preflight requests</h2>
-<p class="text-slate-600 mb-4">Browsers send an OPTIONS preflight request before certain cross-origin requests (e.g. those with custom headers or non-simple methods). The Nimbus CORS middleware detects OPTIONS requests and responds with a <code class="bg-slate-100 px-1 rounded">204 No Content</code> status, including the required CORS headers, so the actual request can proceed.</p>
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Per-Group CORS</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// API allows different origin than the main app
+api := app.Router.Group("/api")
+api.Use(middleware.CORS("https://mobile.myapp.com"))</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">CORS on specific route groups</h2>
-<p class="text-slate-600 mb-4">You can apply CORS only to your API routes instead of globally:</p>
-<pre><code>api := app.Router.Group("/api")
-api.Use(middleware.CORS("https://app.example.com"))
-
-api.Get("/posts", ListPosts)
-api.Post("/posts", CreatePost)</code></pre>
-
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Credentials and cookies</h2>
-<p class="text-slate-600 mb-4">If your frontend sends cookies or authorization headers cross-origin, the browser requires <code class="bg-slate-100 px-1 rounded">Access-Control-Allow-Credentials: true</code>. You can add this by wrapping the built-in CORS middleware or writing a custom one:</p>
-<pre><code>func CORSWithCredentials(origin string) router.Middleware {
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">CORS with Credentials</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">If your frontend sends cookies cross-origin, you need <code>Access-Control-Allow-Credentials</code>. Write a custom middleware:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func CORSWithCredentials(origin string) router.Middleware {
     return func(next router.HandlerFunc) router.HandlerFunc {
         return func(c *http.Context) error {
             c.Response.Header().Set("Access-Control-Allow-Origin", origin)
@@ -50,9 +48,139 @@ api.Post("/posts", CreatePost)</code></pre>
     }
 }</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Important notes</h2>
-<ul class="list-disc pl-6 mb-4 text-slate-600 space-y-1">
-  <li>Using <code class="bg-slate-100 px-1 rounded">"*"</code> as origin is convenient for development but insecure for production.</li>
-  <li>When using credentials, the origin must be an explicit domain — <code class="bg-slate-100 px-1 rounded">"*"</code> is not allowed.</li>
-  <li>Place the CORS middleware before other middleware that might short-circuit the request.</li>
-</ul>
+<hr class="my-8 border-slate-200 dark:border-slate-700" />
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Security Headers</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SecureHeaders</code> middleware sets OWASP-recommended HTTP security headers:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Use production defaults
+app.Router.Use(middleware.SecureHeaders(middleware.DefaultSecureHeadersConfig()))
+
+// Or customize
+app.Router.Use(middleware.SecureHeaders(middleware.SecureHeadersConfig{
+    HSTS:                  "max-age=63072000; includeSubDomains",
+    ContentTypeNoSniff:    true,
+    FrameOptions:          "DENY",
+    XSSProtection:         "1; mode=block",
+    ReferrerPolicy:        "strict-origin-when-cross-origin",
+    ContentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline'",
+    PermissionsPolicy:     "camera=(), microphone=(), geolocation=()",
+}))</code></pre>
+
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Header</th><th class="px-4 py-2 text-left font-semibold">Default</th><th class="px-4 py-2 text-left font-semibold">Purpose</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Strict-Transport-Security</code></td><td class="px-4 py-2"><code>max-age=63072000; includeSubDomains</code></td><td class="px-4 py-2">Force HTTPS</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>X-Content-Type-Options</code></td><td class="px-4 py-2"><code>nosniff</code></td><td class="px-4 py-2">Prevent MIME sniffing</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>X-Frame-Options</code></td><td class="px-4 py-2"><code>DENY</code></td><td class="px-4 py-2">Prevent clickjacking</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>X-XSS-Protection</code></td><td class="px-4 py-2"><code>1; mode=block</code></td><td class="px-4 py-2">XSS filter (legacy)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Referrer-Policy</code></td><td class="px-4 py-2"><code>strict-origin-when-cross-origin</code></td><td class="px-4 py-2">Control referrer leaking</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Content-Security-Policy</code></td><td class="px-4 py-2">(configurable)</td><td class="px-4 py-2">Restrict resource loading</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Permissions-Policy</code></td><td class="px-4 py-2">(configurable)</td><td class="px-4 py-2">Restrict browser APIs</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700" />
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">CSRF Protection</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Protects against Cross-Site Request Forgery by requiring a valid token on POST/PUT/PATCH/DELETE:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Create a token store
+csrfStore := middleware.NewMemoryCSRFStore()
+
+// Apply middleware
+app.Router.Use(middleware.CSRF(csrfStore))</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Including the Token</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-2">In <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.nimbus</code> templates with the Shield plugin, use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{ .csrfField }}</code> which renders a hidden input automatically:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>&lt;form method="POST" action="/posts"&gt;
+    {{ .csrfField }}
+    &lt;input type="text" name="title"&gt;
+    &lt;button type="submit"&gt;Create&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+
+<p class="text-slate-600 dark:text-slate-400 mb-2">In JavaScript SPAs, send the token via header:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>fetch('/api/posts', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': token,
+    },
+    body: JSON.stringify({ title: 'Hello' }),
+});</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">The middleware checks for the token in the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">_csrf</code> form field or the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">X-CSRF-Token</code> header.</p>
+
+<p class="text-slate-600 dark:text-slate-400 mb-4">For multi-instance deployments, implement the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">CSRFStore</code> interface backed by Redis or your database instead of the in-memory store.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700" />
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Rate Limiting</h2>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">In-Memory</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// 100 requests per minute, keyed by client IP
+app.Router.Use(middleware.RateLimit(100, time.Minute, middleware.DefaultKeyFn))</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Redis-Backed (multi-instance)</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>import "github.com/redis/go-redis/v9"
+
+rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+
+app.Router.Use(middleware.RateLimitRedis(rdb, 1000, time.Hour, middleware.DefaultKeyFn))</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Custom Key Function</h3>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Rate limit by API key
+app.Router.Use(middleware.RateLimit(1000, time.Hour, func(r *http.Request) string {
+    return r.Header.Get("X-API-Key")
+}))
+
+// Strict limit on login
+loginLimiter := middleware.RateLimit(5, time.Minute, middleware.DefaultKeyFn)
+auth := app.Router.Group("/auth")
+auth.Use(loginLimiter)
+auth.Post("/login", controllers.Login)</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">DefaultKeyFn</code> extracts the client IP, handling <code>X-Forwarded-For</code> and <code>X-Real-IP</code> headers for reverse proxy setups.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700" />
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Body Limit</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Prevents denial-of-service by capping request body size:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>app.Router.Use(middleware.BodyLimit(10 << 20))  // 10 MB global
+
+// Larger limit for file upload routes
+upload := app.Router.Group("/upload")
+upload.Use(middleware.BodyLimit(50 << 20))  // 50 MB</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Gzip Compression</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Transparent gzip compression when the client sends <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Accept-Encoding: gzip</code>:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>app.Router.Use(middleware.Gzip())</code></pre>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700" />
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Recommended Middleware Stack</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">A production-ready order (middleware executes top-to-bottom on requests, bottom-to-top on responses):</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>app := nimbus.New()
+
+// 1. Recovery — catch panics first
+app.Router.Use(middleware.Recover())
+
+// 2. Logging — log all requests
+app.Router.Use(middleware.Logger())
+
+// 3. Security headers — set on every response
+app.Router.Use(middleware.SecureHeaders(middleware.DefaultSecureHeadersConfig()))
+
+// 4. CORS — handle preflight before other middleware
+app.Router.Use(middleware.CORS(os.Getenv("CORS_ORIGIN")))
+
+// 5. Body limit — reject oversized requests early
+app.Router.Use(middleware.BodyLimit(10 << 20))
+
+// 6. Gzip — compress responses
+app.Router.Use(middleware.Gzip())
+
+// 7. Rate limiting — throttle abuse
+app.Router.Use(middleware.RateLimit(100, time.Minute, middleware.DefaultKeyFn))
+
+// 8. CSRF — protect forms
+app.Router.Use(middleware.CSRF(middleware.NewMemoryCSRFStore()))</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">Place <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Recover</code> first so it catches panics from all downstream middleware.</p>

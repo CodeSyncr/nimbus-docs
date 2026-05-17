@@ -1,52 +1,181 @@
 @layout('layout-docs')
-<h1 class="text-3xl font-bold text-slate-900 mb-4">Full-Text Search</h1>
-<p class="text-slate-600 mb-6">Nimbus provides a unified full-text search abstraction supporting multiple backends.</p>
+<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Full-Text Search</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-6">Unified search abstraction — index and query documents across PostgreSQL full-text search, Meilisearch, and Typesense with a single API. Switch engines by changing one config value.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Supported Drivers</h2>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Supported Engines</h2>
 <div class="overflow-x-auto mb-4">
-  <table class="min-w-full text-sm text-slate-700 border border-slate-200 rounded-lg">
-    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left font-semibold">Driver</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Engine</th><th class="px-4 py-2 text-left font-semibold">Description</th><th class="px-4 py-2 text-left font-semibold">Best For</th></tr></thead>
     <tbody>
-      <tr class="border-t border-slate-200"><td class="px-4 py-2 font-medium"><code class="bg-slate-100 px-1 rounded">meilisearch</code></td><td class="px-4 py-2">Meilisearch search engine</td></tr>
-      <tr class="border-t border-slate-200"><td class="px-4 py-2 font-medium"><code class="bg-slate-100 px-1 rounded">typesense</code></td><td class="px-4 py-2">Typesense search engine</td></tr>
-      <tr class="border-t border-slate-200"><td class="px-4 py-2 font-medium"><code class="bg-slate-100 px-1 rounded">postgresql</code></td><td class="px-4 py-2">PostgreSQL <code class="bg-slate-100 px-1 rounded">tsvector</code> full-text search</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">postgres</code></td><td class="px-4 py-2">PostgreSQL <code>tsvector</code> + GIN index</td><td class="px-4 py-2">Small-medium datasets, no external service</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">meilisearch</code></td><td class="px-4 py-2">HTTP-based Meilisearch client</td><td class="px-4 py-2">Typo-tolerant search, faceted filtering</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2 font-medium"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">typesense</code></td><td class="px-4 py-2">HTTP-based Typesense client</td><td class="px-4 py-2">Low-latency search, geo-search</td></tr>
     </tbody>
   </table>
 </div>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Configuration</h2>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>search.Config{
-    Driver: "meilisearch",
-    Meilisearch: search.MeilisearchConfig{
-        Host:   "http://localhost:7700",
-        APIKey: "masterKey",
-    },
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Configuration</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Set <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">SEARCH_DRIVER</code> in your <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.env</code> (defaults to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">postgres</code>):</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// PostgreSQL — uses your existing database, no extra service
+engine := search.NewPostgresEngine(db)
+app.Use(search.NewPlugin(engine))
+
+// Meilisearch — external search service
+engine := search.NewMeilisearchEngine(search.MeilisearchConfig{
+    Host:   "http://localhost:7700",
+    APIKey: os.Getenv("MEILISEARCH_KEY"),
+})
+app.Use(search.NewPlugin(engine))</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">The Engine Interface</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">All search engines implement this interface:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Engine interface {
+    Index(ctx context.Context, index string, id string, data map[string]any) error
+    Delete(ctx context.Context, index string, id string) error
+    Search(ctx context.Context, index string, query string, opts *Options) (*Results, error)
+    Flush(ctx context.Context, index string) error
 }</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Indexing & Searching</h2>
-<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Index a document
-search.Index("products", product.ID, map[string]any{
-    "name":        product.Name,
-    "description": product.Description,
-    "price":       product.Price,
-})
-
-// Search
-results, err := search.Search("products", "wireless headphones", search.Options{
-    Limit:  20,
-    Offset: 0,
-    Filter: "price < 100",
-    Sort:   []string{"price:asc"},
-})</code></pre>
-
-<h2 class="text-xl font-semibold text-slate-900 mt-8 mb-2">Model Integration</h2>
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">The Searchable Interface</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Implement <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">Searchable</code> on your models for automatic indexing:</p>
 <pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>type Product struct {
     database.Model
-    Name        string
-    Description string
+    Name        string  `json:"name"`
+    Description string  `json:"description"`
+    Price       float64 `json:"price"`
+    Category    string  `json:"category"`
 }
 
-func (p *Product) SearchableAs() string { return "products" }
-func (p *Product) ToSearchableMap() map[string]any {
-    return map[string]any{"name": p.Name, "description": p.Description}
+func (p *Product) SearchIndex() string { return "products" }
+func (p *Product) SearchID() string    { return p.ID }
+func (p *Product) SearchData() map[string]any {
+    return map[string]any{
+        "name":        p.Name,
+        "description": p.Description,
+        "price":       p.Price,
+        "category":    p.Category,
+    }
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Indexing Documents</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Index a Searchable model via the default engine
+err := search.IndexRecord(ctx, &product)
+
+// Delete from index
+err := search.DeleteRecord(ctx, &product)
+
+// Index directly with a named engine
+engine, _ := search.Use("meilisearch")
+err := engine.Index(ctx, "products", product.ID, map[string]any{
+    "name":  product.Name,
+    "price": product.Price,
+})
+
+// Flush all documents from an index
+err := engine.Flush(ctx, "products")</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Searching</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Basic search via default engine
+results, err := search.Query(ctx, "products", "wireless headphones", nil)
+
+// Search with options
+results, err := search.Query(ctx, "products", "wireless headphones", &search.Options{
+    Page:    1,
+    PerPage: 20,
+    Filters: map[string]any{
+        "category": "electronics",
+    },
+    Sort: "price",
+})
+
+// Iterate results
+for _, hit := range results.Hits {
+    fmt.Printf("ID: %s, Score: %.2f, Name: %s\n",
+        hit.ID, hit.Score, hit.Data["name"])
+}
+fmt.Printf("Total: %d results (page %d)\n", results.Total, results.Page)</code></pre>
+
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-2">Search Options & Results</h3>
+<div class="overflow-x-auto mb-4">
+  <table class="min-w-full text-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg">
+    <thead class="bg-slate-50 dark:bg-slate-800"><tr><th class="px-4 py-2 text-left font-semibold">Options Field</th><th class="px-4 py-2 text-left font-semibold">Type</th><th class="px-4 py-2 text-left font-semibold">Description</th></tr></thead>
+    <tbody>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Page</code></td><td class="px-4 py-2">int</td><td class="px-4 py-2">Page number (1-based)</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>PerPage</code></td><td class="px-4 py-2">int</td><td class="px-4 py-2">Results per page</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Filters</code></td><td class="px-4 py-2">map[string]any</td><td class="px-4 py-2">Pre-filter criteria</td></tr>
+      <tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-4 py-2"><code>Sort</code></td><td class="px-4 py-2">string</td><td class="px-4 py-2">Sort field name</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Using in Handlers</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>func SearchProducts(c *http.Context) error {
+    query := c.Request.URL.Query().Get("q")
+    page := c.QueryInt("page", 1)
+
+    results, err := search.Query(c.Ctx(), "products", query, &search.Options{
+        Page:    page,
+        PerPage: 20,
+    })
+    if err != nil {
+        return c.JSON(500, map[string]string{"error": "Search failed"})
+    }
+    return c.JSON(200, results)
+}</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Multiple Engines</h2>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Register named engines
+search.Register("postgres", postgresEngine)
+search.Register("meilisearch", meilisearchEngine)
+
+// Use a specific engine
+engine, err := search.Use("meilisearch")
+results, err := engine.Search(ctx, "products", "headphones", nil)
+
+// The default engine is used by search.Query() and search.IndexRecord()
+results, err := search.Query(ctx, "products", "headphones", nil)</code></pre>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">PostgreSQL Engine Details</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">The PostgreSQL engine stores documents in a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">search_index</code> table with a GIN index for fast full-text queries. It supports prefix matching (<code>:*</code>) for autocomplete.</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>-- Created automatically by the PostgreSQL engine
+CREATE TABLE search_index (
+    id TEXT NOT NULL,
+    index_name TEXT NOT NULL,
+    content TEXT NOT NULL,
+    data JSONB,
+    PRIMARY KEY (index_name, id)
+);
+CREATE INDEX idx_search_fts ON search_index
+    USING GIN (to_tsvector('english', content));</code></pre>
+<p class="text-slate-600 dark:text-slate-400 mb-4">No external service required — runs on your existing PostgreSQL database. Best for datasets under ~1M documents per index.</p>
+
+<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Sync Patterns</h2>
+<p class="text-slate-600 dark:text-slate-400 mb-2">Keep your search index in sync with your database:</p>
+<pre class="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto mb-4"><code>// Index on create/update
+func CreateProduct(c *http.Context) error {
+    product := parseProduct(c)
+    db.Create(product)
+    search.IndexRecord(c.Ctx(), product)
+    return c.JSON(201, product)
+}
+
+// Remove on delete
+func DeleteProduct(c *http.Context) error {
+    product := loadProduct(c.Param("id"))
+    db.Delete(product)
+    search.DeleteRecord(c.Ctx(), product)
+    return c.JSON(200, map[string]string{"status": "deleted"})
+}
+
+// Bulk re-index
+func ReindexAll(ctx context.Context) error {
+    engine := search.Default()
+    engine.Flush(ctx, "products")
+
+    var products []Product
+    db.FindAll(&products)
+    for _, p := range products {
+        search.IndexRecord(ctx, &p)
+    }
+    return nil
 }</code></pre>
