@@ -1,0 +1,98 @@
+@layout('layout-docs')
+
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Templates</span>
+    <span class="px-2.5 py-1 rounded-full bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400 text-xs font-semibold">Layouts & Components</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Layouts and Components</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">Nimbus provides a flexible slot-based system for layouts and components. Keep your HTML DRY by reusing common components and page structures across your application.</p>
+
+  <!-- ── Layouts ── -->
+  <h2 id="layouts" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Working with Layouts
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Layouts define the outer shell of your pages (e.g. <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, <code>&lt;body&gt;</code>, navigation headers, and footer blocks). Child templates insert their main content into the layout via the <code>embed</code> variable.</p>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">1. Define a Layout File</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Create a layout file at <code>resources/views/layout-app.nimbus</code>:</p>
+  <pre data-file="resources/views/layout-app.nimbus"><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;{{ title || "Default Title" }}&lt;/title&gt;
+&lt;/head&gt;
+&lt;body class="bg-slate-50 text-slate-800"&gt;
+  &lt;header class="bg-white border-b py-4"&gt;
+    &lt;nav class="max-w-xl mx-auto px-4"&gt;
+      &lt;a href="/"&gt;Dashboard&lt;/a&gt;
+    &lt;/nav&gt;
+  &lt;/header&gt;
+
+  &lt;main class="max-w-xl mx-auto px-4 py-8"&gt;
+    &lt;!-- Child template contents are rendered here --&gt;
+    {{{ embed }}}
+  &lt;/main&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">2. Use the Layout in a Page Template</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Place the <code>@layout('layout-app')</code> directive on the very first line of your page template:</p>
+  <pre data-file="resources/views/pages/home.nimbus"><code class="language-html">@layout('layout-app')
+
+&lt;h1 class="text-2xl font-bold"&gt;Welcome Home&lt;/h1&gt;
+&lt;p&gt;This content is injected into layout-app's embed block.&lt;/p&gt;</code></pre>
+
+  <!-- ── Creating Components ── -->
+  <h2 id="creating-components" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Creating Components
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Components are reusable fragments of templates stored inside the <code>resources/views/components/</code> directory. Any template file inside this folder automatically becomes available as a tag.</p>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">1. Build a Component Template</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Create a card component at <code>resources/views/components/card.nimbus</code>. It receives nested content through the <code>{{{ .slots.main }}}</code> block:</p>
+  <pre data-file="resources/views/components/card.nimbus"><code class="language-html">&lt;div class="p-5 rounded-lg border border-slate-200 bg-white shadow-sm"&gt;
+  &lt;!-- Render main slot content --&gt;
+  {{{ .slots.main }}}
+&lt;/div&gt;</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">2. Use Your Component</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Consume the card component anywhere in your views using the <code>@name()</code> syntax:</p>
+  <pre data-file="resources/views/pages/about.nimbus"><code class="language-html">@layout('layout-app')
+
+&lt;h1 class="mb-4"&gt;About Us&lt;/h1&gt;
+
+@card()
+  &lt;h2 class="text-lg font-semibold"&gt;Our Team&lt;/h2&gt;
+  &lt;p&gt;We build production-ready applications with Go and Nimbus!&lt;/p&gt;
+@end</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">Named Slots</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">For more complex components, you can define multiple named slots. This allows consumers to inject markup into specific locations of the component:</p>
+  <pre data-file="resources/views/components/modal.nimbus"><code class="language-html">&lt;div class="modal"&gt;
+  &lt;div class="modal-header border-b"&gt;
+    {{{ .slots.header }}}
+  &lt;/div&gt;
+  &lt;div class="modal-body py-4"&gt;
+    {{{ .slots.main }}}
+  &lt;/div&gt;
+  &lt;div class="modal-footer border-t"&gt;
+    {{{ .slots.footer }}}
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <p class="text-slate-600 dark:text-slate-400 my-4">Render the component and specify values for each slot:</p>
+  <pre><code class="language-html">@modal()
+  @slot('header')
+    &lt;h3 class="font-bold text-lg"&gt;Delete Account&lt;/h3&gt;
+  @end
+
+  &lt;p&gt;Are you sure you want to delete your account? This action is irreversible.&lt;/p&gt;
+
+  @slot('footer')
+    &lt;button class="btn btn-danger"&gt;Delete&lt;/button&gt;
+    &lt;button class="btn"&gt;Cancel&lt;/button&gt;
+  @end
+@end</code></pre>
+</div>

@@ -1,90 +1,124 @@
 @layout('layout-docs')
-<h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Nimbus Template (.nimbus)</h1>
-<p class="text-slate-600 dark:text-slate-400 mb-6">Nimbus includes its own template engine with an Edge/Blade-inspired syntax. Template files use the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.nimbus</code> extension and live in the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/</code> directory. Under the hood, they are compiled to Go's <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">html/template</code> — giving you the same security guarantees with a friendlier syntax.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Template file location</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">By default, the engine looks for templates in the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/</code> folder relative to your project root. Subdirectories are supported — use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">c.View("docs/index", data)</code> to render <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/docs/index.nimbus</code>. You can change the root with <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">view.SetRoot("custom/path")</code>.</p>
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Templates</span>
+    <span class="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">Core</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Nimbus Templates (.nimbus)</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">Nimbus includes its own lightweight, production-grade template engine featuring an Edge/Blade-inspired syntax. Template files use the <code>.nimbus</code> extension and reside in the <code>resources/views/</code> directory. Compiled down to Go's native <code>html/template</code>, they deliver absolute safety against XSS attacks combined with a developer-friendly syntax.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Variable interpolation</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Output a variable with double curly braces (HTML-escaped) or triple curly braces (unescaped, for rich content).</p>
-<pre><code>&lt;h1&gt;Welcome, {{ name }}&lt;/h1&gt;
-&lt;p&gt;Page title: {{ title }}&lt;/p&gt;
-&lt;div&gt;{{{ post.content }}}&lt;/div&gt;</code></pre>
-<p class="text-slate-600 dark:text-slate-400 mb-4"><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{ variable }}</code> escapes HTML; <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{{ variable }}}</code> outputs raw HTML (use only for trusted content).</p>
+  <!-- ── Overview ── -->
+  <h2 id="overview" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Overview
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Edge/Blade syntax allows you to compose clean HTML markup on the server and stream it to the client. Since templates execute on the server-side, they integrate natively with authentication guards, authorization checks, sessions, and request helper contexts.</p>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Templates are automatically compiled at startup, and in development mode, they are refreshed on file change without requiring a server reboot.</p>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Comments</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{-- comment --}}</code> for template comments. They are stripped from the output.</p>
+  <!-- ── Your First Template ── -->
+  <h2 id="first-template" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Your First Template
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Let's create a simple page to display a list of blog posts. This example demonstrates the fundamental workflow of rendering templates in Nimbus.</p>
+  
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">1. Create the Template File</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Templates are stored in the <code>resources/views/</code> directory. Create a new template file at <code>resources/views/pages/posts/index.nimbus</code>:</p>
+  <pre data-file="resources/views/pages/posts/index.nimbus"><code class="language-html">@layout('layout-app')
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Conditionals</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@if</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@elseif</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@else</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@endif</code> (or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@end</code>).</p>
-<pre><code>@if(.isLoggedIn)
-  &lt;p&gt;Hello, {{ username }}&lt;/p&gt;
-@elseif(.isGuest)
-  &lt;p&gt;Guest view&lt;/p&gt;
+&lt;div class="max-w-xl mx-auto py-8"&gt;
+  &lt;h1 class="text-2xl font-bold mb-6"&gt;Blog Posts&lt;/h1&gt;
+  
+  @each(post in posts)
+    &lt;div class="mb-6 border-b pb-4"&gt;
+      &lt;h2 class="text-xl font-semibold text-slate-900 dark:text-white"&gt;
+        {{ post.Title }}
+      &lt;/h2&gt;
+      &lt;p class="text-slate-600 mt-2"&gt;
+        {{{ excerpt(post.Content, 280) }}}
+      &lt;/p&gt;
+    &lt;/div&gt;
+  @end
+&lt;/div&gt;</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">Understanding the Syntax:</h3>
+  <ul class="list-disc pl-6 mb-6 text-slate-600 dark:text-slate-400 space-y-2">
+    <li><code>@layout('layout-app')</code> inherits the global HTML shell (boilerplate, head, navigation).</li>
+    <li><code>@each(post in posts) ... @end</code> loops over a Go slice or array.</li>
+    <li><code>{{ post.Title }}</code> outputs HTML-escaped text.</li>
+    <li><code>{{{ excerpt(post.Content, 280) }}}</code> outputs unescaped HTML content (use only with trusted content).</li>
+  </ul>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">2. Register the Route and Controller</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Register a route and serve it from your controller handler in Go:</p>
+  <pre data-file="start/routes.go"><code class="language-go">package start
+
+import (
+    "github.com/CodeSyncr/nimbus/router"
+    "app/controllers"
+)
+
+func RegisterRoutes(r *router.Router) {
+    r.Get("/posts", controllers.PostsIndex)
+}</code></pre>
+
+  <p class="text-slate-600 dark:text-slate-400 my-4">Render the template from the controller by passing the view path and state:</p>
+  <pre data-file="app/controllers/posts.go"><code class="language-go">package controllers
+
+import (
+    "github.com/CodeSyncr/nimbus/http"
+    "app/models"
+)
+
+func PostsIndex(c *http.Context) error {
+    posts, err := models.GetRecentPosts()
+    if err != nil {
+        return err
+    }
+
+    // Render resources/views/pages/posts/index.nimbus
+    return c.View("pages/posts/index", map[string]any{
+        "posts": posts,
+    })
+}</code></pre>
+
+  <!-- ── Template State ── -->
+  <h2 id="template-state" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Understanding Template State
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">The data map you pass to <code>c.View(name, state)</code> is called the <strong>template state</strong>. All keys in this map become available as variables inside the template context.</p>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">In addition to explicit data variables, Nimbus shares framework globals with every template:</p>
+  <ul class="list-disc pl-6 mb-6 text-slate-600 dark:text-slate-400 space-y-2">
+    <li><code>request</code>: Access URL query parameters, headers, or client IP.</li>
+    <li><code>auth</code>: Check authentication state and active user claims.</li>
+    <li><code>session</code>: Retrieve flash data, messages, or session store variables.</li>
+    <li>Built-in helper functions (e.g. <code>route()</code>, <code>csrfField()</code>, <code>excerpt()</code>).</li>
+  </ul>
+
+  <!-- ── Syntax Refresher ── -->
+  <h2 id="syntax-refresher" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Template Syntax Refresher
+  </h2>
+  
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">Outputting Variables</h3>
+  <pre><code>&lt;p&gt;{{ user.Name }}&lt;/p&gt;</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">Outputting Unescaped HTML</h3>
+  <pre><code>&lt;div&gt;{{{ post.BodyHtml }}}&lt;/div&gt;</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">Conditionals</h3>
+  <pre><code>@if(user.IsAdmin)
+  &lt;span class="badge"&gt;Admin&lt;/span&gt;
+@elseif(user.IsModerator)
+  &lt;span class="badge"&gt;Moderator&lt;/span&gt;
 @else
-  &lt;p&gt;Please log in.&lt;/p&gt;
-@endif</code></pre>
-
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Loops</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@each(items)</code> or Edge-style <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@each(post in posts)</code>. Inside the loop, use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{ . }}</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{ $post }}</code> for the current item.</p>
-<pre><code>&lt;ul&gt;
-  @each(items)
-    &lt;li&gt;{{ . }}&lt;/li&gt;
-  @endeach
-&lt;/ul&gt;
-
-@each(post in posts)
-  &lt;h2&gt;{{ $post.Title }}&lt;/h2&gt;
-@endeach</code></pre>
-
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Components</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Create reusable fragments in <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/components/</code>. Any <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.nimbus</code> file becomes a tag. Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{{{ .slots.main }}}}</code> to render the main slot (Edge-style).</p>
-<pre><code>&lt;!-- views/components/card.nimbus --&gt;
-&lt;div class="card"&gt;
-  {{{ .slots.main }}}
-&lt;/div&gt;
-
-&lt;!-- In a template --&gt;
-@card()
-  &lt;h2&gt;Card title&lt;/h2&gt;
-  &lt;p&gt;Card content&lt;/p&gt;
+  &lt;span class="badge"&gt;User&lt;/span&gt;
 @end</code></pre>
 
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Layouts</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-4">Layouts let you define a shared HTML shell (head, nav, footer) that wraps individual page content. Place <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@layout('name')</code> on the very first line of the child template. The layout receives the page content through the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">embed</code> variable.</p>
-<pre><code>&lt;!-- views/layout-app.nimbus --&gt;
-&lt;!DOCTYPE html&gt;
-&lt;html lang="en"&gt;
-&lt;head&gt;&lt;title&gt;{{ title }} - My App&lt;/title&gt;&lt;/head&gt;
-&lt;body&gt;
-  &lt;nav&gt;...&lt;/nav&gt;
-  &lt;main&gt;{{ embed }}&lt;/main&gt;
-&lt;/body&gt;
-&lt;/html&gt;
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">Loops</h3>
+  <pre><code>@each(item in items)
+  &lt;li&gt;{{ item }}&lt;/li&gt;
+@end</code></pre>
 
-&lt;!-- views/home.nimbus --&gt;
-@layout('layout-app')
-&lt;h1&gt;Welcome Home&lt;/h1&gt;</code></pre>
-<p class="text-slate-600 dark:text-slate-400 mb-4">All data passed to the child is available in the layout. Layouts can nest within other layouts. Omit the directive to render without a layout.</p>
-
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Debugging</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Use <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@dump(variable)</code> to pretty-print data, or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@dump(state)</code> for the entire template state.</p>
-
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Rendering from handlers</h2>
-<p class="text-slate-600 dark:text-slate-400 mb-2">Call <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">c.View(name, data)</code> to render a template. The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">name</code> is the file path relative to <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/</code> without the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">.nimbus</code> extension.</p>
-<pre><code>return c.View("home", map[string]any{
-    "title": "Home",
-    "name":  "Alice",
-    "items": []string{"A", "B"},
-})</code></pre>
-
-<h2 class="text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-2">Syntax summary</h2>
-<ul class="list-disc pl-6 mb-4 text-slate-600 dark:text-slate-400 space-y-1">
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{ var }}</code> — output (escaped); <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{{ var }}}</code> — unescaped.</li>
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">{{-- comment --}}</code> — template comment.</li>
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@if</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@elseif</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@else</code> / <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@endif</code> — conditionals.</li>
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@each(slice)</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@each(item in slice)</code> … <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@endeach</code> — loops.</li>
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@layout('name')</code> — inherit layout (first line).</li>
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@dump(var)</code> or <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@dump(state)</code> — debug.</li>
-  <li><code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@componentName()</code> … <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">@end</code> — component from <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">views/components/</code>.</li>
-</ul>
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">Evaluating Logic & Expressions</h3>
+  <pre><code>{{ len(items) > 0 ? "Items available" : "No items" }}</code></pre>
+</div>

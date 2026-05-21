@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -15,13 +16,19 @@ import (
 var Log *zap.SugaredLogger
 
 // channelLoggers holds named channel loggers.
-var channelLoggers = map[string]*zap.SugaredLogger{}
+var (
+	channelLoggers   = map[string]*zap.SugaredLogger{}
+	channelLoggersMu sync.RWMutex
+)
 
 func init() {
 	cfg := zap.NewProductionConfig()
 	cfg.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
 	cfg.Encoding = "console"
-	cfg.EncoderConfig.TimeKey = "time"
+	cfg.DisableCaller = true
+	cfg.EncoderConfig.TimeKey = ""
+	cfg.EncoderConfig.LevelKey = ""
+	cfg.EncoderConfig.CallerKey = ""
 	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	l, _ := cfg.Build()
 	Log = l.Sugar()
@@ -70,6 +77,7 @@ func Configure(cfg Config) error {
 		Encoding:         encoding,
 		OutputPaths:      []string{"stdout"},
 		ErrorOutputPaths: []string{"stderr"},
+		DisableCaller:    true,
 		EncoderConfig:    encoderConfig(encoding),
 	}
 
@@ -85,7 +93,9 @@ func Configure(cfg Config) error {
 		if err != nil {
 			return fmt.Errorf("logger: channel %q: %w", name, err)
 		}
+		channelLoggersMu.Lock()
 		channelLoggers[name] = cl
+		channelLoggersMu.Unlock()
 	}
 
 	return nil
@@ -129,6 +139,7 @@ func buildChannel(name string, ch ChannelConfig, global Config) (*zap.SugaredLog
 		Encoding:         encoding,
 		OutputPaths:      outputPaths,
 		ErrorOutputPaths: []string{"stderr"},
+		DisableCaller:    true,
 		EncoderConfig:    encoderConfig(encoding),
 	}
 
@@ -156,8 +167,8 @@ func encoderConfig(encoding string) zapcore.EncoderConfig {
 		}
 	}
 	return zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
+		TimeKey:        "", // Minimalist
+		LevelKey:       "", // Minimalist
 		NameKey:        "channel",
 		CallerKey:      "",
 		MessageKey:     "msg",
@@ -201,7 +212,10 @@ func SetLevel(level string) {
 	cfg := zap.NewProductionConfig()
 	cfg.Level = zap.NewAtomicLevelAt(lvl)
 	cfg.Encoding = "console"
-	cfg.EncoderConfig.TimeKey = "time"
+	cfg.DisableCaller = true
+	cfg.EncoderConfig.TimeKey = ""
+	cfg.EncoderConfig.LevelKey = ""
+	cfg.EncoderConfig.CallerKey = ""
 	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	l, _ := cfg.Build()
 	Set(l)
@@ -211,7 +225,10 @@ func SetLevel(level string) {
 
 // Channel returns a named channel logger. Falls back to the global logger.
 func Channel(name string) *zap.SugaredLogger {
-	if cl, ok := channelLoggers[name]; ok {
+	channelLoggersMu.RLock()
+	cl, ok := channelLoggers[name]
+	channelLoggersMu.RUnlock()
+	if ok {
 		return cl
 	}
 	return Log.Named(name)
@@ -266,6 +283,8 @@ func Sync() {
 	if Log != nil {
 		_ = Log.Sync()
 	}
+	channelLoggersMu.RLock()
+	defer channelLoggersMu.RUnlock()
 	for _, cl := range channelLoggers {
 		_ = cl.Sync()
 	}

@@ -62,6 +62,12 @@
         <p style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.6;">Fluent interface for OAuth authentication with Facebook, GitHub, Google, and more.</p>
       </a>
 
+      <a href="/packages/supabase" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--bg-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border); font-size: 1.5rem;">⚡</div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">Supabase</h3>
+        <p style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.6;">Seamless database connection, stateless JWT token middleware, realtime bindings, and storage capabilities.</p>
+      </a>
+
       <a href="/packages/unpoly" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
         <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--bg-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border); font-size: 1.5rem;">🔗</div>
         <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">Unpoly</h3>

@@ -15,8 +15,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
+	"github.com/CodeSyncr/nimbus/lucid"
+	lucidclause "github.com/CodeSyncr/nimbus/lucid/clause"
 )
 
 // QueueJob is the database model for jobs.
@@ -34,12 +34,23 @@ func (QueueJob) TableName() string { return "queue_jobs" }
 
 // DatabaseAdapter uses a SQL database for job storage.
 type DatabaseAdapter struct {
-	db *gorm.DB
+	db            *lucid.DB
+	leaseDuration time.Duration
 }
 
 // NewDatabaseAdapter creates a database adapter.
-func NewDatabaseAdapter(db *gorm.DB) *DatabaseAdapter {
-	return &DatabaseAdapter{db: db}
+func NewDatabaseAdapter(db *lucid.DB) *DatabaseAdapter {
+	return &DatabaseAdapter{
+		db:            db,
+		leaseDuration: 2 * time.Minute,
+	}
+}
+
+// SetLeaseDuration sets how long a processing job can remain unacked before reclaim.
+func (d *DatabaseAdapter) SetLeaseDuration(v time.Duration) {
+	if v > 0 {
+		d.leaseDuration = v
+	}
 }
 
 // EnsureTable creates the queue_jobs table if not exists.
@@ -72,19 +83,28 @@ func (d *DatabaseAdapter) Pop(ctx context.Context, queue string) (*JobPayload, e
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		case <-ticker.C:
+			now := time.Now()
+			res := d.db.WithContext(ctx).
+				Model(&QueueJob{}).
+				Where("queue = ? AND status = ? AND updated_at <= ?", queue, "processing", now.Add(-d.leaseDuration)).
+				Update("status", "pending")
+			if res.Error == nil && res.RowsAffected > 0 {
+				notifyReclaimed(queue, int(res.RowsAffected))
+			}
+
 			var j QueueJob
-			err := d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+			err := d.db.WithContext(ctx).Transaction(func(tx *lucid.DB) error {
 				q := tx.Where("queue = ? AND status = ? AND run_at <= ?", queue, "pending", time.Now()).
 					Order("run_at ASC")
 				if tx.Dialector.Name() == "postgres" || tx.Dialector.Name() == "mysql" {
-					q = q.Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"})
+					q = q.Clauses(lucidclause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"})
 				}
 				if err := q.First(&j).Error; err != nil {
 					return err
 				}
 				return tx.Model(&j).Update("status", "processing").Error
 			})
-			if err == gorm.ErrRecordNotFound {
+			if err == lucid.ErrRecordNotFound {
 				continue
 			}
 			if err != nil {
@@ -100,6 +120,17 @@ func (d *DatabaseAdapter) Pop(ctx context.Context, queue string) (*JobPayload, e
 	}
 }
 
+// Complete marks a processing job as done after successful or terminal handling.
+func (d *DatabaseAdapter) Complete(ctx context.Context, payload *JobPayload) error {
+	if payload == nil || payload.ID == "" {
+		return nil
+	}
+	return d.db.WithContext(ctx).
+		Model(&QueueJob{}).
+		Where("id = ?", payload.ID).
+		Update("status", "done").Error
+}
+
 // Len returns the number of pending jobs.
 func (d *DatabaseAdapter) Len(ctx context.Context, queue string) (int, error) {
 	var n int64
@@ -110,3 +141,4 @@ func (d *DatabaseAdapter) Len(ctx context.Context, queue string) (int, error) {
 }
 
 var _ Adapter = (*DatabaseAdapter)(nil)
+var _ CompletableAdapter = (*DatabaseAdapter)(nil)

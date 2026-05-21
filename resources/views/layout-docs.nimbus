@@ -379,7 +379,11 @@
             <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
           <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
-            <a href="/docs/nimbus-template" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">.nimbus Syntax &amp; Layouts</a>
+            <a href="/docs/nimbus-template" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Syntax &amp; Basics</a>
+            <a href="/docs/nimbus-template-layouts" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Layouts &amp; Components</a>
+            <a href="/docs/nimbus-template-props" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Props &amp; Attributes API</a>
+            <a href="/docs/nimbus-template-inject" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Provide / Inject API</a>
+            <a href="/docs/nimbus-template-starter-components" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Starter Kit Components</a>
           </div>
         </details>
 
@@ -550,11 +554,12 @@
           <summary class="flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
             <span class="nav-icon bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400">🧩</span>
             <span class="flex-1">Plugins</span>
-            <span class="nav-count">8</span>
+            <span class="nav-count">9</span>
             <span class="nav-chevron text-slate-400 text-[0.6rem] shrink-0 transition-transform">▼</span>
           </summary>
           <div class="nav-links ml-4 mt-0.5 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700/50 pl-3">
             <a href="/docs/plugins" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Plugin System</a>
+            <a href="/docs/supabase" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Supabase</a>
             <a href="/docs/telescope" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Telescope</a>
             <a href="/docs/horizon" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Horizon</a>
             <a href="/docs/pulse" class="block py-1.5 px-2 rounded text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors text-[0.8125rem]">Pulse</a>

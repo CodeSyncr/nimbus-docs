@@ -191,7 +191,11 @@ var docsTitles = map[string]string{
 	"exception-handling": "Exception Handling",
 	"static-files":       "Static Files",
 	// Nimbus Template
-	"nimbus-template": "Nimbus Template",
+	"nimbus-template":                    "Templates Introduction",
+	"nimbus-template-layouts":            "Layouts & Components",
+	"nimbus-template-props":              "Props & Attributes API",
+	"nimbus-template-inject":             "Provide / Inject API",
+	"nimbus-template-starter-components": "Starter Kit Components",
 	// Inertia
 	"inertia":       "Inertia.js",
 	"inertia-setup": "Inertia Setup",
@@ -291,6 +295,7 @@ var docsTitles = map[string]string{
 	"pulse":     "Pulse",
 	"socialite": "Socialite",
 	"unpoly":    "Unpoly",
+	"supabase":  "Supabase Integration",
 }
 
 // livewireDirectiveDetailSlugs are per-directive doc pages (registered in init).
@@ -745,7 +750,7 @@ var docsOrder = []string{
 	"getting-started", "introduction", "installation", "folder-structure", "configuration", "deployment", "production-readiness", "versioning-policy", "release-checklist", "faqs",
 	"routing", "controllers", "http-context", "middleware", "request", "response", "body-parser",
 	"validation", "file-uploads", "locale", "api-resources", "session", "exception-handling", "static-files",
-	"nimbus-template",
+	"nimbus-template", "nimbus-template-layouts", "nimbus-template-props", "nimbus-template-inject", "nimbus-template-starter-components",
 	"inertia", "inertia-setup", "inertia-hmr",
 	"database", "database-query-select", "database-query-insert", "database-query-raw",
 	"database-migrations-intro", "database-migrations-schema", "database-migrations-table",
@@ -762,7 +767,7 @@ var docsOrder = []string{
 	"cache", "cache-remember", "cache-backends", "cache-invalidation",
 	"storage", "drive", "transmit", "events", "logger", "mail", "notification", "queue", "scheduler", "websockets",
 	"workflow", "feature-flags", "multi-tenancy", "presence", "openapi", "studio", "edge-functions", "metrics",
-	"telescope", "horizon", "pulse", "reverb", "socialite", "unpoly",
+	"telescope", "horizon", "pulse", "reverb", "socialite", "supabase", "unpoly",
 	"ai", "ai-video", "mcp",
 	"cli", "creating-commands", "command-arguments", "command-flags", "prompts", "terminal-ui", "repl", "hot-reload",
 	"testing-introduction", "http-tests",

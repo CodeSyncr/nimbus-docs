@@ -1,0 +1,147 @@
+@layout('layout-docs')
+
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Templates</span>
+    <span class="px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 text-xs font-semibold">Props API</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Props &amp; Attributes API</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">Props are the primary way to share data with a component when rendering it. Nimbus supports a powerful prop serialization engine that allows you to easily forward HTML attributes to elements without manual boilerplate.</p>
+
+  <!-- ── Prop Declarations ── -->
+  <h2 id="props-basics" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Basic Props Usage
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">A component can accept any props passed to it at render time. Let's create an input component at <code>resources/views/components/input.nimbus</code>:</p>
+  <pre data-file="resources/views/components/input.nimbus"><code class="language-html">&lt;input 
+  type="{{ type || 'text' }}"
+  placeholder="{{ placeholder || '' }}"
+  name="{{ name }}"
+  id="{{ name }}"
+  value="{{ value || '' }}"
+/&gt;</code></pre>
+
+  <p class="text-slate-600 dark:text-slate-400 my-4">Render the input component and pass custom props to configure it:</p>
+  <pre><code class="language-html">@!input({
+  name: 'title',
+  placeholder: 'Enter post title'
+})
+
+@!input({
+  name: 'slug',
+  placeholder: 'Enter post slug',
+  type: 'text'
+})</code></pre>
+
+  <!-- ── Props Serialization ── -->
+  <h2 id="serialization" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Serializing Props to HTML Attributes
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Binding each individual prop manually does not scale well if you need to support many standard HTML attributes (like <code>autocomplete</code>, <code>minlength</code>, <code>autofocus</code>, etc.).</p>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Nimbus provides the <code>$props</code> helper to serialize all properties into standard HTML attributes using the <code>toAttrs()</code> method:</p>
+  <pre data-file="resources/views/components/input-auto.nimbus"><code class="language-html">&lt;!-- Serializes all passed properties to standard HTML attributes --&gt;
+&lt;input {{ $props.toAttrs() }} /&gt;</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">Merging Classes</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">You can assign default classes to your component while keeping the ability to append custom classes passed by the consumer. Use the <code>.merge()</code> method to combine classes:</p>
+  <pre data-file="resources/views/components/input-styled.nimbus"><code class="language-html">&lt;input {{
+  $props.merge({ class: ['form-input', 'border', 'rounded-md'] }).toAttrs()
+}} /&gt;</code></pre>
+
+  <p class="text-slate-600 dark:text-slate-400 my-4">If the consumer passes custom classes, they will be cleanly appended to the output:</p>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Input Markup</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Output HTML</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2">
+            <pre class="!p-1 bg-transparent !border-0"><code class="language-html">@!input-styled({
+  name: 'title'
+})</code></pre>
+          </td>
+          <td class="px-4 py-2">
+            <pre class="!p-1 bg-transparent !border-0"><code class="language-html">&lt;input name="title" class="form-input border rounded-md" /&gt;</code></pre>
+          </td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2">
+            <pre class="!p-1 bg-transparent !border-0"><code class="language-html">@!input-styled({
+  name: 'title',
+  class: ['w-full', 'bg-slate-100']
+})</code></pre>
+          </td>
+          <td class="px-4 py-2">
+            <pre class="!p-1 bg-transparent !border-0"><code class="language-html">&lt;input name="title" class="form-input border rounded-md w-full bg-slate-100" /&gt;</code></pre>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Removing Styles ── -->
+  <h2 id="removing-styles" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Removing Existing Classes
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">If the consumer wants to override the default styles entirely, you can check for a custom prop (like <code>removeExistingStyles</code>) using <code>mergeUnless()</code>:</p>
+  <pre data-file="resources/views/components/input-styled.nimbus"><code class="language-html">&lt;input {{
+  $props
+    .mergeUnless(removeExistingStyles, { class: ['form-input', 'border'] })
+    .except(['removeExistingStyles'])
+    .toAttrs()
+}} /&gt;</code></pre>
+
+  <p class="text-slate-600 dark:text-slate-400 my-4">Render component with overrides:</p>
+  <pre><code class="language-html">@!input-styled({
+  removeExistingStyles: true,
+  class: ['flex', 'mt-2', 'mb-4', 'border-red-500']
+})</code></pre>
+
+  <!-- ── Props API Reference ── -->
+  <h2 id="props-api" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Props API Reference
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">The following methods are available on the <code>$props</code> helper object:</p>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Method</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Description</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Example</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2"><code>has(key)</code></td>
+          <td class="px-4 py-2">Returns <code>true</code> if a given prop was passed to the component.</td>
+          <td class="px-4 py-2"><code>$props.has('label')</code></td>
+        </tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2"><code>get(key, fallback)</code></td>
+          <td class="px-4 py-2">Gets the value of a specific prop, optionally specifying a default fallback.</td>
+          <td class="px-4 py-2"><code>$props.get('type', 'text')</code></td>
+        </tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2"><code>only(keys)</code></td>
+          <td class="px-4 py-2">Returns a new props object containing only the specified keys.</td>
+          <td class="px-4 py-2"><code>$props.only(['id', 'class'])</code></td>
+        </tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2"><code>except(keys)</code></td>
+          <td class="px-4 py-2">Returns a new props object excluding the specified keys (useful to drop non-HTML attributes).</td>
+          <td class="px-4 py-2"><code>$props.except(['label', 'removeExistingStyles'])</code></td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2"><code>merge(defaults)</code></td>
+          <td class="px-4 py-2">Merges default parameters with user-provided props. Props passed at render take priority.</td>
+          <td class="px-4 py-2"><code>$props.merge({ type: 'button' })</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

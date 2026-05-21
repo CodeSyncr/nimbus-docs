@@ -18,7 +18,7 @@ filippo.io/edwards25519/field
 github.com/AlecAivazis/survey/v2
 github.com/AlecAivazis/survey/v2/core
 github.com/AlecAivazis/survey/v2/terminal
-# github.com/CodeSyncr/nimbus v0.1.7 => ../nimbus
+# github.com/CodeSyncr/nimbus v1.1.0 => ../nimbus
 ## explicit; go 1.26
 github.com/CodeSyncr/nimbus
 github.com/CodeSyncr/nimbus/auth
@@ -34,10 +34,15 @@ github.com/CodeSyncr/nimbus/errors
 github.com/CodeSyncr/nimbus/events
 github.com/CodeSyncr/nimbus/health
 github.com/CodeSyncr/nimbus/http
+github.com/CodeSyncr/nimbus/locale
 github.com/CodeSyncr/nimbus/logger
+github.com/CodeSyncr/nimbus/lucid
+github.com/CodeSyncr/nimbus/lucid/clause
+github.com/CodeSyncr/nimbus/lucid/logger
 github.com/CodeSyncr/nimbus/mail
 github.com/CodeSyncr/nimbus/metrics
 github.com/CodeSyncr/nimbus/middleware
+github.com/CodeSyncr/nimbus/notification
 github.com/CodeSyncr/nimbus/packages/shield
 github.com/CodeSyncr/nimbus/plugins/ai
 github.com/CodeSyncr/nimbus/plugins/horizon
@@ -46,9 +51,11 @@ github.com/CodeSyncr/nimbus/plugins/telescope
 github.com/CodeSyncr/nimbus/plugins/transmit
 github.com/CodeSyncr/nimbus/plugins/unpoly
 github.com/CodeSyncr/nimbus/queue
+github.com/CodeSyncr/nimbus/redis
 github.com/CodeSyncr/nimbus/router
 github.com/CodeSyncr/nimbus/schedule
 github.com/CodeSyncr/nimbus/session
+github.com/CodeSyncr/nimbus/timex
 github.com/CodeSyncr/nimbus/validation
 github.com/CodeSyncr/nimbus/view
 # github.com/aws/aws-sdk-go-v2 v1.41.4

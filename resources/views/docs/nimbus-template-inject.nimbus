@@ -1,0 +1,76 @@
+@layout('layout-docs')
+
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Templates</span>
+    <span class="px-2.5 py-1 rounded-full bg-pink-100 dark:bg-pink-500/20 text-pink-700 dark:text-pink-400 text-xs font-semibold">Context API</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Provide / Inject Context API</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">Inspired by Svelte's Context API and Vue's Provide/Inject mechanism, this feature allows parent components to share state down the entire component tree without explicitly passing it down as props through each intermediate child.</p>
+
+  <!-- ── Core Concepts ── -->
+  <h2 id="concepts" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Core Concepts
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">When designing related component groups (like forms, select lists, accordion panels, or tab pages), child components often need access to values or state managed by the parent container.</p>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Instead of forcing developers to pass the parent's data to each nested field explicitly, the parent component can <strong>provide</strong> a context mapping, which child elements can then <strong>inject</strong> on-demand.</p>
+
+  <!-- ── Example Usage ── -->
+  <h2 id="example" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Form Context Example
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Let's build a form validation container that automatically shares its name and error state with all child input controls nested within it.</p>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">1. The Parent: Provide Context</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Create a form field container component at <code>resources/views/components/field/root.nimbus</code>. It registers a context key using <code>$context.provide()</code>:</p>
+  <pre data-file="resources/views/components/field/root.nimbus"><code class="language-html">&lt;!-- views/components/field/root.nimbus --&gt;
+{{
+  $context.provide('fieldContext', {
+    name: name,
+    id: id || name,
+    hasError: session.HasError(name),
+    errorMessage: session.Error(name)
+  })
+}}
+
+&lt;div class="form-group mb-4"&gt;
+  {{{ .slots.main }}}
+&lt;/div&gt;</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">2. The Child: Inject Context</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Create the input control at <code>resources/views/components/input/control.nimbus</code>. It accesses the provided properties using <code>$context.inject()</code>:</p>
+  <pre data-file="resources/views/components/input/control.nimbus"><code class="language-html">&lt;!-- views/components/input/control.nimbus --&gt;
+{{
+  const field = $context.inject('fieldContext')
+}}
+
+&lt;input 
+  name="{{ field.name }}" 
+  id="{{ field.id }}" 
+  class="input {{ field.hasError ? 'border-red-500' : 'border-slate-300' }}"
+  {{ $props.toAttrs() }}
+/&gt;</code></pre>
+
+  <p class="text-slate-600 dark:text-slate-400 my-4">Similarly, write the label control at <code>resources/views/components/field/label.nimbus</code> to auto-associate the <code>for="..."</code> attribute:</p>
+  <pre data-file="resources/views/components/field/label.nimbus"><code class="language-html">&lt;!-- views/components/field/label.nimbus --&gt;
+{{
+  const field = $context.inject('fieldContext')
+}}
+
+&lt;label for="{{ field.id }}" class="block font-medium text-slate-700 mb-1"&gt;
+  {{{ .slots.main || text }}}
+&lt;/label&gt;</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">3. Consume the Components Together</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Now, when building views, developers get automatic id-matching, name configuration, and error styling simply by nesting the tags:</p>
+  <pre data-file="resources/views/pages/login.nimbus"><code class="language-html">@field.root({ name: 'email' })
+  @!field.label({ text: 'Email Address' })
+  @!input.control({ type: 'email', placeholder: 'you@example.com' })
+@end</code></pre>
+
+  <p class="text-slate-600 dark:text-slate-400 mb-4">This compiles down into the following clean, error-aware markup without requiring the developer to pass <code>name</code> and <code>id</code> to both labels and inputs:</p>
+  <pre><code class="language-html">&lt;div class="form-group mb-4"&gt;
+  &lt;label for="email" class="block font-medium text-slate-700 mb-1"&gt;Email Address&lt;/label&gt;
+  &lt;input name="email" id="email" type="email" placeholder="you@example.com" class="input border-slate-300" /&gt;
+&lt;/div&gt;</code></pre>
+</div>

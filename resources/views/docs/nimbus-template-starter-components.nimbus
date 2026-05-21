@@ -1,0 +1,159 @@
+@layout('layout-docs')
+
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Templates</span>
+    <span class="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 text-xs font-semibold">UI Components</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Starter Kit Components</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">The Hypermedia starter kit includes a full collection of unstyled, accessible UI components. Each component passes unknown properties through as HTML attributes, allowing you to directly style them with utility classes (like Tailwind CSS) or customize their behavior.</p>
+
+  <!-- ── Layout ── -->
+  <h2 id="component-layout" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Layout
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Renders the outer HTML layout shell with head and body tags.</p>
+  <pre><code class="language-html">@layout()
+  &lt;main&gt;Page contents go here&lt;/main&gt;
+@end</code></pre>
+
+  <!-- ── Form ── -->
+  <h2 id="component-form" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Form
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Renders a form element with automated CSRF protection field injection.</p>
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full text-sm text-left border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Prop</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Type</th>
+          <th class="px-4 py-2 font-semibold border-b border-slate-200 dark:border-slate-700">Description</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-600 dark:text-slate-400">
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2"><code>action</code></td>
+          <td class="px-4 py-2"><code>string</code></td>
+          <td class="px-4 py-2">The form action endpoint URL.</td>
+        </tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2"><code>method</code></td>
+          <td class="px-4 py-2"><code>string</code></td>
+          <td class="px-4 py-2">HTTP verb (supports method spoofing for PUT, PATCH, and DELETE).</td>
+        </tr>
+        <tr class="border-b border-slate-200 dark:border-slate-700">
+          <td class="px-4 py-2"><code>route</code></td>
+          <td class="px-4 py-2"><code>string</code></td>
+          <td class="px-4 py-2">Target named route identifier to resolve the action URL.</td>
+        </tr>
+        <tr>
+          <td class="px-4 py-2"><code>routeParams</code></td>
+          <td class="px-4 py-2"><code>array</code></td>
+          <td class="px-4 py-2">Dynamic parameters for resolving URL route wildcards.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <pre><code class="language-html">@form({ route: 'posts.store', method: 'POST' })
+  &lt;!-- Form fields go here --&gt;
+@end
+
+@form({ route: 'posts.update', method: 'PUT', routeParams: [post.ID] })
+  &lt;!-- Edit fields --&gt;
+@end</code></pre>
+
+  <!-- ── Field Groups ── -->
+  <h2 id="component-fields" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Form Field Components
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Form field elements collaborate to output unified controls with automated labels and input validation error tracking.</p>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">field.root</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Context provider container to group labeling, input controls, and validation errors.</p>
+  <pre><code class="language-html">@field.root({ name: 'email', id: 'user-email' })
+  &lt;!-- Inputs, labels, and error tags --&gt;
+@end</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">field.label</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Renders label tag mapping the associated control target ID.</p>
+  <pre><code class="language-html">@!field.label({ text: 'Email Address' })</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">field.error</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Conditionally displays validation warnings retrieved from session flash memory.</p>
+  <pre><code class="language-html">@!field.error()</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">input.control</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Renders a standard input tag. Passes properties down as HTML attributes.</p>
+  <pre><code class="language-html">@!input.control({ type: 'text', placeholder: 'Name' })</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">select.control</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Renders selection menus using an options data array.</p>
+  <pre><code class="language-html">@!select.control({
+  options: [
+    { name: 'Admin', value: 'admin' },
+    { name: 'User', value: 'user' }
+  ]
+})</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">textarea.control</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Renders multi-line textarea boxes.</p>
+  <pre><code class="language-html">@!textarea.control({ rows: '4', placeholder: 'Biography...' })</code></pre>
+
+  <!-- ── Checkboxes & Radios ── -->
+  <h2 id="component-choices" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Selection Choices
+  </h2>
+  
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">checkbox.group / checkbox.control</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Groups related checkboxes under a unified array-like post key:</p>
+  <pre><code class="language-html">@checkbox.group({ name: 'roles' })
+  @field.root({ id: 'role-editor' })
+    @!checkbox.control({ value: 'editor' })
+    @!field.label({ text: 'Editor Role' })
+  @end
+@end</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">radio.group / radio.control</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Groups mutually exclusive radio select fields:</p>
+  <pre><code class="language-html">@radio.group({ name: 'plan' })
+  @field.root({ id: 'plan-free' })
+    @!radio.control({ value: 'free' })
+    @!field.label({ text: 'Free Plan' })
+  @end
+  @field.root({ id: 'plan-pro' })
+    @!radio.control({ value: 'pro' })
+    @!field.label({ text: 'Pro Plan' })
+  @end
+@end</code></pre>
+
+  <!-- ── Alerts ── -->
+  <h2 id="component-alerts" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Alerts
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Displays feedback prompts or diagnostic status messages.</p>
+  <pre><code class="language-html">@alert.root({ variant: 'destructive', autoDismiss: true })
+  @!alert.title({ text: 'Error Occurred' })
+  @!alert.description({ text: 'Unable to process transaction.' })
+@end</code></pre>
+
+  <!-- ── Buttons & Links ── -->
+  <h2 id="component-buttons" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Navigation &amp; Action Buttons
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Submit actions or link paths:</p>
+  <pre><code class="language-html">@!button({ text: 'Submit Entry', type: 'submit' })
+
+@!link({ route: 'posts.show', routeParams: [post.ID], text: 'View Post' })</code></pre>
+
+  <!-- ── Debugging ── -->
+  <h2 id="debugging" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Debugging Templates
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Inspect active template state values inline without breaking execution:</p>
+  <pre><code class="language-html">&lt;!-- Dump specific variable context --&gt;
+@dump(posts)
+
+&lt;!-- Dump complete template local scope map --&gt;
+@dump(state)</code></pre>
+</div>

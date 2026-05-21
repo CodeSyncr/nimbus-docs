@@ -1,0 +1,275 @@
+@layout('layout-docs')
+
+<div class="max-w-3xl mx-auto docs-content">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 text-xs font-semibold">Plugin</span>
+    <span class="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">Database</span>
+    <span class="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 text-xs font-semibold">Auth</span>
+  </div>
+  <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Supabase Integration</h1>
+  <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">Seamless integration of Supabase into the Nimbus framework. Use Supabase Postgres as your primary database with Lucid, handle user authentication using GoTrue-compliant middleware, perform S3-compatible storage operations, and tap into real-time WebSockets.</p>
+
+  <!-- ── Overview ── -->
+  <h2 id="overview" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Overview
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">The Supabase plugin combines multiple backend capabilities into a unified SDK designed specifically for Nimbus applications:</p>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+    <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex gap-3">
+      <div class="shrink-0 p-2 rounded-lg bg-amber-500/10 text-amber-500 h-10 w-10 flex items-center justify-center">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+          <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path>
+        </svg>
+      </div>
+      <div>
+        <h4 class="font-semibold text-slate-900 dark:text-white mb-1">Primary GORM Connection</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Routes GORM/Lucid calls to the Supabase database instance automatically when selected as the primary driver.</p>
+      </div>
+    </div>
+    <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex gap-3">
+      <div class="shrink-0 p-2 rounded-lg bg-amber-500/10 text-amber-500 h-10 w-10 flex items-center justify-center">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0110 0v4"></path>
+        </svg>
+      </div>
+      <div>
+        <h4 class="font-semibold text-slate-900 dark:text-white mb-1">Stateless Guard &amp; Middleware</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Decrypts and verifies Supabase JWT access tokens inside the HTTP router to identify users.</p>
+      </div>
+    </div>
+    <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex gap-3">
+      <div class="shrink-0 p-2 rounded-lg bg-amber-500/10 text-amber-500 h-10 w-10 flex items-center justify-center">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"></path>
+        </svg>
+      </div>
+      <div>
+        <h4 class="font-semibold text-slate-900 dark:text-white mb-1">Dual Storage Support</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Support for native storage operations or unified Nimbus Drive storage mapping (S3-compatible).</p>
+      </div>
+    </div>
+    <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex gap-3">
+      <div class="shrink-0 p-2 rounded-lg bg-amber-500/10 text-amber-500 h-10 w-10 flex items-center justify-center">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+      </div>
+      <div>
+        <h4 class="font-semibold text-slate-900 dark:text-white mb-1">Real-time Events &amp; Presence</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400">WebSocket bindings to listen for database changes, broadcast events, or track user presence.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Installation ── -->
+  <h2 id="installation" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Installation &amp; Scaffolding
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">During new project creation, select <strong>Supabase (Postgres)</strong> as your database driver. The CLI will automatically configure the Supabase Auth Guard and add the plugin to your project:</p>
+  <pre><code class="language-bash">$ nimbus new my-app</code></pre>
+  
+  <p class="text-slate-600 dark:text-slate-400 my-4">To add the plugin to an existing project, install it via the CLI:</p>
+  <pre><code class="language-bash">$ nimbus plugin install supabase</code></pre>
+  <p class="text-slate-600 dark:text-slate-400 my-4">This command scaffolds <code>config/supabase.go</code>, registers the plugin in <code>bin/server.go</code>, and adds credentials to your environment files.</p>
+
+  <!-- ── Configuration ── -->
+  <h2 id="configuration" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Configuration &amp; Credentials
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Fill in your Supabase project values in <code>.env</code>:</p>
+  <pre data-file=".env"><code class="language-bash"># Supabase API Credentials
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5...
+SUPABASE_JWT_SECRET=your_jwt_signing_secret
+
+# Supabase Postgres Connection URL
+SUPABASE_DB_URL=postgres://postgres:password@db.your-project.supabase.co:5432/postgres
+
+# Supabase Storage S3-compatible endpoints (optional, for unified Drive plugin)
+SUPABASE_STORAGE_BUCKET=avatars
+SUPABASE_STORAGE_REGION=us-east-1
+SUPABASE_STORAGE_KEY=your_s3_storage_access_key
+SUPABASE_STORAGE_SECRET=your_s3_storage_secret
+SUPABASE_ENDPOINT=https://your-project.supabase.co/storage/v1/s3</code></pre>
+
+  <!-- ── Database connection ── -->
+  <h2 id="database" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Lucid / Database Connection
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">When <code>DB_DRIVER=supabase</code> is set alongside <code>SUPABASE_DB_URL</code> in your environment, GORM handles connection bootstrap and redirects queries to the Supabase database instance. You can run Lucid migrations and make standard GORM queries as usual:</p>
+  <pre><code class="language-go">import (
+    "github.com/CodeSyncr/nimbus"
+    "app/models"
+)
+
+// Queries are executed against Supabase Postgres
+var user models.User
+nimbus.DB().First(&user, 1)</code></pre>
+
+  <!-- ── Authentication ── -->
+  <h2 id="authentication" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Authentication &amp; Middleware
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">The plugin includes middleware to decode, verify, and validate Supabase JWT tokens. Claims are loaded onto the context automatically.</p>
+  
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">Registering Middleware</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Register the middleware on a group of routes to require authentication:</p>
+  <pre data-file="start/routes.go"><code class="language-go">package start
+
+import (
+    "github.com/CodeSyncr/nimbus/plugins/supabase"
+    "github.com/CodeSyncr/nimbus/router"
+)
+
+func RegisterRoutes(r *router.Router) {
+    // Authenticated API routes
+    authRoutes := r.Group("/api", supabase.AuthMiddleware())
+    authRoutes.Get("/profile", func(ctx *http.Context) error {
+        userID := supabase.GetUserID(ctx)
+        return ctx.JSON(200, map[string]string{"user_id": userID})
+    })
+
+    // Optional auth routes (injects claims if token exists but doesn't reject)
+    publicRoutes := r.Group("/public", supabase.OptionalAuthMiddleware())
+    publicRoutes.Get("/posts", func(ctx *http.Context) error {
+        claims := supabase.GetClaims(ctx)
+        if claims != nil {
+            // User is authenticated
+        }
+        return ctx.JSON(200, posts)
+    })
+}</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">Auth Client Operations</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Interact directly with the GoTrue backend using the Auth client to sign users up, sign them in, or verify OTPs:</p>
+  <pre><code class="language-go">import "github.com/CodeSyncr/nimbus/plugins/supabase"
+
+client := supabase.GetClient()
+
+// Sign in with Email and Password
+authResponse, err := client.Auth.SignInWithPassword(ctx, "user@example.com", "secret-pass")
+if err != nil {
+    return err
+}
+
+// Access the access token or user ID
+token := authResponse.AccessToken
+uid := authResponse.User.ID</code></pre>
+
+  <!-- ── Storage ── -->
+  <h2 id="storage" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> File Storage
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">You can manage and interact with Supabase Storage buckets using either the native client or through the unified Nimbus Drive abstraction.</p>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">1. Native Storage Client</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">The native storage client utilizes your standard Supabase URL and credentials, removing the need for separate S3 keys:</p>
+  <pre><code class="language-go">import (
+    "bytes"
+    "github.com/CodeSyncr/nimbus/plugins/supabase"
+)
+
+client := supabase.GetClient()
+bucket := client.Storage.From("avatars")
+
+// Upload a file
+fileData := []byte("image-data")
+err := bucket.Upload("users/123/profile.png", bytes.NewReader(fileData), "image/png")
+
+// Create a signed URL (expires in 1 hour)
+url, err := bucket.CreateSignedURL("users/123/profile.png", 3600)</code></pre>
+
+  <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-2">2. Unified Drive Client</h3>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Map Supabase Storage as a disk in the Nimbus Drive system using S3 compatibility. Once configured, you can call storage operations through the unified `drive` package:</p>
+  <pre><code class="language-go">import (
+    "strings"
+    "github.com/CodeSyncr/nimbus/plugins/drive"
+)
+
+// Select the Supabase Storage disk
+supabaseDisk := drive.Disk("supabase")
+
+// Put a file
+err := supabaseDisk.Put("documents/invoice.pdf", strings.NewReader("pdf-content"))
+
+// Check if file exists
+exists, err := supabaseDisk.Exists("documents/invoice.pdf")
+
+// Delete the file
+err = supabaseDisk.Delete("documents/invoice.pdf")</code></pre>
+
+  <!-- ── Realtime ── -->
+  <h2 id="realtime" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Real-time Subscriptions
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Listen to broadcast messages, Postgres updates, or user presence changes using WebSockets:</p>
+  <pre><code class="language-go">import (
+    "fmt"
+    "github.com/CodeSyncr/nimbus/plugins/supabase"
+)
+
+client := supabase.GetClient()
+realtime := client.Realtime()
+
+// Connect to the WebSocket server
+err := realtime.Connect()
+if err != nil {
+    return err
+}
+defer realtime.Disconnect()
+
+// Join a channel
+channel := realtime.Channel("room-1")
+
+// 1. Subscribe to Postgres Database Changes (INSERTs on public.messages)
+channel.OnPostgresChanges("INSERT", "public", "messages", func(payload map[string]any) {
+    fmt.Printf("New message: %v\n", payload["record"])
+})
+
+// 2. Listen to Broadcast messages
+channel.OnBroadcast("chat-message", func(payload map[string]any) {
+    fmt.Printf("Broadcast received: %v\n", payload)
+})
+
+// 3. Track Presence state
+channel.OnPresenceJoin(func(id string, info map[string]any) {
+    fmt.Printf("User joined: %s, details: %v\n", id, info)
+})
+
+channel.OnPresenceLeave(func(id string, info map[string]any) {
+    fmt.Printf("User left: %s\n", id)
+})
+
+// Subscribe to the channel
+err = channel.Subscribe()</code></pre>
+
+  <!-- ── Edge Functions & RPC ── -->
+  <h2 id="edge-functions" class="text-xl font-semibold text-slate-900 dark:text-white mt-12 mb-4 flex items-center gap-2">
+    <span class="text-amber-500">§</span> Edge Functions &amp; Remote Procedure Calls (RPC)
+  </h2>
+  <p class="text-slate-600 dark:text-slate-400 mb-4">Call custom database functions (RPC) or trigger deployed Supabase Edge Functions directly from Go:</p>
+  <pre><code class="language-go">import (
+    "fmt"
+    "github.com/CodeSyncr/nimbus/plugins/supabase"
+)
+
+client := supabase.GetClient()
+
+// Call a stored SQL procedure with parameters
+var total int
+err := client.Rpc("calculate_total", map[string]any{"user_id": 123}, &total)
+if err != nil {
+    return err
+}
+fmt.Printf("User Total: %d\n", total)
+
+// Trigger a deployed Edge Function
+response, err := client.Functions.Invoke("send-welcome-email", map[string]any{
+    "email": "user@example.com",
+    "name":  "John Doe",
+})</code></pre>
+</div>
